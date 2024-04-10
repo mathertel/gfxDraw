@@ -2,3 +2,7 @@
 
 _*.*
 .fake
+*.obj
+*.exe
+*.pdb
+*.ilk
