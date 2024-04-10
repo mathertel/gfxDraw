@@ -1,0 +1,4 @@
+# .gitignore for Arduino gfxDraw library 
+
+_*.*
+.fake
