@@ -2,9 +2,36 @@
 
 #pragma once
 
-#include "gfxDraw.h"
+#ifdef ARDUINO
+#include <Arduino.h>
+#endif
+
+#include <stdint.h>
 
 namespace gfxDraw {
+
+#pragma pack(push, 1)
+/// @brief The RGBA class is used to define the color and opacity of a single abstract pixel.
+class RGBA {
+public:
+  RGBA() = default;
+  RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+  RGBA(uint32_t col24);
+
+  uint8_t Red;
+  uint8_t Green;
+  uint8_t Blue;
+  uint8_t Alpha;
+  
+  constexpr bool operator==(const RGBA &col2);
+  constexpr bool operator!=(const RGBA &col2);
+
+  /// @brief Convert into a 3*8 bit value using #rrggbb.
+  /// @return color value.
+  uint32_t toColor24();
+};
+#pragma pack(pop)
+
 
 // Some useful constants for simple colors
 

@@ -39,20 +39,22 @@ void drawDigits14(int n, uint16_t x, uint16_t y, gfxDraw::fSetPixel cbBorder, gf
   };
   uint16_t sd = SD[n % 10];
 
-  if (sd & 0b0000000000000001) gfxDraw::pathByText("M 10 1h49l3 3l-5 5h-45l-5 -5Z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000000000010) gfxDraw::pathByText("M1 10v42h4l5 -5v-36l-5 -5Z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000000000100) gfxDraw::pathByText("M13 12h4l10 20v15h-3l-11 -23z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000000001000) gfxDraw::pathByText("M30 12h9v34l-4 4h-1l-4 -4z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000000010000) gfxDraw::pathByText("M56 12h-4l-10 20v15h3l11 -23z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000000100000) gfxDraw::pathByText("M68 10v42l-4 0l-5 -5v-36 l5-5z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000001000000) gfxDraw::pathByText("M11 50h18l4 4v1l-4 4h-18l-4 -4v-1z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000010000000) gfxDraw::pathByText("M58 50h-18l-4 4v1l4 4h18l4 -4v-1z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000000100000000) gfxDraw::pathByText("M1, 99v-42l4, 0l5, 5v36l-5, 5z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000001000000000) gfxDraw::pathByText("M13, 97h4 l10, -20v-15h-3l-11, 23z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000010000000000) gfxDraw::pathByText("M30, 97h9v-34l-4, -4h-1l-4, 4", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0000100000000000) gfxDraw::pathByText("M56, 97h-4l-10, -20v-15h3l11, 23z", x, y, 100, cbBorder, cbFill);
-  if (sd & 0b0001000000000000) gfxDraw::pathByText("M68, 99v-42l-4, 0l-5, 5v36l5, 5z", x, y, 100, cbBorder, cbFill);
+  // clang-format off
+  if (sd & 0b0000000000000001) gfxDraw::pathByText("M 10 1h49l3 3l-5 5h-45l-5 -5Z",       x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000000000010) gfxDraw::pathByText("M1 10v42h4l5 -5v-36l-5 -5Z",          x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000000000100) gfxDraw::pathByText("M13 12h4l10 20v15h-3l-11 -23z",       x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000000001000) gfxDraw::pathByText("M30 12h9v34l-4 4h-1l-4 -4z",          x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000000010000) gfxDraw::pathByText("M56 12h-4l-10 20v15h3l11 -23z",       x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000000100000) gfxDraw::pathByText("M68 10v42l-4 0l-5 -5v-36 l5-5z",      x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000001000000) gfxDraw::pathByText("M11 50h18l4 4v1l-4 4h-18l-4 -4v-1z",  x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000010000000) gfxDraw::pathByText("M58 50h-18l-4 4v1l4 4h18l4 -4v-1z",   x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000000100000000) gfxDraw::pathByText("M1, 99v-42l4, 0l5, 5v36l-5, 5z",      x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000001000000000) gfxDraw::pathByText("M13, 97h4 l10, -20v-15h-3l-11, 23z",  x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000010000000000) gfxDraw::pathByText("M30, 97h9v-34l-4, -4h-1l-4, 4",       x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0000100000000000) gfxDraw::pathByText("M56, 97h-4l-10, -20v-15h3l11, 23z",   x, y, 100, cbBorder, cbFill);
+  if (sd & 0b0001000000000000) gfxDraw::pathByText("M68, 99v-42l-4, 0l-5, 5v36l5, 5z",    x, y, 100, cbBorder, cbFill);
   if (sd & 0b0010000000000000) gfxDraw::pathByText("M10, 108h49l3, -3l-5, -5h-45l-5, 5z", x, y, 100, cbBorder, cbFill);
+  // clang-format on
 }
 
 
@@ -83,9 +85,54 @@ void drawDigits7(int n, uint16_t x, uint16_t y, gfxDraw::fSetPixel cbBorder, gfx
 
 
 // draw the test paths for outTest.bmp
-void drawTest1() {
+void assert(bool b, char *text) {
+  if (!b) {
+    printf("ALERT: %s\n", text);
+  }
+}
 
-  CBitmap *bmp2 = bmp;
+// draw the test paths for outTest.bmp
+void silentTests() {
+  uint16_t count;
+  printf("\nSilent Tests\n");
+
+  count = 0;
+  gfxDraw::drawLine(5, 5, 10, 5, [&](int16_t x, int16_t y) {
+    count++;
+    assert((y == 5), "draw false point");
+  });
+  assert((count <= 6), "draw too many points");
+  assert((count >= 6), "draw not enough points");
+
+  count = 0;
+  gfxDraw::drawLine(5, 5, 5, 10, [&](int16_t x, int16_t y) {
+    count++;
+    assert((x == 5), "draw false point");
+  });
+  assert((count <= 6), "draw too many points");
+  assert((count >= 6), "draw not enough points");
+
+  count = 0;
+  gfxDraw::drawLine(5, 5, 20, 10, [&](int16_t x, int16_t y) {
+    count++;
+  });
+  assert((count <= 16), "draw too many points");
+  assert((count >= 16), "draw not enough points");
+
+  count = 0;
+  gfxDraw::drawCubicBezier(10, 10, 11, 2, 25, 18, 26, 10, [&](int16_t x, int16_t y) {
+    count++;
+  });
+  assert((count <= 18), "draw too many points");
+  assert((count >= 18), "draw not enough points");
+
+  printf("\n");
+}
+
+
+// draw the test paths for outTest.bmp
+void drawTest1() {
+  printf("\nDraw Tests #1\n");
 
 #if 1
   printf("\nTest-01:\n");
@@ -122,20 +169,20 @@ void drawTest1() {
                          bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
   printf("\nTest-06: |> symbol\n");
-  gfxDraw::rect(63, 10, 10, 10, nullptr, bmpSet(gfxDraw::GRAY));
+  gfxDraw::drawRect(63, 10, 10, 10, bmpSet(gfxDraw::GRAY));
   gfxDraw::pathByText100("M1 1 l7,4 l-7 4 z",
                          63, 10,
                          bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
   printf("\nTest-07: <| symbol\n");
-  gfxDraw::rect(73, 10, 10, 10, nullptr, bmpSet(gfxDraw::SILVER));
+  gfxDraw::drawRect(73, 10, 10, 10, bmpSet(gfxDraw::SILVER));
   gfxDraw::pathByText100("M8 1 l-7,4 l7 4 z",
                          73, 10,
                          bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 #endif
 
   printf("\nTest-10: [[]] \n");
-  gfxDraw::rect(10, 22, 10, 10, nullptr, bmpSet(gfxDraw::SILVER));
+  gfxDraw::drawRect(10, 22, 10, 10, bmpSet(gfxDraw::SILVER));
   gfxDraw::pathByText100("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z",
                          10, 22,
                          bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
@@ -143,21 +190,21 @@ void drawTest1() {
 
 #if 1
   printf("\nTest-11: [*] \n");
-  gfxDraw::rect(20, 22, 10, 10, nullptr, bmpSet(gfxDraw::GRAY));
+  gfxDraw::drawRect(20, 22, 10, 10, bmpSet(gfxDraw::GRAY));
   gfxDraw::pathByText100("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z",
                          20, 22,
                          bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 #endif
 
 #if 1
-  gfxDraw::rect(10, 34, 27, 24, nullptr, bmpSet(gfxDraw::SILVER));
+  gfxDraw::drawRect(10, 34, 27, 24, bmpSet(gfxDraw::SILVER));
   gfxDraw::pathByText("M2 52 l60-50 v20 h20 l-30 50z", 10, 34, 30,
                       bmpSet(gfxDraw::BLUE),
-                      [bmp2](int16_t x, int16_t y) {
+                      [](int16_t x, int16_t y) {
                         gfxDraw::RGBA col = gfxDraw::RGBA(0xC0, 0x0, 0, 0xFF);
                         col.Green += (7 * x);
                         col.Blue += (7 * y);
-                        bmp2->setPixel(x, y, col);
+                        bmp->setPixel(x, y, col);
                       });
 #endif
 
@@ -168,7 +215,7 @@ void drawTest1() {
   // rect2->setFillGradient(gfxDraw::YELLOW, 0, 2, gfxDraw::BLUE, 0, 22);
   // rect2->draw(4, 240, bmpDraw());
 
-  gfxDraw::rect(40, 34, 43, 25, nullptr, bmpSet(gfxDraw::SILVER));
+  gfxDraw::drawRect(40, 34, 43, 25, bmpSet(gfxDraw::SILVER));
   gfxDraw::pathByText(
     "M2 42 l20-33 l20 38 l20 -38 l20 33 l0 -40 l-70 0 z",
     40, 34, 50,
@@ -185,7 +232,27 @@ void drawTest1() {
 }
 
 void drawP() {
-  CBitmap *bmp2 = bmp;
+
+  gfxDraw::drawRect(100, 10, 49, 49, bmpSet(gfxDraw::RED));
+  gfxDraw::pathByText(
+    "M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z"
+    "M16 12c5 0 5 7 0 7 c-5 0-5-7 0-7Z"
+    "M32 12c5 0 5 7 0 7 c-5 0-5-7 0-7Z"
+    "M38 32c0 1-1 2-2 3 c-6 5-12 6-19 3 c-2-2-5-3-5-6 c1-2 3 0 4 1 c4 3 9 5 15 2 c3-2 3-2 5-4 c1-1 2-1 2 1Z",
+    100, 10, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  gfxDraw::drawCubicBezier(5, 10,
+                           10, -5,
+                           20, 25,
+                           26, 10,
+                           bmpSet(gfxDraw::RED));
+
+  std::vector<gfxDraw::Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z");
+  gfxDraw::scaleSegments(segs, 200);  // scale by 200%
+  gfxDraw::fillSegments(segs, 0, 20, 
+                        bmpSet(gfxDraw::BLACK),
+                        bmpSet(gfxDraw::WHITE));  // hard-coded fill color here.
+
 
   // gfxDraw::rect(4, 200, 47, 31, nullptr, bmpSet(gfxDraw::SILVER));
   // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
@@ -201,7 +268,7 @@ void drawP() {
 
 #if 0
 
-  // gfxDraw::cubicBezier(80, 200, 80, 240, 150, 240, 150, 200, bmpSet(gfxDraw::BLACK));
+  // gfxDraw::drawCubicBezier(80, 200, 80, 240, 150, 240, 150, 200, bmpSet(gfxDraw::BLACK));
 
   // da->rect(180, 200, 84, 74, nullptr, bmpSet(gfxDraw::SILVER), 2);
   // gfxDraw::pathByText("M80 200 C 80,240 150,240 150,200 z", 0,0, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::YELLOW));
@@ -218,7 +285,6 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 
   float rad1 = (M_PI * 2 / 60);
   int16_t x0, y0, x1, y1;
-  CBitmap *bmp2 = bmp;
 
   // uint32_t color;
 
@@ -228,8 +294,8 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 
   da->drawCircle(
     _cx, _cy, _radius,
-    [bmp2](int16_t x, int16_t y) {
-      bmp2->setPixel(x, y, gfxDraw::BLACK);
+    [bmp](int16_t x, int16_t y) {
+      bmp->setPixel(x, y, gfxDraw::BLACK);
     });
 
 
@@ -266,11 +332,7 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 //   bm->setPixel(x, y, gfxDraw::BLACK);
 // }
 
-// const lambda[](int32_t x, int32_t y)->void &fBlack(CBitmap *bmp2);
-
 int main() {
-  CBitmap *bmp2 = bmp;
-
   if (sizeof(gfxDraw::RGBA) != 4) {
     // cout << "size(Segment):" << sizeof(gfxDraw::Segment) << endl;
     cout << "error: size(RGBA) is not 4!" << endl;
@@ -281,7 +343,9 @@ int main() {
     cout << "error: size(Segment) is not 14!" << endl;
   }
 
-  bmp2 = bmp = new CBitmap("startTest.bmp");
+  silentTests();
+
+  bmp = new CBitmap("startTest.bmp");
 
   cout << "w:" << bmp->GetWidth() << endl;
   cout << "h:" << bmp->GetHeight() << endl;
@@ -290,13 +354,9 @@ int main() {
   bmp->Save("test.bmp");
 
 
-  bmp2 = bmp = new CBitmap("start.bmp");
+  bmp = new CBitmap("start.bmp");
 
   if (1) {
-
-    gfxDraw::line(12 + 0, 20, 51 + 0, 59, bmpSet(gfxDraw::BLACK));
-
-    gfxDraw::line(20 + 0, 20, 59 + 0, 59, bmpSet(gfxDraw::BLUE));
 
     // gfxDraw::rect(10, 50, 12, 8, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::CYAN), 2);
     // gfxDraw::rect(10, 60, 12, 8, nullptr, bmpSet(gfxDraw::CYAN), 2);
@@ -310,21 +370,6 @@ int main() {
 
     // gfxDraw::rect(54, 70, 10, 8, nullptr, bmpSet(gfxDraw::RED), 2);
     // gfxDraw::rect(54, 77, 10, -8, nullptr, bmpSet(gfxDraw::BLACK), 2);
-
-    // H Lines
-    gfxDraw::line(10, 90, 40, 90, bmpSet(gfxDraw::GREEN));
-    gfxDraw::line(40, 94, 10, 94, bmpSet(gfxDraw::GREEN));
-
-    // V Lines
-    gfxDraw::line(10, 120, 10, 100, bmpSet(gfxDraw::GREEN));
-    gfxDraw::line(15, 120, 15, 100, bmpSet(gfxDraw::GREEN));
-
-    // slope Lines
-    gfxDraw::line(20, 100, 36, 120, bmpSet(gfxDraw::BLACK));
-    gfxDraw::line(36, 120, 20, 100, bmpSet(gfxDraw::GREEN));
-
-    gfxDraw::line(56, 100, 40, 120, bmpSet(gfxDraw::BLACK));
-    gfxDraw::line(40, 120, 56, 100, bmpSet(gfxDraw::GREEN));
   }
 
   // drawClock(120, 205, 80);
@@ -349,9 +394,3 @@ int main() {
 
   bmp->Save("out.bmp");
 }
-
-// const lambda[](int32_t x, int32_t y)->void &fBlack(CBitmap *bmp2) {
-//   return [bmp2](int32_t x, int32_t y) {
-//     bmp2->setPixel(x, y, gfxDraw::BLACK);
-//   };
-// }

@@ -30,8 +30,9 @@
 #include <algorithm>
 
 #include <cctype>
-#include <cstring>
-#include <cmath>
+// #include <cmath>
+
+#include "gfxDrawColors.h"
 
 // scaling: factors are in unit 100 (percent)
 
@@ -39,29 +40,6 @@
 
 namespace gfxDraw {
 
-
-
-#pragma pack(push, 1)
-/// @brief The RGBA class is used to define the color and opacity of a single abstract pixel.
-class RGBA {
-public:
-  RGBA() = default;
-  RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
-  RGBA(uint32_t col24);
-
-  uint8_t Red;
-  uint8_t Green;
-  uint8_t Blue;
-  uint8_t Alpha;
-
-  constexpr bool operator==(const RGBA &col2);
-  constexpr bool operator!=(const RGBA &col2);
-
-  /// @brief Convert into a 3*8 bit value using #rrggbb.
-  /// @return color value.
-  uint32_t toColor24();
-};
-#pragma pack(pop)
 
 /// @brief Callback function definition to address a pixel on a display
 typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
@@ -97,81 +75,7 @@ public:
 };
 
 
-#define POINT_BREAK_Y INT16_MAX
-// #define POINT_END_X INT16_MAX-1
-
-/// @brief The Point holds a pixel position and provides some useful static methods.
-class Point {
-public:
-  Point(int16_t _x, int16_t _y)
-    : x(_x), y(_y){};
-
-  /// @brief X coordinate of the Point
-  int16_t x;
-
-  /// @brief Y coordinate of the Point
-  int16_t y;
-
-  /// @brief compare function for std::sort to sort points by (y) and ascending (x)
-  /// @param p1 first point
-  /// @param p2 second point
-  /// @return when p1 is lower than p2
-  static bool compare(const Point &p1, const Point &p2) {
-    if (p1.y != p2.y)
-      return (p1.y < p2.y);
-    return (p1.x < p2.x);
-  };
-
-  constexpr bool operator==(const Point &p2) {
-    return ((x == p2.x) && (y == p2.y));
-  };
-};
-
-/// @brief The _Edge holds a horizontal pixel sequence for path boundaries and provides some useful static methods.
-class _Edge : public Point {
-public:
-  _Edge(int16_t _x, int16_t _y)
-    : Point(_x, _y), len(1){};
-
-  uint16_t len;
-
-  /// @brief compare function for std::sort to sort points by (y) and ascending (x)
-  /// @param p1 first Edge-point
-  /// @param p2 second Edge-point
-  /// @return when p1 is lower than p2
-  static bool compare(const _Edge &p1, const _Edge &p2) {
-    if (p1.y != p2.y)
-      return (p1.y < p2.y);
-    if (p1.x != p2.x)
-      return (p1.x < p2.x);
-    return (p1.len < p2.len);
-  };
-
-  bool expand(_Edge &p2) {
-    if (y == p2.y) {
-      if (x > p2.x + p2.len) {
-        // no
-        return (false);
-      } else if (x + len < p2.x) {
-        // no
-        return (false);
-
-      } else {
-        // overlapping or joining edges
-        int16_t left = (x < p2.x ? x : p2.x);
-        int16_t right = (x + len > p2.x + p2.len ? x + len : p2.x + p2.len);
-        x = left;
-        len = right - left;
-        return (true);
-      }
-    }
-    return (false);
-  };
-};
-
-
 /// ===== Basic draw functions with callback =====
-
 
 /// @brief Draw a line using the most efficient algorithm
 /// @param x0 Starting Point X coordinate.
@@ -180,17 +84,50 @@ public:
 /// @param y1 Ending Point Y coordinate.
 /// @param cbDraw Callback with coordinates of line pixels.
 /// @param w Width of line.
-void line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
+void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
 
+/// @brief Draw the border line of a rectangle. 
+void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
 
-/// @brief Draw a rectangle with border and fill color
-void rect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel fBorder, fSetPixel fFill = nullptr);
-
-
-// bezier
-void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw);
+/// @brief Draw a bezier curve.
+void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw);
 
 // arc
+// void drawArc(..., fSetPixel cbDraw);
+
+/// @brief Draw the border line of a path.
+void drawPath(const char *pathText, fSetPixel cbDraw);
+
+
+// ===== create and manipulate segments
+
+/// @brief Scan a path using the svg/path/d syntax to create a vector(array) of Segments.
+/// @param pathText path definition as String
+/// @return Vector with Segments.
+/// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
+std::vector<Segment> parsePath(const char *pathText);
+
+/// @brief Make a identical copy of the given segment vector.
+/// @param segments 
+void copySegments(std::vector<Segment> &segments);
+
+/// @brief scale all points by the factor f100 / 100.
+/// @param segments Segment vector to be changed
+/// @param f100 scaling factor
+void scaleSegments(std::vector<Segment> &segments, int16_t f100);
+
+/// @brief rotate all points by the given angle.
+/// @param segments Segment vector to be changed
+/// @param angle angle 0...360
+void rotateSegments(std::vector<Segment> &segments, int16_t angle);
+
+/// @brief move all points by the given offset in x and y.
+/// @param segments Segment vector to be changed
+/// @param dx X-Offset
+/// @param dy Y-Offset
+void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy);
+
+
 
 /// @brief Draw a path without filling.
 /// @param segments Vector of the segments of the path.
@@ -201,16 +138,8 @@ void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDr
 
 
 /// @brief Draw a path with filling.
-void fillPath(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
+void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
 
-void scale(std::vector<Segment> &segments, int16_t f);
-
-
-/// @brief Scan a path using the svg/path/d syntax to create a vector(array) of Segments.
-/// @param pathText path definition as String
-/// @return Vector with Segments.
-/// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
-std::vector<Segment> parsePath(const char *pathText);
 
 
 /// @brief draw a path using a border and optional fill drawing function.
@@ -293,7 +222,7 @@ public:
 
   void scale(int16_t scale100) {
     if (scale100 != 100)
-      gfxDraw::scale(_segments, scale100);
+      gfxDraw::scaleSegments(_segments, scale100);
   };
 
   void setFillGradient(gfxDraw::RGBA fill1, int16_t x1, int16_t y1, gfxDraw::RGBA fill2, int16_t x2, int16_t y2) {
@@ -435,7 +364,7 @@ public:
            });
 
     } else if ((_stroke.Alpha > 0)) {
-      fillPath(
+      fillSegments(
         _segments, 0, 0,
         [&](int16_t x, int16_t y) {
           cbDraw(x + _xOffset, y + _yOffset, _stroke);
@@ -446,7 +375,7 @@ public:
 
 
     } else if (_stroke.Alpha == 0) {
-      fillPath(
+      fillSegments(
         _segments, 0, 0,
         nullptr,
         [&](int16_t x, int16_t y) {
@@ -487,9 +416,6 @@ private:
   // distance of the 2 gradient points.
   int32_t d1000;
 };
-
-// /// @brief The DrawAlgo provides all functions to draw visual elements on a pixel based canvas.
-// class DrawAlgo {
 
 // public:
 

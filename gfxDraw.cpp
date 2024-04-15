@@ -1,6 +1,7 @@
 // gfxDraw.cpp
 
 #include "gfxDraw.h"
+#include "gfxDrawColors.h"
 
 
 #define TRACE(...) printf(__VA_ARGS__)
@@ -13,31 +14,83 @@
 
 namespace gfxDraw {
 
-// ===== RGBA class members =====
-RGBA::RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-  : Red(r), Green(g), Blue(b), Alpha(a){};
+// ===== internal class definitions =====
 
-RGBA::RGBA(uint32_t col24) {
-  Red = (col24 >> 16) & 0xFF;
-  Green = (col24 >> 8) & 0xFF;
-  Blue = col24 & 0xFF;
-  Alpha = 0xFF;
+/// @brief The Point holds a pixel position and provides some useful static methods.
+class Point {
+public:
+  Point(int16_t _x, int16_t _y)
+    : x(_x), y(_y){};
+
+  /// @brief X coordinate of the Point
+  int16_t x;
+
+  /// @brief Y coordinate of the Point
+  int16_t y;
+
+  /// @brief compare function for std::sort to sort points by (y) and ascending (x)
+  /// @param p1 first point
+  /// @param p2 second point
+  /// @return when p1 is lower than p2
+  static bool compare(const Point &p1, const Point &p2) {
+    if (p1.y != p2.y)
+      return (p1.y < p2.y);
+    return (p1.x < p2.x);
+  };
+
+  constexpr bool operator==(const Point &p2) {
+    return ((x == p2.x) && (y == p2.y));
+  };
 };
 
-constexpr bool RGBA::operator==(const RGBA &col2) {
-  return ((Red == col2.Red) && (Green == col2.Green) && (Blue == col2.Blue) && (Alpha == col2.Alpha));
-}
 
-constexpr bool RGBA::operator!=(const RGBA &col2) {
-  return ((Red != col2.Red) || (Green != col2.Green) || (Blue != col2.Blue) || (Alpha != col2.Alpha));
-}
+/// @brief The _Edge class holds a horizontal pixel sequence for path boundaries and provides some useful static methods.
+class _Edge : public Point {
+public:
+  _Edge(int16_t _x, int16_t _y)
+    : Point(_x, _y), len(1){};
 
-/// @brief Convert into a 3*8 bit value using #RRGGBB.
-/// @return color value.
-uint32_t RGBA::toColor24() {
-  return ((Red << 16) | (Green << 8) | Blue);
-}
+  uint16_t len;
 
+  /// @brief compare function for std::sort to sort points by (y) and ascending (x)
+  /// @param p1 first Edge-point
+  /// @param p2 second Edge-point
+  /// @return when p1 is lower than p2
+  static bool compare(const _Edge &p1, const _Edge &p2) {
+    if (p1.y != p2.y)
+      return (p1.y < p2.y);
+    if (p1.x != p2.x)
+      return (p1.x < p2.x);
+    return (p1.len < p2.len);
+  };
+
+  bool expand(_Edge &p2) {
+    if (y == p2.y) {
+      if (x > p2.x + p2.len) {
+        // no
+        return (false);
+      } else if (x + len < p2.x) {
+        // no
+        return (false);
+
+      } else {
+        // overlapping or joining edges
+        int16_t left = (x < p2.x ? x : p2.x);
+        int16_t right = (x + len > p2.x + p2.len ? x + len : p2.x + p2.len);
+        x = left;
+        len = right - left;
+        return (true);
+      }
+    }
+    return (false);
+  };
+};
+
+
+#define POINT_BREAK_Y INT16_MAX
+
+
+// ===== Segments implementation =====
 
 Segment::Segment(Type _type, int16_t p1, int16_t p2) {
   type = _type;
@@ -72,7 +125,7 @@ void dumpEdges(std::vector<_Edge> &edges) {
   TRACE("\n");
 }
 
-// ===== gfxDraw namespace functions =====
+// ===== gfxDraw helper functions =====
 
 void dumpColor(char *name, RGBA col) {
   printf(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
@@ -89,39 +142,97 @@ void dumpColorTable() {
 }
 
 
-/// @brief Draw a 1px line using the Bresenham's Line Generation Algorithm.
-/// This function is used for returning all pixels defining the line.
-/// This is a private function (not mentioned in the header) in the gfxDraw namespace.
-void _line1(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
+
+// ===== Basic drawing algorithm implementations =====
+
+/// @brief Draw a line using the most efficient algorithm
+/// @param x0 Starting Point X coordinate.
+/// @param y0 Starting Point Y coordinate.
+/// @param x1 Ending Point X coordinate.
+/// @param y1 Ending Point Y coordinate.
+/// @param cbDraw Callback with coordinates of line pixels.
+void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
+  // TRACE("Draw Line %d/%d %d/%d\n", x0, y0, x1, y1);
+
   int16_t dx = abs(x1 - x0);
   int16_t dy = abs(y1 - y0);
   int16_t sx = (x0 < x1) ? 1 : -1;
   int16_t sy = (y0 < y1) ? 1 : -1;
-  int16_t err = dx - dy;
 
-  while (true) {
-    cbDraw(x0, y0);
-    if ((x0 == x1) && (y0 == y1)) break;
-
-    int16_t err2 = err << 1;
-
-    if (err2 > -dy) {
-      err -= dy;
-      x0 += sx;
+  if (x0 == x1) {
+    // fast draw vertical lines
+    int16_t endY = y1 + sy;
+    for (int16_t y = y0; y != endY; y += sy) {
+      cbDraw(x0, y);
     }
-    if (err2 < dx) {
-      err += dx;
-      y0 += sy;
+
+  } else if (y0 == y1) {
+    // fast draw horizontal lines
+    int16_t endX = x1 + sx;
+    for (int16_t x = x0; x != endX; x += sx) {
+      cbDraw(x, y0);
+    }
+
+  } else {
+    int16_t err = dx - dy;
+
+    while (true) {
+      cbDraw(x0, y0);
+      if ((x0 == x1) && (y0 == y1)) break;
+
+      int16_t err2 = err << 1;
+
+      if (err2 > -dy) {
+        err -= dy;
+        x0 += sx;
+      }
+      if (err2 < dx) {
+        err += dx;
+        y0 += sy;
+      }
     }
   }
 };
+
+
+/// @brief Draw a rectangle with border and fill callbacks
+/// @param x0 Starting Point X coordinate.
+/// @param y0 Starting Point Y coordinate.
+/// @param w width of the rect in pixels
+/// @param h height of the rect in pixels
+/// @param cbDraw Callback with coordinates of rect pixels.
+void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
+  if ((w != 0) && (h != 0)) {
+
+    // ensure w > 0
+    if (w < 0) {
+      w = -w;
+      x0 = x0 - w + 1;
+    }
+
+    // ensure h > 0
+    if (h < 0) {
+      h = -h;
+      y0 = y0 - h + 1;
+    }
+
+    int16_t endX = x0 + w - 1;
+    int16_t endY = y0 + h - 1;
+
+    // draw lines on the border clockwise
+    for (int16_t x = x0; x <= endX; x++) cbDraw(x, y0);
+    for (int16_t y = y0; y <= endY; y++) cbDraw(endX, y);
+    for (int16_t x = endX; x >= x0; x--) cbDraw(x, endY);
+    for (int16_t y = endY; y >= y0; y--) cbDraw(x0, y);
+  }
+}  // rect()
 
 // Draw a path (no fill).
 
 /// @brief Scale the points of a path by factor
 /// @param segments
 /// @param f100
-void scale(std::vector<Segment> &segments, int16_t f100) {
+void scaleSegments(std::vector<Segment> &segments, int16_t f100) {
   if (f100 != 100) {
     for (Segment &pSeg : segments) {
       switch (pSeg.type) {
@@ -154,8 +265,8 @@ void scale(std::vector<Segment> &segments, int16_t f100) {
 // void simplify(int16_t dx, int16_t dy, fSetPixel cbDraw);
 
 // Draw a path (no fill).
-void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw) {
-  TRACE("path()\n");
+void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw) {
+  TRACE("drawSegments()\n");
   int16_t startPosX = 0;
   int16_t startPosY = 0;
   int16_t posX = 0;
@@ -174,13 +285,13 @@ void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDr
         case Segment::Type::Line:
           endPosX = pSeg.x1;
           endPosY = pSeg.y1;
-          gfxDraw::line(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
+          gfxDraw::drawLine(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
           break;
 
         case Segment::Type::Curve:
           endPosX = pSeg.p[4];
           endPosY = pSeg.p[5];
-          gfxDraw::cubicBezier(
+          gfxDraw::drawCubicBezier(
             dx + posX, dy + posY,
             dx + pSeg.p[0], dy + pSeg.p[1],
             dx + pSeg.p[2], dy + pSeg.p[3],
@@ -191,7 +302,7 @@ void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDr
           endPosX = startPosX;
           endPosY = startPosY;
           if ((posX != endPosX) || (posY != endPosY)) {
-            gfxDraw::line(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
+            gfxDraw::drawLine(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
           }
           cbDraw(0, POINT_BREAK_Y);
           break;
@@ -206,7 +317,7 @@ void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDr
     }  // for
     cbDraw(0, POINT_BREAK_Y);
   }
-}  // _path()
+}  // drawSegments()
 
 
 // find local extreme sequences and mark them with a double-edge
@@ -280,8 +391,8 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
 
 
 /// @brief Draw a path with filling.
-void fillPath(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
-  TRACE("fillPath()\n");
+void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
+  TRACE("fillSegments()\n");
   std::vector<_Edge> edges;
   _Edge *lastEdge = nullptr;
 
@@ -289,7 +400,7 @@ void fillPath(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel 
   fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
 
   // create the path and collect edges
-  path(segments, dx, dy,
+  drawSegments(segments, dx, dy,
        [&](int16_t x, int16_t y) {
          //  TRACE("    P(%d/%d)\n", x, y);
          if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
@@ -381,7 +492,7 @@ void fillPath(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel 
     // if (p.x + p.len > x)
     x = p.x + p.len;
   }
-};
+}; // fillSegments()
 
 
 /// @brief draw a path using a border and optional fill drawing function.
@@ -394,12 +505,12 @@ void fillPath(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel 
 void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fSetPixel cbBorder, fSetPixel cbFill) {
   std::vector<Segment> vSeg = parsePath(pathText);
   if (scale100 != 100)
-    gfxDraw::scale(vSeg, scale100);
+    gfxDraw::scaleSegments(vSeg, scale100);
 
   if (cbFill) {
-    fillPath(vSeg, x, y, cbBorder, cbFill);
+    fillSegments(vSeg, x, y, cbBorder, cbFill);
   } else {
-    path(vSeg, x, y, cbBorder);
+    drawSegments(vSeg, x, y, cbBorder);
   }
 }
 
@@ -414,96 +525,13 @@ void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorde
   pathByText(pathText, x, y, 100, cbBorder, cbFill);
 }
 
-/// @brief Draw a line using the most efficient algorithm
-/// @param x0 Starting Point X coordinate.
-/// @param y0 Starting Point Y coordinate.
-/// @param x1 Ending Point X coordinate.
-/// @param y1 Ending Point Y coordinate.
-/// @param cbDraw Callback with coordinates of line pixels.
-void line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
-  // TRACE("Draw Line %d/%d %d/%d\n", x0, y0, x1, y1);
-
-  int16_t dx = x1 - x0;
-  int16_t dy = y1 - y0;
-
-  // // ensure x0 <= x1
-  // if (dx < 0) {  // swap line endings
-  //   int16_t t;
-  //   t = x0;
-  //   x0 = x1;
-  //   x1 = t;
-  //   t = y0;
-  //   y0 = y1;
-  //   y1 = t;
-  //   dx = x1 - x0;
-  //   dy = y1 - y0;
-  // }
-
-  if (x0 == x1) {
-    // fast draw vertical lines
-    // TRACE("Draw-vertical\n");
-    int16_t sy = (y1 > y0 ? 1 : -1);
-    int16_t endY = y1 + sy;
-    for (int16_t y = y0; y != endY; y += sy) {
-      // TRACE(".Set %d/%d\n", x, y);
-      cbDraw(x0, y);
-    }
-
-  } else if (y0 == y1) {
-    // fast draw horizontal lines
-    // TRACE("Draw-horizontal\n");
-    int16_t sx = (x1 > x0 ? 1 : -1);
-    int16_t endX = x1 + sx;
-    for (int16_t x = x0; x != endX; x += sx) {
-      cbDraw(x, y0);
-    }
-
-  } else {
-    // any other direction
-    gfxDraw::_line1(x0, y0, x1, y1, cbDraw);
-  }
-};
-
-
-/// @brief Draw a rectangle with border and fill callbacks
-void rect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder, fSetPixel cbFill) {
-  if ((w != 0) && (h != 0)) {
-    int16_t borderWidth = (cbFill ? 1 : 0);
-    fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
-
-    // ensure w > 0
-    if (w < 0) {
-      w = -w;
-      x0 = x0 - w + 1;
-    }
-
-    // ensure h > 0
-    if (h < 0) {
-      h = -h;
-      y0 = y0 - h + 1;
-    }
-
-    int16_t endX = x0 + w - 1;
-    int16_t endY = y0 + h - 1;
-
-    // inside rect with background coloring
-    if ((cbFill) && (h > 2) && (w > 2)) {
-      int16_t endX = x0 + w - 1;
-      int16_t endY = y0 + h - 1;
-      for (int16_t y = y0 + 1; y < endY; y++)
-        for (int16_t x = x0 + 1; x < endX; x++)
-          cbFill(x, y);
-    }
-
-    // draw lines on the border clockwise
-    if (cbStroke) {
-      for (int16_t x = x0; x <= endX; x++) cbStroke(x, y0);
-      for (int16_t y = y0; y <= endY; y++) cbStroke(endX, y);
-      for (int16_t x = endX; x >= x0; x--) cbStroke(x, endY);
-      for (int16_t y = endY; y >= y0; y--) cbStroke(x0, y);
-    }
-  }
-}  // rect()
+/// @brief draw the a path.
+/// @param path The path definition using SVG path syntax.
+/// @param cbDraw Draw function for border pixels. cbFill is used when cbBorder is null.
+void drawPath(const char *pathText, fSetPixel cbDraw) {
+  std::vector<Segment> vSeg = parsePath(pathText);
+  drawSegments(vSeg, 0, 0, cbDraw);
+}
 
 
 // This implementation of cubic bezier curve with a start and an end point given and by using 2 control points.
@@ -511,8 +539,8 @@ void rect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder, fSet
 // good article for reading: <https://pomax.github.io/bezierinfo/>
 // Here the Casteljau's algorithm approach is used.
 
-void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
-  TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
+void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
+  // TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
   std::vector<Point> borderPoints;
   // Line 1 is x0/y0 to x1/y1, dx1/dy1 is the relative vector from x0/y0 to x1/y1
   int16_t dx1 = (x1 - x0);
@@ -528,7 +556,7 @@ void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int
 
   // heuristic: calc the steps we need
   uint16_t steps = abs(dx1) + abs(dy1) + abs(dx2) + abs(dy2) + abs(dx3) + abs(dy3);  // p0 - 1 - 2 - 3 - 4 - p3
-  TRACE("steps:%d\n", steps);
+  // TRACE("steps:%d\n", steps);
 
   uint16_t skipped = 0;
 
@@ -575,7 +603,7 @@ void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int
       skipped++;
     }
   }
-  TRACE("skipped:%d\n", skipped);
+  // TRACE("skipped:%d\n", skipped);
 
 
 
@@ -584,7 +612,7 @@ void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int
   // remove middle point in corner steps.
 
   size_t pSize = borderPoints.size();
-  TRACE("  pSize=%d\n", pSize);
+  // TRACE("  pSize=%d\n", pSize);
   skipped = 0;
 
   for (int n = 0; n < borderPoints.size() - 2; n++) {
@@ -605,7 +633,7 @@ void cubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int
       skipped++;
     };
   }
-  TRACE("removed:%d\n", skipped);
+  // TRACE("removed:%d\n", skipped);
 
   for (Point &p : borderPoints) { cbDraw(p.x, p.y); }
 };
@@ -827,10 +855,6 @@ std::vector<Segment> parsePath(const char *pathText) {
 
   return (vSeg);
 }
-
-
-// ===== DrawAlgo public class members =====
-
 
 
 
