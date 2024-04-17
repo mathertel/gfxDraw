@@ -1,8 +1,9 @@
 # .gitignore for Arduino gfxDraw library 
 
-_*.*
-.fake
-*.obj
-*.exe
-*.pdb
+obj/*
 *.ilk
+*.pdb
+*.exe
+
+_*.*
+\!*.*

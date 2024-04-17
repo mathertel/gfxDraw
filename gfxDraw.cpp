@@ -1,5 +1,8 @@
 // gfxDraw.cpp
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "gfxDraw.h"
 #include "gfxDrawColors.h"
 
@@ -227,7 +230,43 @@ void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
   }
 }  // rect()
 
+
+/// @brief Draw a solidrectangle with border and fill callbacks
+/// @param x0 Starting Point X coordinate.
+/// @param y0 Starting Point Y coordinate.
+/// @param w width of the rect in pixels
+/// @param h height of the rect in pixels
+/// @param cbDraw Callback with coordinates of rect pixels.
+void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
+  if ((w != 0) && (h != 0)) {
+
+    // ensure w > 0
+    if (w < 0) {
+      w = -w;
+      x0 = x0 - w + 1;
+    }
+
+    // ensure h > 0
+    if (h < 0) {
+      h = -h;
+      y0 = y0 - h + 1;
+    }
+
+    int16_t endX = x0 + w - 1;
+    int16_t endY = y0 + h - 1;
+
+    // draw all pixels in the rect.
+    for (int16_t y = y0; y <= endY; y++) {
+      for (int16_t x = x0; x <= endX; x++) {
+        cbDraw(x, y);
+      }
+    }
+  }
+}  // rect()
+
+
 // Draw a path (no fill).
+
 
 /// @brief Scale the points of a path by factor
 /// @param segments
@@ -262,7 +301,92 @@ void scaleSegments(std::vector<Segment> &segments, int16_t f100) {
   }
 }
 
-// void simplify(int16_t dx, int16_t dy, fSetPixel cbDraw);
+
+/// @brief move all points by the given offset in x and y.
+/// @param segments Segment vector to be changed
+/// @param dx X-Offset
+/// @param dy Y-Offset
+void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy) {
+  if ((dx != 0) || (dy != 0)) {
+    for (Segment &pSeg : segments) {
+      switch (pSeg.type) {
+        case Segment::Type::Move:
+        case Segment::Type::Line:
+          pSeg.p[0] += dx;
+          pSeg.p[1] += dy;
+          break;
+
+        case Segment::Type::Curve:
+          pSeg.p[0] += dx;
+          pSeg.p[1] += dy;
+          pSeg.p[2] += dx;
+          pSeg.p[3] += dy;
+          pSeg.p[4] += dx;
+          pSeg.p[5] += dy;
+          break;
+
+        case Segment::Type::Close:
+          break;
+
+        default:
+          printf("unknown segment-%04x\n", pSeg.type);
+          break;
+      }
+    }  // for
+  }
+};
+
+
+void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
+  if (angle != 0) {
+
+    double radians = (angle * M_PI) / 180;
+
+    int32_t sinFactor1000 = floor(sin(radians) * 1000);
+    int32_t cosFactor1000 = floor(cos(radians) * 1000);
+    int32_t x, y;
+
+    for (Segment &pSeg : segments) {
+      switch (pSeg.type) {
+        case Segment::Type::Move:
+        case Segment::Type::Line:
+          x = cosFactor1000 * pSeg.p[0] - sinFactor1000 * pSeg.p[1];
+          y = sinFactor1000 * pSeg.p[0] + cosFactor1000 * pSeg.p[1];
+          pSeg.p[0] = (x / 1000); // (x + 500) / 1000;
+          pSeg.p[1] = (y / 1000); // (y + 500) / 1000;
+          break;
+
+        case Segment::Type::Curve:
+          x = cosFactor1000 * pSeg.p[0] - sinFactor1000 * pSeg.p[1];
+          y = sinFactor1000 * pSeg.p[0] + cosFactor1000 * pSeg.p[1];
+          pSeg.p[0] = (x / 1000); // (x + 500) / 1000;
+          pSeg.p[1] = (y / 1000); // (y + 500) / 1000;
+
+          x = cosFactor1000 * pSeg.p[2] - sinFactor1000 * pSeg.p[3];
+          y = sinFactor1000 * pSeg.p[2] + cosFactor1000 * pSeg.p[3];
+          pSeg.p[2] = (x / 1000); // (x + 500) / 1000;
+          pSeg.p[3] = (y / 1000); // (y + 500) / 1000;
+
+          x = cosFactor1000 * pSeg.p[4] - sinFactor1000 * pSeg.p[5];
+          y = sinFactor1000 * pSeg.p[4] + cosFactor1000 * pSeg.p[5];
+          pSeg.p[4] = (x / 1000); // (x + 500) / 1000;
+          pSeg.p[5] = (y / 1000); // (y + 500) / 1000;
+
+          break;
+
+        case Segment::Type::Close:
+          break;
+
+        default:
+          printf("unknown segment-%04x\n", pSeg.type);
+          break;
+      }
+    }  // for
+  }
+};
+
+
+// =====
 
 // Draw a path (no fill).
 void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw) {
@@ -391,6 +515,11 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
 
 
 /// @brief Draw a path with filling.
+void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel cbFill) {
+  fillSegments(segments, 0, 0, cbBorder, cbFill);
+}
+
+/// @brief Draw a path with filling.
 void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
   TRACE("fillSegments()\n");
   std::vector<_Edge> edges;
@@ -401,16 +530,16 @@ void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
 
   // create the path and collect edges
   drawSegments(segments, dx, dy,
-       [&](int16_t x, int16_t y) {
-         //  TRACE("    P(%d/%d)\n", x, y);
-         if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
-           // fine
-         } else {
-           // first in sequence on on new line.
-           edges.push_back(_Edge(x, y));
-           lastEdge = &edges.back();
-         }
-       });
+               [&](int16_t x, int16_t y) {
+                 //  TRACE("    P(%d/%d)\n", x, y);
+                 if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
+                   // fine
+                 } else {
+                   // first in sequence on on new line.
+                   edges.push_back(_Edge(x, y));
+                   lastEdge = &edges.back();
+                 }
+               });
   dumpEdges(edges);
 
   // sub-paths are separated by (0/POINT_BREAK_Y) points;
@@ -492,7 +621,7 @@ void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
     // if (p.x + p.len > x)
     x = p.x + p.len;
   }
-}; // fillSegments()
+};  // fillSegments()
 
 
 /// @brief draw a path using a border and optional fill drawing function.
@@ -855,7 +984,6 @@ std::vector<Segment> parsePath(const char *pathText) {
 
   return (vSeg);
 }
-
 
 
 

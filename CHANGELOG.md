@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-04-17
+
+* using [PNG encoder and decoder in C and C++](https://github.com/lvandeve/lodepng)
+  for creating and saving test images.
+* moveSegments, rotateSegments implemented.
+
+
 ## 2024-04-15
 
 * Documentation added.

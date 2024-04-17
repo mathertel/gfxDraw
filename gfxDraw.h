@@ -88,6 +88,7 @@ void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
 
 /// @brief Draw the border line of a rectangle. 
 void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
+void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
 
 /// @brief Draw a bezier curve.
 void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw);
@@ -136,9 +137,11 @@ void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy);
 /// @param cbDraw Callback with coordinates of line pixels.
 void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw);
 
+#define drawSegments path
 
 /// @brief Draw a path with filling.
 void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
+void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
 
 
 
