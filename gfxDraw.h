@@ -30,7 +30,6 @@
 #include <algorithm>
 
 #include <cctype>
-// #include <cmath>
 
 #include "gfxDrawColors.h"
 
@@ -48,6 +47,8 @@ typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
 /// @brief Callback function definition to address a pixel on a display
 typedef std::function<void(int16_t x, int16_t y, RGBA color)> fDrawPixel;
 
+/// @brief Callback function to transform all points in the segments
+typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
 
 /// @brief The Segment struct holds all information about a segment of a path.
 class Segment {
@@ -129,15 +130,17 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle);
 void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy);
 
 
+/// @brief Transform all points in the segments
+void transformSegments(std::vector<Segment> &segments, fTransform cbTransform);
+
 
 /// @brief Draw a path without filling.
 /// @param segments Vector of the segments of the path.
 /// @param dx Position X coordinate for the path.
 /// @param dy Position Y coordinate for the path.
 /// @param cbDraw Callback with coordinates of line pixels.
-void path(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw);
-
-#define drawSegments path
+void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw);
+void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw);
 
 /// @brief Draw a path with filling.
 void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
@@ -165,292 +168,7 @@ void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorde
 
 }  // gfxDraw:: namespace
 
-#include "gfxDrawColors.h"
 
-
-/// @brief A gfxDrawObject is used to define a stroke path and coloring of a graphical object.
-/// It supports creating paths by simple functions like lines and rectangles or by using the svg path notation (not fully supported)
-/// The stroke color can be set.
-/// The fill color can be set to solid or gradient functions.
-/// TODO: collect the current colors from the canvas so the object can be "undrawn" later.
-class gfxDrawObject {
-public:
-  enum FillMode { None,
-                  Solid,
-                  Horizontal,
-                  Vertical,
-                  Linear };
-
-  gfxDrawObject() {
-    _fillMode = None;
-    _stroke = gfxDraw::BLACK;
-  };
-
-  gfxDrawObject(gfxDraw::RGBA stroke, gfxDraw::RGBA fill) {
-    _stroke = stroke;
-    if (fill.Alpha == 0) {
-      _fillMode = None;
-    } else {
-      _fillMode = Solid;
-      _fillColor1 = fill;
-    }
-  };
-
-#ifdef ARDUINO
-  void setPath(String path) {
-    setPath(path.c_str());
-  }
-#endif
-
-  void setPath(const char *path) {
-    _segments = gfxDraw::parsePath(path);
-  }
-
-  void setRect(int16_t w, int16_t h) {
-    _segments.push_back(gfxDraw::Segment(gfxDraw::Segment::Move, 0, 0));
-    _segments.push_back(gfxDraw::Segment(gfxDraw::Segment::Line, 0, w - 1));
-    _segments.push_back(gfxDraw::Segment(gfxDraw::Segment::Line, h - 1, w - 1));
-    _segments.push_back(gfxDraw::Segment(gfxDraw::Segment::Line, h - 1, 0));
-    _segments.push_back(gfxDraw::Segment(gfxDraw::Segment::Close));
-  }
-
-  void setStrokeColor(gfxDraw::RGBA stroke) {
-    _stroke = stroke;
-  };
-
-  void setFillColor(gfxDraw::RGBA fill) {
-    _fillMode = Solid;
-    _fillColor1 = fill;
-  };
-
-  void scale(int16_t scale100) {
-    if (scale100 != 100)
-      gfxDraw::scaleSegments(_segments, scale100);
-  };
-
-  void setFillGradient(gfxDraw::RGBA fill1, int16_t x1, int16_t y1, gfxDraw::RGBA fill2, int16_t x2, int16_t y2) {
-    printf("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
-
-    _fillColor1 = fill1;
-    _fillColor2 = fill2;
-    _gradientX1 = x1;
-    _gradientY1 = y1;
-
-    if (y1 == y2) {
-      _fillMode = Horizontal;
-      d1000 = (x2 - x1) * 1000;
-
-    } else if (x1 == x2) {
-      _fillMode = Vertical;
-      d1000 = (y2 - y1) * 1000;
-
-    } else {
-      _fillMode = Linear;
-
-      // pre-calculate all factors for dist calculation in linear Gradient color function.
-      // instead of using floats use the factor 1000.
-      // Line formula: `y = mx + b` for the line where fill1 color will be used;
-      // This is the orthogonal line through p1 (slope = 1/m)
-      int16_t dx = (x2 - x1);
-      int16_t dy = (y2 - y1);
-      printf(" dx=%d, dy=%d\n", dx, dy);
-
-      m1000 = -dx * 1000 / dy;  // = -2000
-      printf(" m1000=%d\n", m1000);
-      b1000 = (y1 * 1000) - (m1000 * x1);  // 6000 - ( -2000 * 4)
-      printf(" b1000=%d\n", b1000);
-
-      // distance of the 2 gradient points.
-      d1000 = sqrt(dx * dx + dy * dy) * 1000;
-
-      // Distance formula: `d = (mx - y + b) / sqrt(m*m + 1)`
-      // divisor for the distance formula
-      int16_t nen1000 = sqrt(m1000 * m1000 + 1000000);
-      printf(" nen1000=%d\n", nen1000);
-
-      // `y = (m1000 * x + b1000) / 1000`
-
-      // distance between the 2 points:
-      // int32_t d = sqrt((x2 - x1) * (y2 - y1));
-
-      // distance of point x/y from this line:
-      // d = (mx - y + b) /  sqrt(m*m + 1) // (-2 * x - y + 14) / sqrt(4 +1)
-      // (-2 * 10 - 9 + 14) / sqrt(2*2 +1)
-
-      // sqrt(m*m + 1) = sqrt(m1000*m1000 + 1*1000*1000) / 1000
-      // can be simplified with a small error by just
-      // = sqrt(m1000 / 1000 * m1000 / 1000 + 1)
-      // = sqrt(m1000 / 1000 * m1000 / 1000 ) = m/1000
-
-      // d = (m1000 x - y * 1000 + b1000) /  sqrt(m*m + 1)
-      // (-2000 * 10 - 9 * 1000 + 14000) / sqrt(m1000*m1000 / 1000 / 1000 + 1*1000*1000)
-      // (-2000 * 9 - 5 * 1000 + 14000) / sqrt(m1000*m1000 / 1000 / 1000 + 1*1000*1000)
-
-      int16_t px = 5;
-      int16_t py = 9;
-      int16_t pd = 1000 * ((1000 * py - m1000 * px - b1000) + 500) / nen1000;
-      printf(" pd=%d\n", pd);
-    };
-    printf(" d1000=%d\n", d1000);
-  };
-
-
-
-  /// @brief calculate color of coordinate x/y
-  /// @param x
-  /// @param y
-  /// @return
-  gfxDraw::RGBA _getColor(int16_t x, int16_t y) {
-    if (_fillMode == Solid) {
-      return (_fillColor1);
-
-    } else if (_fillMode == Horizontal) {
-      int32_t dp1000 = (x - _gradientX1) * 1000;
-      int32_t f100 = (dp1000 * 100) / d1000;
-
-      if (f100 <= 0) {
-        return (_fillColor1);
-
-      } else if (f100 >= 100) {
-        return (_fillColor2);
-
-      } else {
-        int32_t q100 = (100 - f100);
-        gfxDraw::RGBA col = gfxDraw::RGBA(
-          (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
-          (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
-          (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
-          (q100 * _fillColor1.Alpha + f100 * _fillColor2.Alpha) / 100);
-        return (col);
-      };
-
-    } else if (_fillMode == Vertical) {
-      int32_t dp1000 = (y - _gradientY1) * 1000;
-      int32_t f100 = (dp1000 * 100) / d1000;
-
-      if (f100 <= 0) {
-        return (_fillColor1);
-
-      } else if (f100 >= 100) {
-        return (_fillColor2);
-
-      } else {
-        int32_t q100 = (100 - f100);
-        gfxDraw::RGBA col = gfxDraw::RGBA(
-          (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
-          (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
-          (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
-          (q100 * _fillColor1.Alpha + f100 * _fillColor2.Alpha) / 100);
-        return (col);
-      };
-    } else {
-      // not implemented yet
-      return (gfxDraw::PURPLE);
-    }
-  }
-
-
-  void draw(int16_t x, int16_t y, gfxDraw::fDrawPixel cbDraw) {
-    printf("draw()\n");
-    _xOffset = x;
-    _yOffset = y;
-    _fDraw = cbDraw;
-
-    printf(" stroke = %02x.%02x.%02x.%02x\n", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
-    printf(" fill   = %02x.%02x.%02x.%02x\n", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
-
-    if (_fillColor1.Alpha == 0) {
-      // need to draw the strike pixels only
-      path(_segments, x, y,
-           [&](int16_t x, int16_t y) {
-             cbDraw(x, y, _stroke);
-           });
-
-    } else if ((_stroke.Alpha > 0)) {
-      fillSegments(
-        _segments, 0, 0,
-        [&](int16_t x, int16_t y) {
-          cbDraw(x + _xOffset, y + _yOffset, _stroke);
-        },
-        [&](int16_t x, int16_t y) {
-          cbDraw(x + _xOffset, y + _yOffset, _getColor(x, y));
-        });
-
-
-    } else if (_stroke.Alpha == 0) {
-      fillSegments(
-        _segments, 0, 0,
-        nullptr,
-        [&](int16_t x, int16_t y) {
-          cbDraw(x + _xOffset, y + _yOffset, _getColor(x, y));
-        });
-    }
-  };
-
-private:
-  std::vector<gfxDraw::Segment> _segments;
-
-  // offset fro drawing the whole gfxDrawObject
-  int16_t _xOffset = 0;
-  int16_t _yOffset = 0;
-
-  // Stroke coloring
-  gfxDraw::RGBA _stroke;
-
-  // Fill coloring
-
-  FillMode _fillMode;
-
-  /// @brief used for solid filling and gradient start color.
-  gfxDraw::RGBA _fillColor1;
-
-  /// @brief used for gradient end color.
-  gfxDraw::RGBA _fillColor2;
-
-  gfxDraw::fDrawPixel _fDraw;
-
-  // point of fillColor1
-  int16_t _gradientX1 = 0;
-  int16_t _gradientY1 = 0;
-
-  int32_t m1000;
-  int32_t b1000;
-
-  // distance of the 2 gradient points.
-  int32_t d1000;
-};
-
-// public:
-
-// void drawCircleIntern(int16_t xc, int16_t yc, int16_t x, int16_t y, fSetPixel fBorderColor) {
-//   fBorderColor(xc + x, yc + y);
-//   fBorderColor(xc - x, yc + y);
-//   fBorderColor(xc + x, yc - y);
-//   fBorderColor(xc - x, yc - y);
-//   fBorderColor(xc + y, yc + x);
-//   fBorderColor(xc - y, yc + x);
-//   fBorderColor(xc + y, yc - x);
-//   fBorderColor(xc - y, yc - x);
-// }
-
-// // Draw a full circle with border and fill color
-// void drawCircle(int16_t xc, int16_t yc, int16_t r, fSetPixel fBorderColor, fSetPixel fFillColor = nullptr) {
-
-
-//   int16_t x = 0, y = r;
-//   int16_t d = 3 - 2 * r;
-//   drawCircleIntern(xc, yc, x, y, fBorderColor);
-//   while (y >= x) {
-//     x++;
-//     if (d > 0) {
-//       y--;
-//       d = d + 4 * (x - y) + 10;
-//     } else {
-//       d = d + 4 * x + 6;
-//     }
-//     drawCircleIntern(xc, yc, x, y, fBorderColor);
-//   }
-// }
 
 
 // End.

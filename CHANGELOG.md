@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2024-04-19
+
+* adding more path commands
+* fix path with repeated commands
+
 ## 2024-04-17
 
 * using [PNG encoder and decoder in C and C++](https://github.com/lvandeve/lodepng)

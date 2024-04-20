@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "gfxDraw.h"
+#include "gfxDrawObject.h"
 
 #include "lodepng.h"
 
@@ -58,6 +59,10 @@ void fillImage(gfxDraw::RGBA color) {
   setImagePixel(x, y, col); \
 }
 
+#define bmpDraw() [](int16_t x, int16_t y, gfxDraw::RGBA col) { \
+  setImagePixel(x, y, col); \
+}
+// printf("-set(%d/%d)\n", x, y); \
 
 // ===== Test paths
 
@@ -250,7 +255,7 @@ void drawTest01() {
 
   // radio with 2 inner paths
   gfxDraw::drawSolidRect(91, 34, 43, 35, bmpSet(gfxDraw::SILVER));
-  gfxDraw::pathByText(RadioPath, 90, 34, 50, ^^^^bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(RadioPath, 90, 34, 50, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::YELLOW));
 
   // smiley with beziers
   gfxDraw::drawSolidRect(10, 80, 99, 99, bmpSet(gfxDraw::GREEN));
@@ -287,8 +292,13 @@ void drawTest02() {
   gfxDraw::moveSegments(segs, 40, 40);                                         // move right down
   gfxDraw::fillSegments(segs, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::LIME));  // hard-coded fill color here.
 
-  // gfxDrawObject *rect2 = new gfxDrawObject(gfxDraw::TRANSPARENT, gfxDraw::GREEN);
-  // rect2->setRect(46, 30);
+  gfxDraw::gfxDrawObject *rect = new gfxDraw::gfxDrawObject(gfxDraw::TRANSPARENT, gfxDraw::BLUE);
+  rect->setRect(18, 9);
+  // rect->rotate(15);
+  rect->scale(200);
+  rect->move(10, 2);
+  rect->draw(bmpDraw());
+
   // // rect2->setFillGradient(gfxDraw::YELLOW, 10, 0, gfxDraw::ORANGE, 36, 0);
   // rect2->setFillGradient(gfxDraw::YELLOW, 0, 2, gfxDraw::BLUE, 0, 22);
   // rect2->draw(4, 240, bmpDraw());
@@ -317,6 +327,16 @@ void drawTest02() {
   //  C 6,23 4,26 4,30 v 48 c 0,4 3,8 8,8 h 64 c 4,0 8,-3 8,-8 V 30 c 0,-4 -3,-8 -8,-8 H 29 L 62,8 59,2 Z",
   // M 8.94,22.6 C 6.04,23.74 4,26.66 4,30 v 48 c 0,4.42 3.58,8 8,8 h 64 c 4.42,0 8,-3.58 8,-8 V 30 c 0,-4.42 -3.58,-8 -8,-8 H 29.22 L 62.28,8.66 59.52,2 Z M 24,78 c -6.62,0 -12,-5.38 -12,-12 0,-6.62 5.38,-12 12,-12 6.62,0 12,5.38 12,12 0,6.62 -5.38,12 -12,12 z M 76,46 H 12 V 30 h 64 z
 };
+
+
+void drawTest03() {
+
+
+
+//gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
+  gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z",
+                      11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+}
 
 
 #if 0
@@ -384,34 +404,48 @@ int main() {
 
   silentTests();
 
+#if 0
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
   drawTest01();
   saveImage("test01.png");
+#endif
 
-
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
 
-  if (1) {
+  drawTest02();
 
-    // gfxDraw::rect(10, 50, 12, 8, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::CYAN), 2);
-    // gfxDraw::rect(10, 60, 12, 8, nullptr, bmpSet(gfxDraw::CYAN), 2);
-    // gfxDraw::rect(10, 70, 12, 8, bmpSet(gfxDraw::BLACK), nullptr, 2);
+  saveImage("test02.png");
+#endif
 
-    // gfxDraw::rect(30, 70, 10, 8, bmpSet(gfxDraw::RED), nullptr, 2);
-    // gfxDraw::rect(39, 70, -10, 8, bmpSet(gfxDraw::BLACK), nullptr, 2);
 
-    // gfxDraw::rect(42, 70, 10, 8, nullptr, bmpSet(gfxDraw::RED), 2);
-    // gfxDraw::rect(51, 70, -10, 8, nullptr, bmpSet(gfxDraw::BLACK), 2);
+#if (0)
+  newImage(400, 300);
+  fillImage(gfxDraw::WHITE);
 
-    // gfxDraw::rect(54, 70, 10, 8, nullptr, bmpSet(gfxDraw::RED), 2);
-    // gfxDraw::rect(54, 77, 10, -8, nullptr, bmpSet(gfxDraw::BLACK), 2);
-  }
+  drawTest03();
+
+  saveImage("test02.png");
+#endif
+
+  // gfxDraw::rect(10, 50, 12, 8, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::CYAN), 2);
+  // gfxDraw::rect(10, 60, 12, 8, nullptr, bmpSet(gfxDraw::CYAN), 2);
+  // gfxDraw::rect(10, 70, 12, 8, bmpSet(gfxDraw::BLACK), nullptr, 2);
+
+  // gfxDraw::rect(30, 70, 10, 8, bmpSet(gfxDraw::RED), nullptr, 2);
+  // gfxDraw::rect(39, 70, -10, 8, bmpSet(gfxDraw::BLACK), nullptr, 2);
+
+  // gfxDraw::rect(42, 70, 10, 8, nullptr, bmpSet(gfxDraw::RED), 2);
+  // gfxDraw::rect(51, 70, -10, 8, nullptr, bmpSet(gfxDraw::BLACK), 2);
+
+  // gfxDraw::rect(54, 70, 10, 8, nullptr, bmpSet(gfxDraw::RED), 2);
+  // gfxDraw::rect(54, 77, 10, -8, nullptr, bmpSet(gfxDraw::BLACK), 2);
+
 
   // drawClock(120, 205, 80);
 
-  drawTest02();
 
   // drawDigits14(1, 0, 10, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
   // drawDigits14(2, 80, 10, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
@@ -428,6 +462,4 @@ int main() {
   // drawDigits7(7, 238, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
   // drawDigits7(8, 282, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
   // drawDigits7(9, 316, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
-
-  saveImage("test02.png");
 }

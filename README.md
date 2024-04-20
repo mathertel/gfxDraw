@@ -38,12 +38,14 @@ Path lines can also be drawn by using a primitive function:
   });
 ```
 
+This function will parse the given path definition and draws the border in GREEN color. This consumes a lot of cpu and all
+intermediate computing and memory requirements will be allocated and freed during the call.
+
+
 In the calback function the figure may be shifted by adding the offset to `x` and `y` and by providing a color to the gfy setPixel function.
 
-These algorithms are internally used for drawing the paths segments.
 
-
-## Path syntax
+## Path Syntax
 
 To create a vector (array) of segments the `path` syntax from the SVG was chosen.  There are several helpful web sites
 and tools to create such paths definitions like the [yqnn SVG Path Editor](https://yqnn.github.io/svg-path-editor/) ot
@@ -57,7 +59,7 @@ Examples:
 * Smiley:
     `"M12,2h64c4,0 8,4 8,8v48c0,4 -4,8 -8,8h-64c-4,0 -8,-4 -8,-8v-48c0,-4 4,-8 8,-8z"`
     `"M12,10 h60v20h-60z"`
-    `"M24,36c6,0 12,6 12,12c0,6 -6,12 -12,12c-6,0 -12,-6 -12,-12c0,-6 6,-12 12,-12z"`
+    `"M24,36c6,0 12,6 12,12 0,6 -6,12 -12,12-6,0 -12,-6 -12,-12 0,-6 6,-12 12,-12z"`
 
 
 ## Path as Segments
@@ -84,7 +86,42 @@ These Segments can be modified to draw the path figure in different scales and r
 
 ## Filling a Path
 
-There is also a function available that allows filling closed paths by providing an additional callback function for drawing the inner pixels.
+There is also a function available that allows filling closed paths.
+2 callback functions are required for drawing:
+
+* The Border draw callback is used for drawing all border pixels.
+* The Fill draw callback is used for drawing all inner pixels.
+
+```cpp
+  std::vector<Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z");
+
+  gfxDraw::fillSegments(segs,
+    [&](int16_t x, int16_t y) { gfx->setPixel(x, y, BLACK); }, // hard-coded stroke color here.
+    [&](int16_t x, int16_t y) { gfx->setPixel(x, y, WHITE); }); // hard-coded fill color here.
+```
+
+When no Border draw callback is provided the Fill draw callback will also be used for the border pixels.
+
+The implementation of fillSegments will use a filling algorithm described in detail below.
+
+The pixel order of the callback functions is y-line oriented and therefore different to the order from the drawSegments
+function.
+
+
+## Transforming based on Segments
+
+Segment vectors can be transformed in place by the following algorithms:
+
+gfxDraw::scaleSegments -- This function scales all points and radius values by the given factor.  The factor is given in
+percentages so `100` will not scale when given as input.
+
+gfxDraw::moveSegments -- This function adds a vector (dx, dy) to all points in the segments.  The offset factor is given
+in pixels.
+
+gfxDraw::rotateSegments -- This function ...
+
+gfxDraw::transformSegments -- This function ... callback for all points in the segments.
+
 
 ```cpp
   std::vector<Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z");
@@ -96,6 +133,10 @@ There is also a function available that allows filling closed paths by providing
     [&](int16_t x, int16_t y) { gfx->setPixel(x, y, WHITE); }); // hard-coded fill color here.
 ```
 
+
+---
+
+## Filling Algorithm
 
 ---
 
@@ -124,4 +165,6 @@ M300,200 h-150 a150,150 0 1,0 150,-150 z
 * [text](https://css-tricks.com/tools-visualize-edit-svg-paths-kinda/)
 * [text](https://github.com/srwiley/rasterx)
 * [text](https://oreillymedia.github.io/Using_SVG/extras/ch04-rasterizers.html)
+* [Matrix Transformation Overview](https://web.cse.ohio-state.edu/~shen.94/681/Site/Slides_files/transformation_review.pdf)
 
+[text](https://www.matheretter.de/wiki/homogene-koordinaten)

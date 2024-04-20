@@ -265,41 +265,19 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 }  // rect()
 
 
-// Draw a path (no fill).
-
+// ===== Segment transformation functions =====
 
 /// @brief Scale the points of a path by factor
 /// @param segments
 /// @param f100
 void scaleSegments(std::vector<Segment> &segments, int16_t f100) {
   if (f100 != 100) {
-    for (Segment &pSeg : segments) {
-      switch (pSeg.type) {
-        case Segment::Type::Move:
-        case Segment::Type::Line:
-          pSeg.p[0] = GFXSCALE100(pSeg.p[0], f100);
-          pSeg.p[1] = GFXSCALE100(pSeg.p[1], f100);
-          break;
-
-        case Segment::Type::Curve:
-          pSeg.p[0] = GFXSCALE100(pSeg.p[0], f100);
-          pSeg.p[1] = GFXSCALE100(pSeg.p[1], f100);
-          pSeg.p[2] = GFXSCALE100(pSeg.p[2], f100);
-          pSeg.p[3] = GFXSCALE100(pSeg.p[3], f100);
-          pSeg.p[4] = GFXSCALE100(pSeg.p[4], f100);
-          pSeg.p[5] = GFXSCALE100(pSeg.p[5], f100);
-          break;
-
-        case Segment::Type::Close:
-          break;
-
-        default:
-          printf("unknown segment-%04x\n", pSeg.type);
-          break;
-      }
-    }  // for
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      x = GFXSCALE100(x, f100);
+      y = GFXSCALE100(y, f100);
+    });
   }
-}
+}  // scaleSegments()
 
 
 /// @brief move all points by the given offset in x and y.
@@ -308,33 +286,12 @@ void scaleSegments(std::vector<Segment> &segments, int16_t f100) {
 /// @param dy Y-Offset
 void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy) {
   if ((dx != 0) || (dy != 0)) {
-    for (Segment &pSeg : segments) {
-      switch (pSeg.type) {
-        case Segment::Type::Move:
-        case Segment::Type::Line:
-          pSeg.p[0] += dx;
-          pSeg.p[1] += dy;
-          break;
-
-        case Segment::Type::Curve:
-          pSeg.p[0] += dx;
-          pSeg.p[1] += dy;
-          pSeg.p[2] += dx;
-          pSeg.p[3] += dy;
-          pSeg.p[4] += dx;
-          pSeg.p[5] += dy;
-          break;
-
-        case Segment::Type::Close:
-          break;
-
-        default:
-          printf("unknown segment-%04x\n", pSeg.type);
-          break;
-      }
-    }  // for
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      x += dx;
+      y += dy;
+    });
   }
-};
+}  // moveSegments()
 
 
 void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
@@ -344,49 +301,52 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
 
     int32_t sinFactor1000 = floor(sin(radians) * 1000);
     int32_t cosFactor1000 = floor(cos(radians) * 1000);
-    int32_t x, y;
 
-    for (Segment &pSeg : segments) {
-      switch (pSeg.type) {
-        case Segment::Type::Move:
-        case Segment::Type::Line:
-          x = cosFactor1000 * pSeg.p[0] - sinFactor1000 * pSeg.p[1];
-          y = sinFactor1000 * pSeg.p[0] + cosFactor1000 * pSeg.p[1];
-          pSeg.p[0] = (x / 1000); // (x + 500) / 1000;
-          pSeg.p[1] = (y / 1000); // (y + 500) / 1000;
-          break;
-
-        case Segment::Type::Curve:
-          x = cosFactor1000 * pSeg.p[0] - sinFactor1000 * pSeg.p[1];
-          y = sinFactor1000 * pSeg.p[0] + cosFactor1000 * pSeg.p[1];
-          pSeg.p[0] = (x / 1000); // (x + 500) / 1000;
-          pSeg.p[1] = (y / 1000); // (y + 500) / 1000;
-
-          x = cosFactor1000 * pSeg.p[2] - sinFactor1000 * pSeg.p[3];
-          y = sinFactor1000 * pSeg.p[2] + cosFactor1000 * pSeg.p[3];
-          pSeg.p[2] = (x / 1000); // (x + 500) / 1000;
-          pSeg.p[3] = (y / 1000); // (y + 500) / 1000;
-
-          x = cosFactor1000 * pSeg.p[4] - sinFactor1000 * pSeg.p[5];
-          y = sinFactor1000 * pSeg.p[4] + cosFactor1000 * pSeg.p[5];
-          pSeg.p[4] = (x / 1000); // (x + 500) / 1000;
-          pSeg.p[5] = (y / 1000); // (y + 500) / 1000;
-
-          break;
-
-        case Segment::Type::Close:
-          break;
-
-        default:
-          printf("unknown segment-%04x\n", pSeg.type);
-          break;
-      }
-    }  // for
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      int32_t tx = cosFactor1000 * x - sinFactor1000 * y;
+      int32_t ty = sinFactor1000 * x + cosFactor1000 * y;
+      x = (tx / 1000);
+      y = (ty / 1000);
+    });
   }
+}  // rotateSegments()
+
+
+/// @brief transform all points in the segment list.
+/// @param segments Segment vector to be changed
+/// @param dx X-Offset
+/// @param dy Y-Offset
+void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
+  for (Segment &pSeg : segments) {
+    switch (pSeg.type) {
+      case Segment::Type::Move:
+      case Segment::Type::Line:
+        cbTransform(pSeg.p[0], pSeg.p[1]);
+        break;
+
+      case Segment::Type::Curve:
+        cbTransform(pSeg.p[0], pSeg.p[1]);
+        cbTransform(pSeg.p[2], pSeg.p[3]);
+        cbTransform(pSeg.p[4], pSeg.p[5]);
+        break;
+
+      case Segment::Type::Close:
+        break;
+
+      default:
+        printf("unknown segment-%04x\n", pSeg.type);
+        break;
+    }
+  }  // for
 };
 
 
-// =====
+// ===== Segment drawing functions =====
+
+// Draw a path (no fill).
+void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
+  drawSegments(segments, 0, 0, cbDraw);
+};
 
 // Draw a path (no fill).
 void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw) {
@@ -872,12 +832,13 @@ void cubicBezier2(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, in
   //  ??? plotLine(x0,y0, x3,y3);       /* remaining part in case of cusp or crunode */
 }
 
-/// @brief Scan a path using the svg/path/d syntax to create a vector(array) of Segments.
+/// @brief Scan a path text with the svg/path/d syntax to create a vector(array) of Segments.
 /// @param pathText path definition as String
 /// @return Vector with Segments.
 /// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
 std::vector<Segment> parsePath(const char *pathText) {
   TRACE("parsePath: '%s'\n", pathText);
+  char command = '-';
 
   char *path = (char *)pathText;
   int16_t lastX = 0, lastY = 0;
@@ -896,20 +857,14 @@ std::vector<Segment> parsePath(const char *pathText) {
     memset(&Seg, 0, sizeof(Seg));
     int parameters = -1;
 
-    char command = *path++;
-    switch (command) {
-      case ' ':
-        continue;
-        break;
+    while (isblank(*path)) path++;
 
+    if (strchr("MmLlCcZHhVvz", *path))
+      command = *path++;
+
+    switch (command) {
       case 'M':
         Seg.type = Segment::Move;
-        lastX = Seg.p[0] = getParam();
-        lastY = Seg.p[1] = getParam();
-        break;
-
-      case 'L':
-        Seg.type = Segment::Line;
         lastX = Seg.p[0] = getParam();
         lastY = Seg.p[1] = getParam();
         break;
@@ -919,6 +874,12 @@ std::vector<Segment> parsePath(const char *pathText) {
         Seg.type = Segment::Move;
         lastX = Seg.p[0] = lastX + getParam();
         lastY = Seg.p[1] = lastY + getParam();
+        break;
+
+      case 'L':
+        Seg.type = Segment::Line;
+        lastX = Seg.p[0] = getParam();
+        lastY = Seg.p[1] = getParam();
         break;
 
       case 'l':
@@ -939,7 +900,6 @@ std::vector<Segment> parsePath(const char *pathText) {
         lastY = Seg.p[5] = getParam();
         break;
 
-
       case 'c':
         Seg.type = Segment::Curve;
         Seg.p[0] = lastX + getParam();
@@ -950,11 +910,25 @@ std::vector<Segment> parsePath(const char *pathText) {
         lastY = Seg.p[5] = lastY + getParam();
         break;
 
+      case 'H':
+        // Horizontal line
+        Seg.type = Segment::Line;
+        lastX = Seg.p[0] = getParam();
+        Seg.p[1] = lastY;  // stay;
+        break;
+
       case 'h':
         // convert to absolute coordinates
         Seg.type = Segment::Line;
         lastX = Seg.p[0] = lastX + getParam();
         Seg.p[1] = lastY;  // stay;
+        break;
+
+      case 'V':
+        // Vertical line
+        Seg.type = Segment::Line;
+        Seg.p[0] = lastX;  // stay;
+        lastY = Seg.p[1] = getParam();
         break;
 
       case 'v':
