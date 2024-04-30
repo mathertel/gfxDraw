@@ -37,6 +37,8 @@
 
 #define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
 
+#define GFXPOINT100(p) (((int32_t)(p) + 50) / 100)
+
 namespace gfxDraw {
 
 
@@ -57,6 +59,7 @@ public:
     Move = 0x0100 + 2,
     Line = 0x0200 + 2,
     Curve = 0x0300 + 6,
+    Arc = 0x0400 + 7,
     Close = 0xFF00 + 0,
   };
 
@@ -72,6 +75,27 @@ public:
       int16_t x1;
       int16_t y1;
     };
+
+    struct {  // for Arcs
+      int16_t rx;
+      int16_t ry;
+      int16_t rotation;
+      int16_t f1f2;
+      int16_t xEnd;
+      int16_t yEnd;
+    };
+
+    // struct {  // for Arcs
+    //   int16_t rx;
+    //   int16_t ry;
+    //   int16_t rotation; // of ellisis
+    //   int16_t delta angle; // positive -> clockwise
+    //   int16_t cx;
+    //   int16_t cy;
+    //   int16_t xEnd;
+    //   int16_t yEnd;
+    // };
+
   };
 };
 
@@ -87,7 +111,7 @@ public:
 /// @param w Width of line.
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
 
-/// @brief Draw the border line of a rectangle. 
+/// @brief Draw the border line of a rectangle.
 void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
 void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
 
@@ -110,8 +134,13 @@ void drawPath(const char *pathText, fSetPixel cbDraw);
 std::vector<Segment> parsePath(const char *pathText);
 
 /// @brief Make a identical copy of the given segment vector.
-/// @param segments 
+/// @param segments
 void copySegments(std::vector<Segment> &segments);
+
+
+/// @brief Draw an arc using the most efficient algorithm
+void drawArc(int16_t x1, int16_t y1, int16_t rx, int16_t ry, int16_t phi, int16_t flags, int16_t x2, int16_t y2, fSetPixel cbDraw);
+
 
 /// @brief scale all points by the factor f100 / 100.
 /// @param segments Segment vector to be changed

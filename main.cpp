@@ -333,9 +333,12 @@ void drawTest03() {
 
 
 
-//gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
-  gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z",
-                      11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
+  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  // gfxDraw::pathByText("M12 2 A 9 9 0 0 0 20 10 Z", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
+  // gfxDraw::pathByText("M112 102 A 14 14 0 0 0 128 118 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
+  gfxDraw::pathByText("M30 12 A 100 100 0 0 0 200 100 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
 }
 
 
@@ -411,7 +414,7 @@ int main() {
   saveImage("test01.png");
 #endif
 
-#if (1)
+#if (0)
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
 
@@ -421,13 +424,13 @@ int main() {
 #endif
 
 
-#if (0)
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
 
   drawTest03();
 
-  saveImage("test02.png");
+  saveImage("test03.png");
 #endif
 
   // gfxDraw::rect(10, 50, 12, 8, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::CYAN), 2);

@@ -1,12 +1,15 @@
 # gfxDraw Arduino Drawing Library for Vector Graphics
 
-There are various GFX libraries available in the Arduino Community that support many differend displays with
-simple graphics can be drawn like lines, rectangles, circles and some more.
+There are various GFX libraries available in the Arduino Community that support many differend displays with simple
+graphics can be drawn like lines, rectangles, circles and some more.  The features are limited e.g.  rectangles can only
+be drawn without rotation and complex figure drawings are not available at all.
 
-The gfxDraw library offers more advanced drawing capabilities with vectorized drawing by using a GFX library under the hood
-for sending the output to the displays.
+The gfxDraw library aims to overcome these limitations by offering more advanced drawing capabilities with vectorized
+drawing by using a GFX library under the hood for sending the output to the displays.
 
-The functions are optimized for pixel oriented displays, do not implement antialiasing and have minimized use of float and arc arithmetics. This makes this library usable in microprocessor programming like ESP32 based boards with graphic displays.
+The functions are optimized for pixel oriented displays, do not implement antialiasing and have minimized use of float
+and arc arithmetics.  This makes this library usable in microprocessor programming like ESP32 based boards with graphic
+displays.
 
 The library supports up to 16 bit display resolutions and 32-bit (or less) colors.
 
@@ -108,9 +111,9 @@ The pixel order of the callback functions is y-line oriented and therefore diffe
 function.
 
 
-## Transforming based on Segments
+## Transforming
 
-Segment vectors can be transformed in place by the following algorithms:
+Segment vectors can be transformed in place by algorithms provided by the library:
 
 gfxDraw::scaleSegments -- This function scales all points and radius values by the given factor.  The factor is given in
 percentages so `100` will not scale when given as input.
@@ -118,25 +121,42 @@ percentages so `100` will not scale when given as input.
 gfxDraw::moveSegments -- This function adds a vector (dx, dy) to all points in the segments.  The offset factor is given
 in pixels.
 
-gfxDraw::rotateSegments -- This function ...
+gfxDraw::rotateSegments -- This function rotates all points in the segment around the center 0/0. The angle is given in degrees.
 
-gfxDraw::transformSegments -- This function ... callback for all points in the segments.
+gfxDraw::transformSegments -- This function is used internally by the transform functions and uses a callback for transforming points from the segment. This function can also be used for combined transformations.
 
 
 ```cpp
   std::vector<Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z");
 
-  gfxDraw::scaleSegments(segs, 200); // scale by 200%
+  segs = gfxDraw::parsePath(SmilieCurvePath);
+  gfxDraw::scaleSegments(segs, 200);
+  gfxDraw::rotateSegments(segs, 25);    // rotate some degrees
+  gfxDraw::moveSegments(segs, 40, 40);  // move right down
 
   gfxDraw::fillSegments(segs,
-    [&](int16_t x, int16_t y) { gfx->setPixel(x, y, BLACK); }, // hard-coded stroke color here.
+    [&](int16_t x, int16_t y) { gfx->setPixel(x, y, BLACK); },  // hard-coded stroke color here.
     [&](int16_t x, int16_t y) { gfx->setPixel(x, y, WHITE); }); // hard-coded fill color here.
 ```
 
 
----
+## Filling Algorithm Insights
 
-## Filling Algorithm
+Closed paths can be filled with a filling color or pattern that is implemented by the internal **fillSegments** function.
+This is implemented using a pixel oriented **Scanline Fill Algorithm** and works not only with polygons but with paths of any shape.
+
+In short, this is done by sorting the border pixels from the draw function so all pixels on the same line (same y-value) are in order with ascending x-value.
+When a subsequent pixel is on the same line this is recorded in a _Edge with the length covering all pixels.
+
+But there are some known problems that need to be addressed:
+
+This requires some analysis of the given points given from the basic draw functionality before the pixels are sorted.
+In this implementation the horizontal pixel sequences that start and end with different slopes are producing 2 Edges (see internal class `_Edge`) entries.  The first starts with the leftmost pixel and all following pixels define the length.  There is another Edge record in the list with the position of the rightmost pixel but with the length = 0.
+
+This ensures that there are always 2 Edges for the pixel sequences creating local extremes.
+
+This ensures that filling is required between the odd-to-even eEdges and not the even-to-odd Edges.
+
 
 ---
 
@@ -156,15 +176,48 @@ Pie:
 M275,175 v-150 a150,150 0 0,0 -150,150 z
 M300,200 h-150 a150,150 0 1,0 150,-150 z
 
+A <rx> <ry> <rot-phi> <flag1> <flag2> <x> <y>
+
+E <rx> <ry> <rot> <flags> <cx> <cy>  <x> <y>
+
 [text](https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes)
+
+
+void drawArc(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t cx, int16_t cy, int16_t r, int16_t dr, fSetPixel cbDraw);
+
+// midpoint of the 2 points
+mx = (x0 - x1)/2;
+my = (y0 - y1)/2;
+
+phi = rotation of e
+
+
+* [text](https://stackoverflow.com/questions/49498633/drawing-ellipse-with-bresenhams-algorithm)
+
+
+## gfxDrawObject
+
+This gfxDrawObject class implements the necessary steps to draw a object based on a path with transformation and
+coloring options to simplify drawing with gfxDraw native functions.
+
+* All transformations are combined into a transformation matrix to avoid intermediate transformations with rounding
+  effects.
+* The fill color can be specified using simple linear gradients.
+* The Transformations can be
+* Example of a gauge based on gfxDrawObject that manipulates segments based on a given value.
 
 
 ## See also
 
-* <http://members.chello.at/easyfilter/bresenham.html>.
+* [Bresenham efficient drawing functions](http://members.chello.at/easyfilter/bresenham.html)
+* [About ellipse drawing](https://dai.fmph.uniba.sk/upload/0/01/Ellipse.pdf)
+* [Wikipedia Scanline Rendering](https://en.wikipedia.org/wiki/Scanline_rendering)
+* [Math background for using transformation matrixes in 2D drawings](https://www.matheretter.de/wiki/homogene-koordinaten)
+
+* <https://svg-path-visualizer.netlify.app/>
 * [text](https://css-tricks.com/tools-visualize-edit-svg-paths-kinda/)
 * [text](https://github.com/srwiley/rasterx)
 * [text](https://oreillymedia.github.io/Using_SVG/extras/ch04-rasterizers.html)
 * [Matrix Transformation Overview](https://web.cse.ohio-state.edu/~shen.94/681/Site/Slides_files/transformation_review.pdf)
 
-[text](https://www.matheretter.de/wiki/homogene-koordinaten)
+* [text](https://www.codeguru.com/multimedia/drawing-rotated-and-skewed-ellipses/)

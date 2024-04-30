@@ -1,21 +1,13 @@
-// draw algorithms
+// GFXDrawObject.h
 
-// This library implements drawing polygons (and paths) on a display.
-
-// These pixel oriented drawing functions are implemented to use callback functions for the
-// effective drawing to make them independent from an specific canvas implementation and can be
-// used for drawing and un-drawing.
-
-// The functions have minimized use of float and arc arithmetics.
-// Path drawing is supporting one closed path and unfolded paths only.
-// The functions have minimized use of float and arc arithmetics.
-
-
-// Some basic drawing algorithms are based on the efficient drawing approach of bresenham, see
-// <http://members.chello.at/easyfilter/bresenham.html>.
-
-// The basic drawing algorithms are implemented as static function in the `gfxDraw` namespace where you can also find useful color constants.
-// The display coordinates are signed 16-bit integers.
+// This gfxDrawObject class implements the necessary steps to draw a object based on a path with transformation and
+// coloring options to simplify drawing with gfxDraw native functions.
+//
+//  * All transformations are combined into a transformation matrix to avoid intermediate transformations with rounding
+//    effects.
+//  * The fill color can be specified using simple linear gradients.
+//  * The Transformations can be 
+//  * Example of a gauge based on gfxDrawObject that manipulates segments based on a given value.
 
 // https://svg-path-visualizer.netlify.app/#M2%2C2%20Q8%2C2%208%2C8
 
@@ -116,6 +108,10 @@ public:
 
   // the transformation is recorded to a 3*3 matrix and applied just before drawing.
 
+  void resetTransformation() {
+    _initMatrix(_matrix);
+  }
+
   // apply the scaling factors to the transformation matrix;
   void move(int16_t dx, int16_t dy) {
     if ((dx != 0) || (dy != 0)) {
@@ -188,7 +184,7 @@ public:
       gfxDraw::fillSegments(
         tSegments, nullptr,
         [&](int16_t x, int16_t y) {
-          cbDraw(x + _xOffset, y + _yOffset, _getColor(x, y));
+          cbDraw(x, y, _getColor(x, y));
         });
     }
   };
@@ -316,14 +312,13 @@ public:
     }
   }
 
-private:
+protected:
   std::vector<gfxDraw::Segment> _segments;
 
-  // offset fro drawing the whole gfxDrawObject
-  int16_t _xOffset = 0;
-  int16_t _yOffset = 0;
-
+private:
+  // combined transformation matrix
   Matrix1000 _matrix;
+
 
   void _initMatrix(Matrix1000 &m) {
     memset(&m, 0, sizeof(m));
@@ -347,7 +342,6 @@ private:
   };
 
 
-
   // Stroke coloring
   gfxDraw::RGBA _stroke;
 
@@ -360,8 +354,6 @@ private:
 
   /// @brief used for gradient end color.
   gfxDraw::RGBA _fillColor2;
-
-  gfxDraw::fDrawPixel _fDraw;
 
   // point of fillColor1
   int16_t _gradientX1 = 0;

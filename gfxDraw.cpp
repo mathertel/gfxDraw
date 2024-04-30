@@ -265,6 +265,87 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 }  // rect()
 
 
+/// @brief Calculate the arc center for drawing
+void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, int16_t &cx, int16_t &cy) {
+  // Conversion from endpoint to center parameterization
+  // see also http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
+
+  // <https://github.com/canvg/canvg/blob/937668eced93e0335c67a255d0d2277ea708b2cb/src/Document/PathElement.ts#L491>
+
+  double sinphi = sin(phi);
+  double cosphi = cos(phi);
+
+  double xShift = (x1 - x2) / 2;
+  double yShift = (y1 - y2) / 2;
+
+  double xTemp = (cosphi * xShift) + (sinphi * yShift);
+  double yTemp = (-sinphi * xShift) + (cosphi * yShift);
+
+  // adjust x & y radius when too small
+  if (rx == 0 || ry == 0) {
+    double dist = sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+    rx = ry = dist / 2;
+    printf("rx=ry= %d\n", rx);
+
+  } else {
+    double dist2 = (xTemp * xTemp) / (rx * rx) + (yTemp * yTemp) / (ry * ry);
+
+    if (dist2 > 1) {
+      double dist = sqrt(dist2);
+      rx = rx * dist;
+      ry = ry * dist;
+    }
+    printf("rx=%d ry=%d \n", rx, ry);
+  }
+
+  // center calculation
+  double centerDist = 0;
+  double distNumerator = ((rx * rx) * (ry * ry) - (rx * rx) * (yTemp * yTemp) - (ry * ry) * (xTemp * xTemp));
+  if (distNumerator > 0) {
+    centerDist = sqrt(distNumerator / ((rx * rx) * (yTemp * yTemp) + (ry * ry) * (xTemp * xTemp)));
+  }
+
+  if ((flags == 0x00) || (flags == 0x03)) {
+    centerDist = -centerDist;
+  }
+
+  double cX = (centerDist * rx * yTemp) / ry;
+  double cY = (centerDist * -ry * xTemp) / rx;
+
+  double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
+  double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
+
+  cx = round(centerX);
+  cy = round(centerY);
+}
+
+/// @brief Draw an arc according to svg path arc parameters.
+/// @param x0 Starting Point X coordinate.
+/// @param y0 Starting Point Y coordinate.
+/// @param rx
+/// @param ry
+/// @param phi  rotation of the ellipsis
+/// @param flags
+/// @param x1 Ending Point X coordinate.
+/// @param y1 Ending Point Y coordinate.
+/// @param cbDraw Callback with coordinates of line pixels.
+void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+             int16_t rx, int16_t ry,
+             int16_t phi, int16_t flags,
+             fSetPixel cbDraw) {
+
+  int16_t cx, cy;
+
+  arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx, cy);
+  cbDraw(cx, cy);
+
+  printf("center=: %d/%d\n", cx, cy);
+
+  cbDraw(x1, y1);
+  cbDraw(x2, y2);
+}
+
+
 // ===== Segment transformation functions =====
 
 /// @brief Scale the points of a path by factor
@@ -380,6 +461,18 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
             dx + pSeg.p[0], dy + pSeg.p[1],
             dx + pSeg.p[2], dy + pSeg.p[3],
             dx + endPosX, dy + endPosY, cbDraw);
+          break;
+
+        case Segment::Type::Arc:
+          endPosX = pSeg.p[4];
+          endPosY = pSeg.p[5];
+          gfxDraw::drawArc(posX + dx, posY + dy,        // start-point
+                           endPosX + dx, endPosY + dy,  // end-point
+                           pSeg.p[0], pSeg.p[1],        // x & y radius
+                           pSeg.p[2],                   // phi, ellipsis rotation
+                           pSeg.p[3],                   // flags
+                           cbDraw);
+
           break;
 
         case Segment::Type::Close:
@@ -859,7 +952,7 @@ std::vector<Segment> parsePath(const char *pathText) {
 
     while (isblank(*path)) path++;
 
-    if (strchr("MmLlCcZHhVvz", *path))
+    if (strchr("MmLlCcZHhVvAaz", *path))
       command = *path++;
 
     switch (command) {
@@ -890,7 +983,7 @@ std::vector<Segment> parsePath(const char *pathText) {
         break;
 
       case 'C':
-        // convert to absolute coordinates
+        // curve defined with absolute points - no convertion required
         Seg.type = Segment::Curve;
         Seg.p[0] = getParam();
         Seg.p[1] = getParam();
@@ -901,6 +994,7 @@ std::vector<Segment> parsePath(const char *pathText) {
         break;
 
       case 'c':
+        // curve defined with relative points - convert to absolute coordinates
         Seg.type = Segment::Curve;
         Seg.p[0] = lastX + getParam();
         Seg.p[1] = lastY + getParam();
@@ -911,31 +1005,49 @@ std::vector<Segment> parsePath(const char *pathText) {
         break;
 
       case 'H':
-        // Horizontal line
+        // Horizontal line with absolute horizontal end point coordinate - convert to absolute line
         Seg.type = Segment::Line;
         lastX = Seg.p[0] = getParam();
         Seg.p[1] = lastY;  // stay;
         break;
 
       case 'h':
-        // convert to absolute coordinates
+        // Horizontal line with relative horizontal end-point coordinate - convert to absolute line
         Seg.type = Segment::Line;
         lastX = Seg.p[0] = lastX + getParam();
         Seg.p[1] = lastY;  // stay;
         break;
 
       case 'V':
-        // Vertical line
+        // Vertical line with absolute vertical end point coordinate - convert to absolute line
         Seg.type = Segment::Line;
         Seg.p[0] = lastX;  // stay;
         lastY = Seg.p[1] = getParam();
         break;
 
       case 'v':
-        // convert to absolute coordinates
+        // Vertical line with relative horizontal end-point coordinate - convert to absolute line
         Seg.type = Segment::Line;
         Seg.p[0] = lastX;  // stay;
         lastY = Seg.p[1] = lastY + getParam();
+        break;
+
+      case 'A':
+        // Ellipsis arc with absolute end-point coordinate. - calculate center and
+        Seg.type = Segment::Arc;
+        Seg.p[0] = getParam();       // rx
+        Seg.p[1] = getParam();       // ry
+        Seg.p[2] = getParam();       // rotation
+        Seg.p[3] = getParam();       // flag1
+        Seg.p[3] += getParam() * 2;  // flag2
+        lastX = Seg.p[4] = getParam();
+        lastY = Seg.p[5] = getParam();
+        break;
+
+      case 'a':
+        // Ellipsis arc with absolute end-point coordinate. - calculate center and
+        printf("arc not implemented yet.\n");
+        Seg.type = Segment::Arc;
         break;
 
       case 'z':
@@ -945,6 +1057,7 @@ std::vector<Segment> parsePath(const char *pathText) {
 
       default:
         printf("unknown path type: %c\n", *path);
+        return (vSeg);
         break;
     }
 
