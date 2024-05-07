@@ -160,40 +160,7 @@ This ensures that filling is required between the odd-to-even eEdges and not the
 
 ---
 
-## Elliptical Arc Curve Command
-
-The [elliptical arc curve command](https://www.w3.org/TR/SVG11/paths.html#PathDataEllipticalArcCommands) as defined by
-the specification enables drawing curves from circles and ecliptics.
-
-Drawing these usually needs much trigonometric computation and the
-[arc reference implementation notes](https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes) from the W3C standard also
-includes several rules how to deal with the parameters.
-
-
-[text](https://en.wikipedia.org/wiki/Ellipse)
-
-Pie:
-M275,175 v-150 a150,150 0 0,0 -150,150 z
-M300,200 h-150 a150,150 0 1,0 150,-150 z
-
-A <rx> <ry> <rot-phi> <flag1> <flag2> <x> <y>
-
-E <rx> <ry> <rot> <flags> <cx> <cy>  <x> <y>
-
-[text](https://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes)
-
-
-void drawArc(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t cx, int16_t cy, int16_t r, int16_t dr, fSetPixel cbDraw);
-
-// midpoint of the 2 points
-mx = (x0 - x1)/2;
-my = (y0 - y1)/2;
-
-phi = rotation of e
-
-
-* [text](https://stackoverflow.com/questions/49498633/drawing-ellipse-with-bresenhams-algorithm)
-
+[text](docu/elliptical_arc_curve_command.md)
 
 ## gfxDrawObject
 
@@ -210,14 +177,27 @@ coloring options to simplify drawing with gfxDraw native functions.
 ## See also
 
 * [Bresenham efficient drawing functions](http://members.chello.at/easyfilter/bresenham.html)
-* [About ellipse drawing](https://dai.fmph.uniba.sk/upload/0/01/Ellipse.pdf)
+* [Wikipedia Bresenham Algorithm](https://de.wikipedia.org/wiki/Bresenham-Algorithmus)
 * [Wikipedia Scanline Rendering](https://en.wikipedia.org/wiki/Scanline_rendering)
 * [Math background for using transformation matrixes in 2D drawings](https://www.matheretter.de/wiki/homogene-koordinaten)
+
+* [Constructing Lines and Curves in Pixel Art](https://www.youtube.com/watch?v=ye21r27kN9I)
+
+
 
 * <https://svg-path-visualizer.netlify.app/>
 * [text](https://css-tricks.com/tools-visualize-edit-svg-paths-kinda/)
 * [text](https://github.com/srwiley/rasterx)
+* [text](https://wiki.gnome.org/Projects/LibRsvg)
 * [text](https://oreillymedia.github.io/Using_SVG/extras/ch04-rasterizers.html)
 * [Matrix Transformation Overview](https://web.cse.ohio-state.edu/~shen.94/681/Site/Slides_files/transformation_review.pdf)
 
 * [text](https://www.codeguru.com/multimedia/drawing-rotated-and-skewed-ellipses/)
+
+[^^](https://docs.opencv.org/4.x/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69)
+
+[aseprite](https://github.com/aseprite/aseprite/blob/2942abae3ec2cd280c988308963f6c340ced29fe/src/doc/algo.cpp#L221)
+
+
+
+

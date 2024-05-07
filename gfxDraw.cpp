@@ -265,7 +265,8 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 }  // rect()
 
 
-/// @brief Calculate the arc center for drawing
+/// @brief Calculate the center parameterization for an arc from endpoints
+/// The radius values may be scaled up when there is no arc possible.
 void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, int16_t &cx, int16_t &cy) {
   // Conversion from endpoint to center parameterization
   // see also http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
@@ -275,11 +276,12 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16
   double sinphi = sin(phi);
   double cosphi = cos(phi);
 
-  double xShift = (x1 - x2) / 2;
-  double yShift = (y1 - y2) / 2;
+  // middle of (x1/y1) to (x2/y2) 
+  double xMiddle = (x1 - x2) / 2;
+  double yMiddle = (y1 - y2) / 2;
 
-  double xTemp = (cosphi * xShift) + (sinphi * yShift);
-  double yTemp = (-sinphi * xShift) + (cosphi * yShift);
+  double xTemp = (cosphi * xMiddle) + (sinphi * yMiddle);
+  double yTemp = (-sinphi * xMiddle) + (cosphi * yMiddle);
 
   // adjust x & y radius when too small
   if (rx == 0 || ry == 0) {
