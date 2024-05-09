@@ -185,6 +185,12 @@ void silentTests() {
   assert((count <= 18), "draw too many points");
   assert((count >= 18), "draw not enough points");
 
+  int16_t a;
+  a = gfxDraw::vectorAngle( 1,  1);  assert((a ==  45), "vectorAngle( 1,  1) error");
+  a = gfxDraw::vectorAngle(-1,  1);  assert((a == 135), "vectorAngle(-1,  1) error");
+  a = gfxDraw::vectorAngle(-1, -1);  assert((a == 225), "vectorAngle(-1, -1) error");
+  a = gfxDraw::vectorAngle( 1, -1);  assert((a == 315), "vectorAngle( 1, -1) error");
+
   printf("\n");
 }
 
@@ -336,9 +342,11 @@ void drawTest03() {
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
+// Simple Arc drawing test cases
   // gfxDraw::pathByText("M12 2 A 9 9 0 0 0 20 10 Z", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
   // gfxDraw::pathByText("M112 102 A 14 14 0 0 0 128 118 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
-  gfxDraw::pathByText("M30 12 A 100 100 0 0 0 200 100 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
+  gfxDraw::pathByText("M30 112 A 100 100 0 0 0 180 220 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
+
 }
 
 

@@ -267,7 +267,7 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 
 /// @brief Calculate the center parameterization for an arc from endpoints
 /// The radius values may be scaled up when there is no arc possible.
-void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, int16_t &cx, int16_t &cy) {
+void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int16_t &ry, int16_t phi, int16_t flags, int16_t &cx, int16_t &cy) {
   // Conversion from endpoint to center parameterization
   // see also http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
 
@@ -276,7 +276,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16
   double sinphi = sin(phi);
   double cosphi = cos(phi);
 
-  // middle of (x1/y1) to (x2/y2) 
+  // middle of (x1/y1) to (x2/y2)
   double xMiddle = (x1 - x2) / 2;
   double yMiddle = (y1 - y2) / 2;
 
@@ -307,7 +307,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16
     centerDist = sqrt(distNumerator / ((rx * rx) * (yTemp * yTemp) + (ry * ry) * (xTemp * xTemp)));
   }
 
-  if ((flags == 0x00) || (flags == 0x03)) {
+  if ((flags == 0x01) || (flags == 0x02)) {
     centerDist = -centerDist;
   }
 
@@ -319,7 +319,21 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16
 
   cx = round(centerX);
   cy = round(centerY);
-}
+}  // arcCenter()
+
+
+int16_t vectorAngle(int16_t dx, int16_t dy) {
+  // printf("vectorAngle(%d, %d)\n", dx, dy);
+
+  double rad = acos(dx / sqrt((dx * dx) + (dy * dy)));
+  int16_t angle = floor((rad * 180 / M_PI) + 0.5);
+
+  if (dy < 0) { angle = 360 - angle; }
+  // printf(" = %d\n", angle);
+
+  return (angle % 360);
+}  // vectorAngle()
+
 
 /// @brief Draw an arc according to svg path arc parameters.
 /// @param x0 Starting Point X coordinate.
@@ -341,10 +355,22 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx, cy);
   cbDraw(cx, cy);
 
+  printf("flags=: 0x%02x\n", flags);
   printf("center=: %d/%d\n", cx, cy);
 
   cbDraw(x1, y1);
   cbDraw(x2, y2);
+
+  int startAngle = vectorAngle(x1 - cx, y1 - cy);
+  int endAngle = vectorAngle(x2 - cx, y2 - cy);
+  int dAngle = (flags & 0x02) ? -1 : 1;
+
+  // Iterate through the ellipse
+  for (uint16_t angle = startAngle; angle != endAngle; angle = (angle + dAngle) % 360) {
+    int x = cx + (int)(rx * cos((angle * M_PI) / 180) + 0.5);
+    int y = cy + (int)(ry * sin((angle * M_PI) / 180) + 0.5);
+    cbDraw(x, y);
+  }
 }
 
 
@@ -908,7 +934,7 @@ void cubicBezier2(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, in
       if (2 * fy <= f) {
         y0 += sy;
         fy += f;
-      }                                          /* y step */
+      } /* y step */
       if (pxy == 0 && dx < 0 && dy > 0) pxy = 1; /* pixel ahead valid */
     }
     xx = x0;

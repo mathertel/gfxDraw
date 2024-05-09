@@ -195,6 +195,14 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
 void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorder, fSetPixel cbFill);
 
 
+/// ====== internally used functions - maybe helpful for generating paths
+
+/// @brief Calculate the angle of a vector in degrees
+/// @param dx x value of the vector
+/// @param dy y value of the vector
+/// @return the angle n range 0 - 359
+int16_t vectorAngle(int16_t dx, int16_t dy);
+
 }  // gfxDraw:: namespace
 
 
