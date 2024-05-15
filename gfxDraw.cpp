@@ -1,19 +1,41 @@
-// gfxDraw.cpp
+// - - - - -
+// GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
+// gfxdraw.cpp: Library implementation file
+//
+// Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
+// This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
+//
+// Changelog: See gfxdraw.h and documentation files in this library.
+//
+// - - - - -
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+// #include <iostream>
 
 #include "gfxDraw.h"
 #include "gfxDrawColors.h"
 
 
-#define TRACE(...) printf(__VA_ARGS__)
+#define TRACE(...) // printf(__VA_ARGS__)
+
+#define STAT 1
+
+#if (STAT)
+uint16_t stat_skipped = 0;
+uint16_t stat_added = 0;
+uint16_t stat_removed = 0;
+#endif
+
 
 #define SLOPE_UNKNOWN 0
 #define SLOPE_FALLING 1
 #define SLOPE_RAISING 2
 #define SLOPE_HORIZONTAL 3
 
+
+#define POINT_BREAK_Y INT16_MAX
+#define POINT_INVALID_Y INT16_MAX - 1
 
 namespace gfxDraw {
 
@@ -22,6 +44,9 @@ namespace gfxDraw {
 /// @brief The Point holds a pixel position and provides some useful static methods.
 class Point {
 public:
+  Point()
+    : x(0), y(POINT_INVALID_Y){};
+
   Point(int16_t _x, int16_t _y)
     : x(_x), y(_y){};
 
@@ -67,7 +92,10 @@ public:
     return (p1.len < p2.len);
   };
 
-  bool expand(_Edge &p2) {
+  /// @brief add another point or Edge to the Edge
+  /// @param p2
+  /// @return true when this Edge could be expanded.
+  bool expand(_Edge p2) {
     if (y == p2.y) {
       if (x > p2.x + p2.len) {
         // no
@@ -90,9 +118,6 @@ public:
 };
 
 
-#define POINT_BREAK_Y INT16_MAX
-
-
 // ===== Segments implementation =====
 
 Segment::Segment(Type _type, int16_t p1, int16_t p2) {
@@ -100,6 +125,45 @@ Segment::Segment(Type _type, int16_t p1, int16_t p2) {
   p[0] = p1;
   p[1] = p2;
 };
+
+
+// ===== fixed decimal precision sin & cos functions =====
+
+const int32_t tab_sin256[] = {
+  0, 4, 9, 13, 18, 22, 27, 31, 35, 40, 44,
+  49, 53, 57, 62, 66, 70, 75, 79, 83, 87,
+  91, 96, 100, 104, 108, 112, 116, 120, 124, 128,
+  131, 135, 139, 143, 146, 150, 153, 157, 160, 164,
+  167, 171, 174, 177, 180, 183, 186, 190, 192, 195,
+  198, 201, 204, 206, 209, 211, 214, 216, 219, 221,
+  223, 225, 227, 229, 231, 233, 235, 236, 238, 240,
+  241, 243, 244, 245, 246, 247, 248, 249, 250, 251,
+  252, 253, 253, 254, 254, 254, 255, 255, 255, 255
+};
+
+int32_t sin256(int32_t degree) {
+  degree = ((degree % 360) + 360) % 360;  // Math. Modulo Operator
+  if (degree <= 90) {
+    return (tab_sin256[degree]);
+  } else if (degree <= 180) {
+    return (tab_sin256[90 - (degree - 90)]);
+  } else if (degree <= 270) {
+    return (-tab_sin256[degree - 180]);
+  } else {
+    return (-tab_sin256[90 - (degree - 270)]);
+  }
+}
+
+int32_t cos256(int32_t degree) {
+  return (sin256(degree + 90));
+}
+
+#define SCALE256(v) (v >> 8)
+
+
+
+
+// ===== Debug helping functions... =====
 
 void dumpPoints(std::vector<Point> &points) {
   TRACE("\nPoints:\n");
@@ -131,12 +195,12 @@ void dumpEdges(std::vector<_Edge> &edges) {
 // ===== gfxDraw helper functions =====
 
 void dumpColor(char *name, RGBA col) {
-  printf(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
+  TRACE(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
   int_fast16_t t1 = INT16_MIN;
 }
 
 void dumpColorTable() {
-  printf("        Color: A  R  G  B  #col24\n");
+  TRACE("        Color: A  R  G  B  #col24\n");
   dumpColor("Red", gfxDraw::RED);
   dumpColor("Green", gfxDraw::GREEN);
   dumpColor("Blue", gfxDraw::BLUE);
@@ -287,17 +351,17 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   if (rx == 0 || ry == 0) {
     double dist = sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
     rx = ry = dist / 2;
-    printf("rx=ry= %d\n", rx);
+    TRACE("rx=ry= %d\n", rx);
 
   } else {
     double dist2 = (xTemp * xTemp) / (rx * rx) + (yTemp * yTemp) / (ry * ry);
 
     if (dist2 > 1) {
       double dist = sqrt(dist2);
-      rx = rx * dist;
-      ry = ry * dist;
+      rx = (rx * dist) + 0.5;
+      ry = (ry * dist) + 0.5;
     }
-    printf("rx=%d ry=%d \n", rx, ry);
+    TRACE("rx=%d ry=%d \n", rx, ry);
   }
 
   // center calculation
@@ -317,22 +381,109 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
   double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
 
-  cx = round(centerX);
-  cy = round(centerY);
+  cx = (centerX + 0.5);
+  cy = (centerY + 0.5);
 }  // arcCenter()
 
 
 int16_t vectorAngle(int16_t dx, int16_t dy) {
-  // printf("vectorAngle(%d, %d)\n", dx, dy);
+  // TRACE("vectorAngle(%d, %d)\n", dx, dy);
 
-  double rad = acos(dx / sqrt((dx * dx) + (dy * dy)));
-  int16_t angle = floor((rad * 180 / M_PI) + 0.5);
+  double rad = acos((double)dx / sqrt((dx * dx) + (dy * dy)));
+  int16_t angle = ((rad * 180 / M_PI) + 0.5);
 
   if (dy < 0) { angle = 360 - angle; }
-  // printf(" = %d\n", angle);
+  // TRACE(" = %d\n", angle);
 
   return (angle % 360);
 }  // vectorAngle()
+
+
+// add the next path pixel to cbDraw
+// * ignore duplicates
+// * remove corner-type pixels
+// * fill missing 1-pixel
+// * draw streight line when more pixels are missing.
+
+void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
+  static Point lastPoints[3];
+
+  TRACE("_addPixel(%d, %d)\n", x, y);
+
+  if ((x == lastPoints[0].x) && (y == lastPoints[0].y)) {
+    // don't collect duplicates
+    TRACE("  duplicate!\n");
+#if (STAT)
+    stat_skipped++;
+#endif
+
+  } else if (y == POINT_BREAK_Y) {
+    // draw all remaining points and invalidate lastPoints
+    TRACE("  flush!\n");
+    for (int n = 2; n >= 0; n--) {
+      if (lastPoints[n].y != POINT_INVALID_Y)
+        cbDraw(lastPoints[n].x, lastPoints[n].y);
+      lastPoints[n].y = POINT_INVALID_Y;
+    }  // for
+
+  } else if (lastPoints[0].y == POINT_BREAK_Y) {
+    lastPoints[0].x = x;
+    lastPoints[0].y = y;
+
+  } else {
+    // draw oldest point and shift new point in
+    if (lastPoints[2].y != POINT_INVALID_Y)
+      cbDraw(lastPoints[2].x, lastPoints[2].y);
+    lastPoints[2] = lastPoints[1];
+    lastPoints[1] = lastPoints[0];
+    lastPoints[0].x = x;
+    lastPoints[0].y = y;
+
+    if (lastPoints[1].y != POINT_INVALID_Y) {
+      bool delFlag = false;
+      bool insFlag = false;
+
+      if ((lastPoints[0].y == lastPoints[1].y) && (abs(lastPoints[0].x - lastPoints[1].x) == 1)) {
+        delFlag = (lastPoints[1].x == lastPoints[2].x);
+      } else if ((lastPoints[0].x == lastPoints[1].x) && (abs(lastPoints[0].y - lastPoints[1].y) == 1)) {
+        delFlag = (lastPoints[1].y == lastPoints[2].y);
+
+      } else if ((abs(lastPoints[0].x - lastPoints[1].x) == 2) || (abs(lastPoints[0].y - lastPoints[1].y) == 2)) {
+        // simple interpolate new lastPoints[1]
+        // TRACE("  gap!\n");
+        if (lastPoints[2].y != POINT_INVALID_Y)
+          cbDraw(lastPoints[2].x, lastPoints[2].y);
+        lastPoints[2] = lastPoints[1];
+        lastPoints[1].x = (lastPoints[0].x + lastPoints[1].x) / 2;
+        lastPoints[1].y = (lastPoints[0].y + lastPoints[1].y) / 2;
+#if (STAT)
+        stat_added++;
+#endif
+
+      } else if ((abs(lastPoints[0].x - lastPoints[1].x) > 2) || (abs(lastPoints[0].y - lastPoints[1].y) > 2)) {
+        // TRACE("  big gap!\n");
+
+        // draw a streight line from lastPoints[1] to lastPoints[0]
+        if (lastPoints[2].y != POINT_INVALID_Y)
+          cbDraw(lastPoints[2].x, lastPoints[2].y);
+        drawLine(lastPoints[1].x, lastPoints[1].y, lastPoints[0].x, lastPoints[0].y, cbDraw);
+        for (int n = 2; n >= 0; n--) {
+          lastPoints[n].y = POINT_INVALID_Y;
+        }  // for
+      }
+
+      if (delFlag) {
+        // remove lastPoints[1];
+        lastPoints[1] = lastPoints[2];
+        lastPoints[2].y = POINT_INVALID_Y;
+#if (STAT)
+        stat_removed++;
+#endif
+      }
+    }
+  }
+}  // _addPixel()
+
 
 
 /// @brief Draw an arc according to svg path arc parameters.
@@ -350,28 +501,40 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
              int16_t phi, int16_t flags,
              fSetPixel cbDraw) {
 
+#if (STAT)
+  stat_skipped = 0;
+  stat_added = 0;
+  stat_removed = 0;
+#endif
+
   int16_t cx, cy;
 
   arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx, cy);
-  cbDraw(cx, cy);
 
-  printf("flags=: 0x%02x\n", flags);
-  printf("center=: %d/%d\n", cx, cy);
-
-  cbDraw(x1, y1);
-  cbDraw(x2, y2);
+  TRACE("flags=: 0x%02x\n", flags);
+  TRACE("center=: %d/%d\n", cx, cy);
 
   int startAngle = vectorAngle(x1 - cx, y1 - cy);
   int endAngle = vectorAngle(x2 - cx, y2 - cy);
-  int dAngle = (flags & 0x02) ? -1 : 1;
+  int stepAngle = (flags & 0x02) ? -1 : 1;
 
   // Iterate through the ellipse
-  for (uint16_t angle = startAngle; angle != endAngle; angle = (angle + dAngle) % 360) {
-    int x = cx + (int)(rx * cos((angle * M_PI) / 180) + 0.5);
-    int y = cy + (int)(ry * sin((angle * M_PI) / 180) + 0.5);
-    cbDraw(x, y);
+  _addPixel(x1, y1, cbDraw);
+  for (uint16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
+    int16_t x = cx + SCALE256(rx * cos256(angle));
+    int16_t y = cy + SCALE256(ry * sin256(angle));
+    _addPixel(x, y, cbDraw);
   }
-}
+  _addPixel(x2, y2, cbDraw);
+  _addPixel(0, POINT_BREAK_Y, cbDraw);
+
+#if (STAT)
+  TRACE("skipped: %d\n", stat_skipped);
+  TRACE("added:   %d\n", stat_added);
+  TRACE("removed: %d\n", stat_removed);
+#endif
+
+}  // drawArc()
 
 
 // ===== Segment transformation functions =====
@@ -443,7 +606,7 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
         break;
 
       default:
-        printf("unknown segment-%04x\n", pSeg.type);
+        TRACE("unknown segment-%04x\n", pSeg.type);
         break;
     }
   }  // for
@@ -513,7 +676,7 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
           break;
 
         default:
-          printf("unknown segment-%04x\n", pSeg.type);
+          TRACE("unknown segment-%04x\n", pSeg.type);
           break;
       }
 
@@ -722,6 +885,7 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
   } else {
     drawSegments(vSeg, x, y, cbBorder);
   }
+  int a;
 }
 
 
@@ -744,6 +908,10 @@ void drawPath(const char *pathText, fSetPixel cbDraw) {
 }
 
 
+// ===== Cubic Bezier Curve Segments =====
+
+
+
 // This implementation of cubic bezier curve with a start and an end point given and by using 2 control points.
 // C x1 y1, x2 y2, x y
 // good article for reading: <https://pomax.github.io/bezierinfo/>
@@ -751,7 +919,7 @@ void drawPath(const char *pathText, fSetPixel cbDraw) {
 
 void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
   // TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
-  std::vector<Point> borderPoints;
+
   // Line 1 is x0/y0 to x1/y1, dx1/dy1 is the relative vector from x0/y0 to x1/y1
   int16_t dx1 = (x1 - x0);
   int16_t dy1 = (y1 - y0);
@@ -760,18 +928,16 @@ void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2,
   int16_t dx3 = (x3 - x2);
   int16_t dy3 = (y3 - y2);
 
-  // line(x0, y0, x1, y1, cbDraw);
-  // line(x1, y1, x2, y2, cbDraw);
-  // line(x2, y2, x3, y3, cbDraw);
-
   // heuristic: calc the steps we need
-  uint16_t steps = abs(dx1) + abs(dy1) + abs(dx2) + abs(dy2) + abs(dx3) + abs(dy3);  // p0 - 1 - 2 - 3 - 4 - p3
-  // TRACE("steps:%d\n", steps);
+  uint16_t steps = (abs(dx1) + abs(dy1) + abs(dx2) + abs(dy2) + abs(dx3) + abs(dy3)) / 2;  // p0 - 1 - 2 - 3 - 4 - p3
+                                                                                           // TRACE("steps:%d\n", steps);
+#if (STAT)
+  stat_skipped = 0;
+  stat_added = 0;
+  stat_removed = 0;
+#endif
 
-  uint16_t skipped = 0;
-
-  int16_t lastX = x0;
-  int16_t lastY = y0;
+  _addPixel(x0, y0, cbDraw);
 
   for (uint16_t n = 1; n <= steps; n++) {
     int16_t f = (1000 * n) / steps;
@@ -799,161 +965,25 @@ void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2,
     int32_t x9 = x7 + (f * dx8) / 1000;
     int32_t y9 = y7 + (f * dy8) / 1000;
 
-    // line(lastX, lastY, x9, y9, cbDraw);
     int16_t nextX = (x9 + 500) / 1000;
     int16_t nextY = (y9 + 500) / 1000;
 
-    // don't collect duplicates
-    if ((nextX != lastX) || (nextY != lastY)) {
-      lastX = nextX;
-      lastY = nextY;
-      borderPoints.push_back(gfxDraw::Point(lastX, lastY));
-      // cbDraw(lastX, lastY);
-    } else {
-      skipped++;
-    }
-  }
-  // TRACE("skipped:%d\n", skipped);
+    _addPixel(nextX, nextY, cbDraw);
+  }  // for
+  _addPixel(x3, y3, cbDraw);
+
+  // flush all Pixels
+  _addPixel(0, POINT_BREAK_Y, cbDraw);
+
+#if (STAT)
+  TRACE("skipped: %d\n", stat_skipped);
+  TRACE("added:   %d\n", stat_added);
+  TRACE("removed: %d\n", stat_removed);
+#endif
+}  // drawCubicBezier()
 
 
-
-  // simplify borderPoints.
-  // remove duplicates
-  // remove middle point in corner steps.
-
-  size_t pSize = borderPoints.size();
-  // TRACE("  pSize=%d\n", pSize);
-  skipped = 0;
-
-  for (int n = 0; n < borderPoints.size() - 2; n++) {
-    bool delFlag = false;
-
-    if ((borderPoints[n].x == borderPoints[n + 1].x) && (borderPoints[n].y == borderPoints[n + 1].y)) {
-      delFlag = true;
-
-    } else if ((borderPoints[n].y == borderPoints[n + 1].y) && (abs(borderPoints[n].x - borderPoints[n + 1].x) == 1)) {
-      delFlag = (borderPoints[n + 1].x == borderPoints[n + 2].x);
-
-    } else if ((borderPoints[n].x == borderPoints[n + 1].x) && (abs(borderPoints[n].y - borderPoints[n + 1].y) == 1)) {
-      delFlag = (borderPoints[n + 1].y == borderPoints[n + 2].y);
-    }
-
-    if (delFlag) {
-      borderPoints.erase(borderPoints.begin() + n + 1);
-      skipped++;
-    };
-  }
-  // TRACE("removed:%d\n", skipped);
-
-  for (Point &p : borderPoints) { cbDraw(p.x, p.y); }
-};
-
-
-void cubicBezier2(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
-  printf("cubicBezier2: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
-
-  int32_t f, fx, fy, leg = 1;
-  int32_t sx = x0 < x3 ? 1 : -1, sy = y0 < y3 ? 1 : -1; /* step direction */
-  int32_t xc = -abs(x0 + x1 - x2 - x3), xa = xc - 4 * sx * (x1 - x2), xb = sx * (x0 - x1 - x2 + x3);
-  int32_t yc = -abs(y0 + y1 - y2 - y3), ya = yc - 4 * sy * (y1 - y2), yb = sy * (y0 - y1 - y2 + y3);
-  int32_t ab, ac, bc, cb, xx, xy, yy, dx, dy, ex, pxy, EP = 0.01;
-
-  /* check for curve restrains */
-  /* slope P0-P1 == P2-P3    and  (P0-P3 == P1-P2      or  no slope change)  */
-  if ((x1 - x0) * (x2 - x3) < EP && ((x3 - x0) * (x1 - x2) < EP || xb * xb < xa * xc + EP)) {}
-  if ((y1 - y0) * (y2 - y3) < EP && ((y3 - y0) * (y1 - y2) < EP || yb * yb < ya * yc + EP)) {}
-
-  int32_t len1 = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0) + 1; /* line lengths */
-  int32_t len2 = (x2 - x3) * (x2 - x3) + (y2 - y3) * (y2 - y3) + 1;
-
-  do { /* loop over both ends */
-    ab = xa * yb - xb * ya;
-    ac = xa * yc - xc * ya;
-    bc = xb * yc - xc * yb;
-    ex = ab * (ab + ac - 3 * bc) + ac * ac;        /* P0 part of self-intersection loop? */
-    f = ex > 0 ? 1 : floor(sqrt(1 + 1024 / len1)); /* calc resolution */
-    ab *= f;
-    ac *= f;
-    bc *= f;
-    ex *= f * f; /* increase resolution */
-    xy = 9 * (ab + ac + bc) / 8;
-    cb = 8 * (xa - ya); /* init differences of 1st degree */
-    dx = 27 * (8 * ab * (yb * yb - ya * yc) + ex * (ya + 2 * yb + yc)) / 64 - ya * ya * (xy - ya);
-    dy = 27 * (8 * ab * (xb * xb - xa * xc) - ex * (xa + 2 * xb + xc)) / 64 - xa * xa * (xy + xa);
-    /* init differences of 2nd degree */
-    xx = 3 * (3 * ab * (3 * yb * yb - ya * ya - 2 * ya * yc) - ya * (3 * ac * (ya + yb) + ya * cb)) / 4;
-    yy = 3 * (3 * ab * (3 * xb * xb - xa * xa - 2 * xa * xc) - xa * (3 * ac * (xa + xb) + xa * cb)) / 4;
-    xy = xa * ya * (6 * ab + 6 * ac - 3 * bc + cb);
-    ac = ya * ya;
-    cb = xa * xa;
-    xy = 3 * (xy + 9 * f * (cb * yb * yc - xb * xc * ac) - 18 * xb * yb * ab) / 8;
-
-    if (ex < 0) { /* negate values if inside self-intersection loop */
-      dx = -dx;
-      dy = -dy;
-      xx = -xx;
-      yy = -yy;
-      xy = -xy;
-      ac = -ac;
-      cb = -cb;
-    } /* init differences of 3rd degree */
-    ab = 6 * ya * ac;
-    ac = -6 * xa * ac;
-    bc = 6 * ya * cb;
-    cb = -6 * xa * cb;
-    dx += xy;
-    ex = dx + dy;
-    dy += xy; /* error of 1st step */
-              // exit:
-    for (pxy = 0, fx = fy = f; x0 != x3 && y0 != y3;) {
-      cbDraw(x0, y0);                                  /* plot curve */
-      do {                                             /* move sub-steps of one pixel */
-        if ((pxy == 0) && (dx > xy || dy < xy)) break; /* confusing */
-        if ((pxy == 1) && (dx > 0 || dy < 0)) break;   /* values */
-        y1 = 2 * ex - dy;                              /* save value for test of y step */
-        if (2 * ex >= dx) {                            /* x sub-step */
-          fx--;
-          ex += dx += xx;
-          dy += xy += ac;
-          yy += bc;
-          xx += ab;
-        } else if (y1 > 0)
-          break;
-        if (y1 <= 0) { /* y sub-step */
-          fy--;
-          ex += dy += yy;
-          dx += xy += bc;
-          xx += ac;
-          yy += cb;
-        }
-      } while (fx > 0 && fy > 0); /* pixel complete? */
-      if (2 * fx <= f) {
-        x0 += sx;
-        fx += f;
-      } /* x step */
-      if (2 * fy <= f) {
-        y0 += sy;
-        fy += f;
-      } /* y step */
-      if (pxy == 0 && dx < 0 && dy > 0) pxy = 1; /* pixel ahead valid */
-    }
-    xx = x0;
-    x0 = x3;
-    x3 = xx;
-    sx = -sx;
-    xb = -xb; /* swap legs */
-    yy = y0;
-    y0 = y3;
-    y3 = yy;
-    sy = -sy;
-    yb = -yb;
-    len1 = len2;
-  } while (leg--); /* try other end */
-
-  //  ??? plotLine(x0,y0, x3,y3);       /* remaining part in case of cusp or crunode */
-}
-
-/// @brief Scan a path text with the svg/path/d syntax to create a vector(array) of Segments.
+/// @brief Scan and parset a path text with the svg/path/d syntax to create a vector(array) of Segments.
 /// @param pathText path definition as String
 /// @return Vector with Segments.
 /// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
@@ -1074,8 +1104,15 @@ std::vector<Segment> parsePath(const char *pathText) {
 
       case 'a':
         // Ellipsis arc with absolute end-point coordinate. - calculate center and
-        printf("arc not implemented yet.\n");
+        // Ellipsis arc with absolute end-point coordinate. - calculate center and
         Seg.type = Segment::Arc;
+        Seg.p[0] = getParam();       // rx
+        Seg.p[1] = getParam();       // ry
+        Seg.p[2] = getParam();       // rotation
+        Seg.p[3] = getParam();       // flag1
+        Seg.p[3] += getParam() * 2;  // flag2
+        lastX = Seg.p[4] = lastX + getParam();
+        lastY = Seg.p[5] = lastY + getParam();
         break;
 
       case 'z':
@@ -1099,8 +1136,6 @@ std::vector<Segment> parsePath(const char *pathText) {
 
   return (vSeg);
 }
-
-
 
 }  // gfxDraw:: namespace
 

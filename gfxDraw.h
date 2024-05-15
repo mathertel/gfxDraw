@@ -1,23 +1,21 @@
-// draw algorithms
-
-// This library implements drawing polygons (and paths) on a display.
-
-// These pixel oriented drawing functions are implemented to use callback functions for the
-// effective drawing to make them independent from an specific canvas implementation and can be
-// used for drawing and un-drawing.
-
+// - - - - -
+// GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
+// gfxdraw.h: Library header file
+// 
+// Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
+// This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
+// 
+// These pixel oriented drawing functions are implemented to use callback functions for the effective drawing
+// to make them independent from an specific canvas or GFX implementation and can be used for drawing and un-drawing.
+// 
 // The functions have minimized use of float and arc arithmetics.
-// Path drawing is supporting one closed path and unfolded paths only.
-// The functions have minimized use of float and arc arithmetics.
-
-
-// Some basic drawing algorithms are based on the efficient drawing approach of bresenham, see
-// <http://members.chello.at/easyfilter/bresenham.html>.
-
-// The basic drawing algorithms are implemented as static function in the `gfxDraw` namespace where you can also find useful color constants.
-// The display coordinates are signed 16-bit integers.
-
-// https://svg-path-visualizer.netlify.app/#M2%2C2%20Q8%2C2%208%2C8
+// Path drawing is supporting on any given path.
+// Filled paths are supported on closed paths only.
+//
+// CHANGELOG:
+// 15.05.2024  creation of the DMXSerial library.
+//
+// - - - - -
 
 #pragma once
 
@@ -51,6 +49,7 @@ typedef std::function<void(int16_t x, int16_t y, RGBA color)> fDrawPixel;
 
 /// @brief Callback function to transform all points in the segments
 typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
+
 
 /// @brief The Segment struct holds all information about a segment of a path.
 class Segment {
@@ -202,6 +201,7 @@ void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorde
 /// @param dy y value of the vector
 /// @return the angle n range 0 - 359
 int16_t vectorAngle(int16_t dx, int16_t dy);
+
 
 }  // gfxDraw:: namespace
 
