@@ -17,7 +17,7 @@
 #include "gfxDrawColors.h"
 
 
-#define TRACE(...) // printf(__VA_ARGS__)
+#define TRACE(...)  // printf(__VA_ARGS__)
 
 #define STAT 1
 
@@ -371,7 +371,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
     centerDist = sqrt(distNumerator / ((rx * rx) * (yTemp * yTemp) + (ry * ry) * (xTemp * xTemp)));
   }
 
-  if ((flags == 0x01) || (flags == 0x02)) {
+  if ((flags == 0x00) || (flags == 0x03)) {
     centerDist = -centerDist;
   }
 
@@ -408,7 +408,7 @@ int16_t vectorAngle(int16_t dx, int16_t dy) {
 void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
   static Point lastPoints[3];
 
-  TRACE("_addPixel(%d, %d)\n", x, y);
+  printf("_addPixel(%d, %d)\n", x, y);
 
   if ((x == lastPoints[0].x) && (y == lastPoints[0].y)) {
     // don't collect duplicates
@@ -443,33 +443,40 @@ void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
       bool delFlag = false;
       bool insFlag = false;
 
+      // don't draw "corner" points
       if ((lastPoints[0].y == lastPoints[1].y) && (abs(lastPoints[0].x - lastPoints[1].x) == 1)) {
         delFlag = (lastPoints[1].x == lastPoints[2].x);
       } else if ((lastPoints[0].x == lastPoints[1].x) && (abs(lastPoints[0].y - lastPoints[1].y) == 1)) {
         delFlag = (lastPoints[1].y == lastPoints[2].y);
+      }
 
-      } else if ((abs(lastPoints[0].x - lastPoints[1].x) == 2) || (abs(lastPoints[0].y - lastPoints[1].y) == 2)) {
-        // simple interpolate new lastPoints[1]
-        // TRACE("  gap!\n");
-        if (lastPoints[2].y != POINT_INVALID_Y)
-          cbDraw(lastPoints[2].x, lastPoints[2].y);
-        lastPoints[2] = lastPoints[1];
-        lastPoints[1].x = (lastPoints[0].x + lastPoints[1].x) / 2;
-        lastPoints[1].y = (lastPoints[0].y + lastPoints[1].y) / 2;
+      // draw between unconnected points
+      if (!delFlag) {
+        if ((abs(lastPoints[0].x - lastPoints[1].x) <= 1) && (abs(lastPoints[0].y - lastPoints[1].y) <= 1)) {
+          // points are connected -> no additional draw required
+
+        } else if ((abs(lastPoints[0].x - lastPoints[1].x) <= 2) && (abs(lastPoints[0].y - lastPoints[1].y) <= 2)) {
+          // simple interpolate new lastPoints[1]
+          // TRACE("  gap!\n");
+          if (lastPoints[2].y != POINT_INVALID_Y)
+            cbDraw(lastPoints[2].x, lastPoints[2].y);
+          lastPoints[2] = lastPoints[1];
+          lastPoints[1].x = (lastPoints[0].x + lastPoints[1].x) / 2;
+          lastPoints[1].y = (lastPoints[0].y + lastPoints[1].y) / 2;
 #if (STAT)
-        stat_added++;
+          stat_added++;
 #endif
+        } else if ((abs(lastPoints[0].x - lastPoints[1].x) > 2) || (abs(lastPoints[0].y - lastPoints[1].y) > 2)) {
+          // TRACE("  big gap!\n");
 
-      } else if ((abs(lastPoints[0].x - lastPoints[1].x) > 2) || (abs(lastPoints[0].y - lastPoints[1].y) > 2)) {
-        // TRACE("  big gap!\n");
-
-        // draw a streight line from lastPoints[1] to lastPoints[0]
-        if (lastPoints[2].y != POINT_INVALID_Y)
-          cbDraw(lastPoints[2].x, lastPoints[2].y);
-        drawLine(lastPoints[1].x, lastPoints[1].y, lastPoints[0].x, lastPoints[0].y, cbDraw);
-        for (int n = 2; n >= 0; n--) {
-          lastPoints[n].y = POINT_INVALID_Y;
-        }  // for
+          // draw a streight line from lastPoints[1] to lastPoints[0]
+          if (lastPoints[2].y != POINT_INVALID_Y)
+            cbDraw(lastPoints[2].x, lastPoints[2].y);
+          drawLine(lastPoints[1].x, lastPoints[1].y, lastPoints[0].x, lastPoints[0].y, cbDraw);
+          lastPoints[2].y = POINT_INVALID_Y;
+          lastPoints[1].y = POINT_INVALID_Y;
+          // lastPoints[0] stays.
+        }
       }
 
       if (delFlag) {
@@ -516,11 +523,12 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
 
   int startAngle = vectorAngle(x1 - cx, y1 - cy);
   int endAngle = vectorAngle(x2 - cx, y2 - cy);
-  int stepAngle = (flags & 0x02) ? -1 : 1;
+  int stepAngle = (flags & 0x02) ? 1 : 359;
 
   // Iterate through the ellipse
   _addPixel(x1, y1, cbDraw);
-  for (uint16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
+  for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
+    printf("a=%d ", angle);
     int16_t x = cx + SCALE256(rx * cos256(angle));
     int16_t y = cy + SCALE256(ry * sin256(angle));
     _addPixel(x, y, cbDraw);
@@ -589,7 +597,13 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
 /// @param dx X-Offset
 /// @param dy Y-Offset
 void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
+  int16_t p0_x, p0_y, p1_x, p1_y;
+  int16_t angle;
+  int16_t scale1000;
+  bool scaleKnown = false;
+
   for (Segment &pSeg : segments) {
+
     switch (pSeg.type) {
       case Segment::Type::Move:
       case Segment::Type::Line:
@@ -600,6 +614,48 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
         cbTransform(pSeg.p[0], pSeg.p[1]);
         cbTransform(pSeg.p[2], pSeg.p[3]);
         cbTransform(pSeg.p[4], pSeg.p[5]);
+        break;
+
+      case Segment::Type::Arc:
+        if (!scaleKnown) {
+          // extract scale and rotation from transforming (0,0)-(1000,0) once for the whole sement vector.
+          p0_x = p0_y = p1_y = 0;
+          p1_x = 1000;  // length = 1000
+
+          cbTransform(p0_x, p0_y);
+          cbTransform(p1_x, p1_y);
+
+          // ignore any translation
+          p1_x -= p0_x;
+          p1_y -= p0_y;
+
+          if (p1_y == 0) {
+            // simplify for non rotated or 180° rotated transformations
+            if (p1_x > 0) {
+              scale1000 = p1_x;
+              angle = 0;
+            } else {
+              scale1000 = -p1_x;
+              angle = 180;
+            }
+
+          } else {
+            double p1_length = sqrt((p1_x * p1_x) + (p1_y * p1_y));
+            scale1000 = round(p1_length);
+            angle = vectorAngle(p1_x, p1_y);
+          }
+          scaleKnown = true;
+        }
+
+        // scale x & y radius
+        pSeg.p[0] = (pSeg.p[0] * scale1000 + 500) / 1000;
+        pSeg.p[1] = (pSeg.p[1] * scale1000 + 500) / 1000;
+
+        // rotate ellipsis rotation
+        pSeg.p[2] += angle;
+
+        // transform endpoint
+        cbTransform(pSeg.p[4], pSeg.p[5]);  // endpoint
         break;
 
       case Segment::Type::Close:
