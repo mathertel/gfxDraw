@@ -408,7 +408,7 @@ int16_t vectorAngle(int16_t dx, int16_t dy) {
 void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
   static Point lastPoints[3];
 
-  printf("_addPixel(%d, %d)\n", x, y);
+  TRACE("_addPixel(%d, %d)\n", x, y);
 
   if ((x == lastPoints[0].x) && (y == lastPoints[0].y)) {
     // don't collect duplicates
@@ -528,7 +528,6 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   // Iterate through the ellipse
   _addPixel(x1, y1, cbDraw);
   for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
-    printf("a=%d ", angle);
     int16_t x = cx + SCALE256(rx * cos256(angle));
     int16_t y = cy + SCALE256(ry * sin256(angle));
     _addPixel(x, y, cbDraw);
@@ -1052,7 +1051,7 @@ std::vector<Segment> parsePath(const char *pathText) {
 
   /// A lambda function to parse a parameter from the inputText.
   auto getParam = [&]() {
-    while (isblank(*path) || (*path == ',')) { path++; }
+    while (isspace(*path) || (*path == ',')) { path++; }
     int16_t p = strtol(path, &path, 10);
     return (p);
   };
@@ -1061,128 +1060,128 @@ std::vector<Segment> parsePath(const char *pathText) {
   std::vector<Segment> vSeg;
 
   while (path && *path) {
-    memset(&Seg, 0, sizeof(Seg));
-    int parameters = -1;
 
-    while (isblank(*path)) path++;
+    if (isspace(*path)) {
+      path++;
 
-    if (strchr("MmLlCcZHhVvAaz", *path))
+    } else if (strchr("MmLlCcZHhVvAaz", *path)) {
       command = *path++;
 
-    switch (command) {
-      case 'M':
-        Seg.type = Segment::Move;
-        lastX = Seg.p[0] = getParam();
-        lastY = Seg.p[1] = getParam();
-        break;
+      memset(&Seg, 0, sizeof(Seg));
+      int parameters = -1;
 
-      case 'm':
-        // convert to absolute coordinates
-        Seg.type = Segment::Move;
-        lastX = Seg.p[0] = lastX + getParam();
-        lastY = Seg.p[1] = lastY + getParam();
-        break;
+      switch (command) {
+        case 'M':
+          Seg.type = Segment::Move;
+          lastX = Seg.p[0] = getParam();
+          lastY = Seg.p[1] = getParam();
+          break;
 
-      case 'L':
-        Seg.type = Segment::Line;
-        lastX = Seg.p[0] = getParam();
-        lastY = Seg.p[1] = getParam();
-        break;
+        case 'm':
+          // convert to absolute coordinates
+          Seg.type = Segment::Move;
+          lastX = Seg.p[0] = lastX + getParam();
+          lastY = Seg.p[1] = lastY + getParam();
+          break;
 
-      case 'l':
-        // convert to absolute coordinates
-        Seg.type = Segment::Line;
-        lastX = Seg.p[0] = lastX + getParam();
-        lastY = Seg.p[1] = lastY + getParam();
-        break;
+        case 'L':
+          Seg.type = Segment::Line;
+          lastX = Seg.p[0] = getParam();
+          lastY = Seg.p[1] = getParam();
+          break;
 
-      case 'C':
-        // curve defined with absolute points - no convertion required
-        Seg.type = Segment::Curve;
-        Seg.p[0] = getParam();
-        Seg.p[1] = getParam();
-        Seg.p[2] = getParam();
-        Seg.p[3] = getParam();
-        lastX = Seg.p[4] = getParam();
-        lastY = Seg.p[5] = getParam();
-        break;
+        case 'l':
+          // convert to absolute coordinates
+          Seg.type = Segment::Line;
+          lastX = Seg.p[0] = lastX + getParam();
+          lastY = Seg.p[1] = lastY + getParam();
+          break;
 
-      case 'c':
-        // curve defined with relative points - convert to absolute coordinates
-        Seg.type = Segment::Curve;
-        Seg.p[0] = lastX + getParam();
-        Seg.p[1] = lastY + getParam();
-        Seg.p[2] = lastX + getParam();
-        Seg.p[3] = lastY + getParam();
-        lastX = Seg.p[4] = lastX + getParam();
-        lastY = Seg.p[5] = lastY + getParam();
-        break;
+        case 'C':
+          // curve defined with absolute points - no convertion required
+          Seg.type = Segment::Curve;
+          Seg.p[0] = getParam();
+          Seg.p[1] = getParam();
+          Seg.p[2] = getParam();
+          Seg.p[3] = getParam();
+          lastX = Seg.p[4] = getParam();
+          lastY = Seg.p[5] = getParam();
+          break;
 
-      case 'H':
-        // Horizontal line with absolute horizontal end point coordinate - convert to absolute line
-        Seg.type = Segment::Line;
-        lastX = Seg.p[0] = getParam();
-        Seg.p[1] = lastY;  // stay;
-        break;
+        case 'c':
+          // curve defined with relative points - convert to absolute coordinates
+          Seg.type = Segment::Curve;
+          Seg.p[0] = lastX + getParam();
+          Seg.p[1] = lastY + getParam();
+          Seg.p[2] = lastX + getParam();
+          Seg.p[3] = lastY + getParam();
+          lastX = Seg.p[4] = lastX + getParam();
+          lastY = Seg.p[5] = lastY + getParam();
+          break;
 
-      case 'h':
-        // Horizontal line with relative horizontal end-point coordinate - convert to absolute line
-        Seg.type = Segment::Line;
-        lastX = Seg.p[0] = lastX + getParam();
-        Seg.p[1] = lastY;  // stay;
-        break;
+        case 'H':
+          // Horizontal line with absolute horizontal end point coordinate - convert to absolute line
+          Seg.type = Segment::Line;
+          lastX = Seg.p[0] = getParam();
+          Seg.p[1] = lastY;  // stay;
+          break;
 
-      case 'V':
-        // Vertical line with absolute vertical end point coordinate - convert to absolute line
-        Seg.type = Segment::Line;
-        Seg.p[0] = lastX;  // stay;
-        lastY = Seg.p[1] = getParam();
-        break;
+        case 'h':
+          // Horizontal line with relative horizontal end-point coordinate - convert to absolute line
+          Seg.type = Segment::Line;
+          lastX = Seg.p[0] = lastX + getParam();
+          Seg.p[1] = lastY;  // stay;
+          break;
 
-      case 'v':
-        // Vertical line with relative horizontal end-point coordinate - convert to absolute line
-        Seg.type = Segment::Line;
-        Seg.p[0] = lastX;  // stay;
-        lastY = Seg.p[1] = lastY + getParam();
-        break;
+        case 'V':
+          // Vertical line with absolute vertical end point coordinate - convert to absolute line
+          Seg.type = Segment::Line;
+          Seg.p[0] = lastX;  // stay;
+          lastY = Seg.p[1] = getParam();
+          break;
 
-      case 'A':
-        // Ellipsis arc with absolute end-point coordinate. - calculate center and
-        Seg.type = Segment::Arc;
-        Seg.p[0] = getParam();       // rx
-        Seg.p[1] = getParam();       // ry
-        Seg.p[2] = getParam();       // rotation
-        Seg.p[3] = getParam();       // flag1
-        Seg.p[3] += getParam() * 2;  // flag2
-        lastX = Seg.p[4] = getParam();
-        lastY = Seg.p[5] = getParam();
-        break;
+        case 'v':
+          // Vertical line with relative horizontal end-point coordinate - convert to absolute line
+          Seg.type = Segment::Line;
+          Seg.p[0] = lastX;  // stay;
+          lastY = Seg.p[1] = lastY + getParam();
+          break;
 
-      case 'a':
-        // Ellipsis arc with absolute end-point coordinate. - calculate center and
-        // Ellipsis arc with absolute end-point coordinate. - calculate center and
-        Seg.type = Segment::Arc;
-        Seg.p[0] = getParam();       // rx
-        Seg.p[1] = getParam();       // ry
-        Seg.p[2] = getParam();       // rotation
-        Seg.p[3] = getParam();       // flag1
-        Seg.p[3] += getParam() * 2;  // flag2
-        lastX = Seg.p[4] = lastX + getParam();
-        lastY = Seg.p[5] = lastY + getParam();
-        break;
+        case 'A':
+          // Ellipsis arc with absolute end-point coordinate. - calculate center and
+          Seg.type = Segment::Arc;
+          Seg.p[0] = getParam();       // rx
+          Seg.p[1] = getParam();       // ry
+          Seg.p[2] = getParam();       // rotation
+          Seg.p[3] = getParam();       // flag1
+          Seg.p[3] += getParam() * 2;  // flag2
+          lastX = Seg.p[4] = getParam();
+          lastY = Seg.p[5] = getParam();
+          break;
 
-      case 'z':
-      case 'Z':
-        Seg.type = Segment::Close;
-        break;
+        case 'a':
+          // Ellipsis arc with absolute end-point coordinate. - calculate center and
+          // Ellipsis arc with absolute end-point coordinate. - calculate center and
+          Seg.type = Segment::Arc;
+          Seg.p[0] = getParam();       // rx
+          Seg.p[1] = getParam();       // ry
+          Seg.p[2] = getParam();       // rotation
+          Seg.p[3] = getParam();       // flag1
+          Seg.p[3] += getParam() * 2;  // flag2
+          lastX = Seg.p[4] = lastX + getParam();
+          lastY = Seg.p[5] = lastY + getParam();
+          break;
 
-      default:
-        printf("unknown path type: %c\n", *path);
-        return (vSeg);
-        break;
+        case 'z':
+        case 'Z':
+          Seg.type = Segment::Close;
+          break;
+      }
+      vSeg.push_back(Seg);
+
+    } else {
+      printf("unknown segment '%c'\n", *path);
     }
-
-    vSeg.push_back(Seg);
   }
 
   // TRACE("  scanned: %d segments\n", vSeg.size());
