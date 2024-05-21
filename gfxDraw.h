@@ -83,18 +83,6 @@ public:
       int16_t xEnd;
       int16_t yEnd;
     };
-
-    // struct {  // for Arcs
-    //   int16_t rx;
-    //   int16_t ry;
-    //   int16_t rotation; // of ellisis
-    //   int16_t delta angle; // positive -> clockwise
-    //   int16_t cx;
-    //   int16_t cy;
-    //   int16_t xEnd;
-    //   int16_t yEnd;
-    // };
-
   };
 };
 
@@ -138,7 +126,7 @@ void copySegments(std::vector<Segment> &segments);
 
 
 /// @brief Draw an arc using the most efficient algorithm
-void drawArc(int16_t x1, int16_t y1, int16_t rx, int16_t ry, int16_t phi, int16_t flags, int16_t x2, int16_t y2, fSetPixel cbDraw);
+void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, fSetPixel cbDraw);
 
 
 /// @brief scale all points by the factor f100 / 100.

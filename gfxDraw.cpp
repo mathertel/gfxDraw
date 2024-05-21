@@ -158,7 +158,7 @@ int32_t cos256(int32_t degree) {
   return (sin256(degree + 90));
 }
 
-#define SCALE256(v) (v >> 8)
+#define SCALE256(v) ((v + 127) >> 8)
 
 
 
@@ -331,7 +331,7 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 
 /// @brief Calculate the center parameterization for an arc from endpoints
 /// The radius values may be scaled up when there is no arc possible.
-void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int16_t &ry, int16_t phi, int16_t flags, int16_t &cx, int16_t &cy) {
+void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int16_t &ry, int16_t phi, int16_t flags, int32_t &cx, int32_t &cy) {
   // Conversion from endpoint to center parameterization
   // see also http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
 
@@ -381,8 +381,8 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
   double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
 
-  cx = (centerX + 0.5);
-  cy = (centerY + 0.5);
+  cx = (256 * centerX) ;
+  cy = (256 * centerY) ;
 }  // arcCenter()
 
 
@@ -514,22 +514,22 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   stat_removed = 0;
 #endif
 
-  int16_t cx, cy;
+  int32_t cx, cy;
 
   arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx, cy);
 
-  TRACE("flags=: 0x%02x\n", flags);
-  TRACE("center=: %d/%d\n", cx, cy);
+  TRACE("flags   = 0x%02x\n", flags);
+  TRACE("center = %d/%d\n", cx, cy);
 
-  int startAngle = vectorAngle(x1 - cx, y1 - cy);
-  int endAngle = vectorAngle(x2 - cx, y2 - cy);
+  int startAngle = vectorAngle(256 * x1 - cx, 256 * y1 - cy);
+  int endAngle = vectorAngle(256 * x2 - cx, 256 * y2 - cy);
   int stepAngle = (flags & 0x02) ? 1 : 359;
 
   // Iterate through the ellipse
   _addPixel(x1, y1, cbDraw);
   for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
-    int16_t x = cx + SCALE256(rx * cos256(angle));
-    int16_t y = cy + SCALE256(ry * sin256(angle));
+    int16_t x = SCALE256(cx + (rx * cos256(angle)));
+    int16_t y = SCALE256(cy + (ry * sin256(angle)));
     _addPixel(x, y, cbDraw);
   }
   _addPixel(x2, y2, cbDraw);
