@@ -13,17 +13,14 @@
 // Filled paths are supported on closed paths only.
 //
 // CHANGELOG:
-// 15.05.2024  creation of the DMXSerial library.
+// 15.05.2024  creation of the GFXDraw library.
 //
 // - - - - -
 
 #pragma once
 
-#ifdef ARDUINO
-#include <Arduino.h>
-#endif
+#include "gfxDrawCommon.h"
 
-#include <functional>
 #include <vector>
 #include <algorithm>
 
@@ -58,7 +55,8 @@ public:
     Move = 0x0100 + 2,
     Line = 0x0200 + 2,
     Curve = 0x0300 + 6,
-    Arc = 0x0400 + 7,
+    Arc   = 0x0400 + 7,
+    Circle = 0x0800 + 3,
     Close = 0xFF00 + 0,
   };
 

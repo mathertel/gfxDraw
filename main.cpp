@@ -5,6 +5,9 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <complex>
+
+#include "fixed4.h"
 
 #include "gfxDraw.h"
 #include "gfxDrawObject.h"
@@ -153,7 +156,17 @@ void assert(bool b, char *text) {
 // draw the test paths for outTest.bmp
 void silentTests() {
   uint16_t count;
-  printf("\nSilent Tests\n");
+  printf("\nSilent Tests:\n");
+
+  if (sizeof(gfxDraw::RGBA) != 4) {
+    // cout << "size(Segment):" << sizeof(gfxDraw::Segment) << endl;
+    cout << "error: size(RGBA) is not 4!" << endl;
+  }
+
+  if (sizeof(gfxDraw::Segment) != 14) {
+    // cout << "size(RGBA):" << sizeof(testRGBA) << endl;
+    cout << "error: size(Segment) is not 14!" << endl;
+  }
 
   count = 0;
   gfxDraw::drawLine(5, 5, 10, 5, [&](int16_t x, int16_t y) {
@@ -182,14 +195,18 @@ void silentTests() {
   gfxDraw::drawCubicBezier(10, 10, 11, 2, 25, 18, 26, 10, [&](int16_t x, int16_t y) {
     count++;
   });
-  assert((count <= 18), "draw too many points");
-  assert((count >= 18), "draw not enough points");
+  assert((count <= 19), "draw too many points");
+  assert((count >= 19), "draw not enough points");
 
   int16_t a;
-  a = gfxDraw::vectorAngle( 1,  1);  assert((a ==  45), "vectorAngle( 1,  1) error");
-  a = gfxDraw::vectorAngle(-1,  1);  assert((a == 135), "vectorAngle(-1,  1) error");
-  a = gfxDraw::vectorAngle(-1, -1);  assert((a == 225), "vectorAngle(-1, -1) error");
-  a = gfxDraw::vectorAngle( 1, -1);  assert((a == 315), "vectorAngle( 1, -1) error");
+  a = gfxDraw::vectorAngle(1, 1);
+  assert((a == 45), "vectorAngle( 1,  1) error");
+  a = gfxDraw::vectorAngle(-1, 1);
+  assert((a == 135), "vectorAngle(-1,  1) error");
+  a = gfxDraw::vectorAngle(-1, -1);
+  assert((a == 225), "vectorAngle(-1, -1) error");
+  a = gfxDraw::vectorAngle(1, -1);
+  assert((a == 315), "vectorAngle( 1, -1) error");
 
   printf("\n");
 }
@@ -342,11 +359,37 @@ void drawTest03() {
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-// Simple Arc drawing test cases
-  // gfxDraw::pathByText("M12 2 A 9 9 0 0 0 20 10 Z", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
-  // gfxDraw::pathByText("M112 102 A 14 14 0 0 0 128 118 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
-  gfxDraw::pathByText("M30 112 A 100 100 0 0 0 180 220 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
+  // Simple Arc drawing test cases
+  gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z",       2, 2, 200, bmpSet(gfxDraw::BLUE), nullptr);
+  // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
 
+  // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  // gfxDraw::drawSolidRect(210, 10, 99, 99, bmpSet(gfxDraw::GREEN));
+  // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  // gfxDraw::drawSolidRect(210, 120, 99, 99, bmpSet(gfxDraw::GREEN));
+
+  // char *pie = "M275,175 v-150 a150,150 0 0,0 -150,150 z M300,200 h-150 a150,150 0 1,0 150,-150 z";
+  // gfxDraw::pathByText(pie, 0, 0, 30, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  const char *svgkey = R"==(
+M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
+)==";
+
+// M44 24a20 20 0 01-20 20A20 20 0 014 24 20 20 0 0124 4a20 20 0 0120 20zM20 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 32a12 4 0 01-12 4 12 4 0 01-12-4 12 4 0 0112-4 12 4 0 0112 4z
+  const char *SmileyArc = R"==(
+M44 24 a20 20 0 0 1 -20 20A20 20 0 0 1 4 24 A20 20 0 0 1 24 4 a20 20 0 0 1 20 20z
+M20 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
+M36 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
+M36 32 a 12 4 0 0 1 -12 4 a12 4 0 0 1-12-4 a12 4 0 0 1 12-4 a12 4 0 0 1 12 4z
+)==";
+
+  // gfxDraw::pathByText(svgkey, 20, 20, 220, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::WHITE));
+  gfxDraw::pathByText(SmileyArc, 110, 10, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArc, 110, 40, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  gfxDraw::pathByText("O 20 20 20", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 }
 
 
@@ -398,22 +441,14 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 
 #endif
 
+
 // fSetPixel fBlack(CBitmap *bm, int32_t x, int32_t y) {
 //   bm->setPixel(x, y, gfxDraw::BLACK);
 // }
 
 int main() {
-  if (sizeof(gfxDraw::RGBA) != 4) {
-    // cout << "size(Segment):" << sizeof(gfxDraw::Segment) << endl;
-    cout << "error: size(RGBA) is not 4!" << endl;
-  }
 
-  if (sizeof(gfxDraw::Segment) != 14) {
-    // cout << "size(RGBA):" << sizeof(testRGBA) << endl;
-    cout << "error: size(Segment) is not 14!" << endl;
-  }
-
-  silentTests();
+  // silentTests();
 
 #if 0
   newImage(400, 300);
@@ -473,4 +508,6 @@ int main() {
   // drawDigits7(7, 238, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
   // drawDigits7(8, 282, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
   // drawDigits7(9, 316, 130, bmpSet(gfxDraw::RED), bmpSet(gfxDraw::YELLOW));
+
+  printf("end.");
 }

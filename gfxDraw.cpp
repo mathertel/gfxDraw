@@ -16,6 +16,8 @@
 #include "gfxDraw.h"
 #include "gfxDrawColors.h"
 
+#include "gfxDrawCircle.h"
+
 
 #define TRACE(...)  // printf(__VA_ARGS__)
 
@@ -34,42 +36,11 @@ uint16_t stat_removed = 0;
 #define SLOPE_HORIZONTAL 3
 
 
-#define POINT_BREAK_Y INT16_MAX
-#define POINT_INVALID_Y INT16_MAX - 1
-
 namespace gfxDraw {
 
 // ===== internal class definitions =====
 
-/// @brief The Point holds a pixel position and provides some useful static methods.
-class Point {
-public:
-  Point()
-    : x(0), y(POINT_INVALID_Y){};
 
-  Point(int16_t _x, int16_t _y)
-    : x(_x), y(_y){};
-
-  /// @brief X coordinate of the Point
-  int16_t x;
-
-  /// @brief Y coordinate of the Point
-  int16_t y;
-
-  /// @brief compare function for std::sort to sort points by (y) and ascending (x)
-  /// @param p1 first point
-  /// @param p2 second point
-  /// @return when p1 is lower than p2
-  static bool compare(const Point &p1, const Point &p2) {
-    if (p1.y != p2.y)
-      return (p1.y < p2.y);
-    return (p1.x < p2.x);
-  };
-
-  constexpr bool operator==(const Point &p2) {
-    return ((x == p2.x) && (y == p2.y));
-  };
-};
 
 
 /// @brief The _Edge class holds a horizontal pixel sequence for path boundaries and provides some useful static methods.
@@ -381,8 +352,8 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
   double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
 
-  cx = (256 * centerX) ;
-  cy = (256 * centerY) ;
+  cx = (256 * centerX);
+  cy = (256 * centerY);
 }  // arcCenter()
 
 
@@ -657,6 +628,11 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
         cbTransform(pSeg.p[4], pSeg.p[5]);  // endpoint
         break;
 
+      case Segment::Type::Circle:
+        // TODO:
+        TRACE("Transform circle is missing.\n");
+        break;
+
       case Segment::Type::Close:
         break;
 
@@ -718,7 +694,10 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
                            pSeg.p[2],                   // phi, ellipsis rotation
                            pSeg.p[3],                   // flags
                            cbDraw);
+          break;
 
+        case Segment::Type::Circle:
+          gfxDraw::drawCircle(Point(pSeg.p[0] + dx, pSeg.p[1] + dy), pSeg.p[2], cbDraw);
           break;
 
         case Segment::Type::Close:
@@ -1064,7 +1043,7 @@ std::vector<Segment> parsePath(const char *pathText) {
     if (isspace(*path)) {
       path++;
 
-    } else if (strchr("MmLlCcZHhVvAaz", *path)) {
+    } else if (strchr("MmLlCcZHhVvAazO", *path)) {
       command = *path++;
 
       memset(&Seg, 0, sizeof(Seg));
@@ -1072,34 +1051,34 @@ std::vector<Segment> parsePath(const char *pathText) {
 
       switch (command) {
         case 'M':
-          Seg.type = Segment::Move;
+          Seg.type = Segment::Type::Move;
           lastX = Seg.p[0] = getParam();
           lastY = Seg.p[1] = getParam();
           break;
 
         case 'm':
           // convert to absolute coordinates
-          Seg.type = Segment::Move;
+          Seg.type = Segment::Type::Move;
           lastX = Seg.p[0] = lastX + getParam();
           lastY = Seg.p[1] = lastY + getParam();
           break;
 
         case 'L':
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           lastX = Seg.p[0] = getParam();
           lastY = Seg.p[1] = getParam();
           break;
 
         case 'l':
           // convert to absolute coordinates
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           lastX = Seg.p[0] = lastX + getParam();
           lastY = Seg.p[1] = lastY + getParam();
           break;
 
         case 'C':
           // curve defined with absolute points - no convertion required
-          Seg.type = Segment::Curve;
+          Seg.type = Segment::Type::Curve;
           Seg.p[0] = getParam();
           Seg.p[1] = getParam();
           Seg.p[2] = getParam();
@@ -1110,7 +1089,7 @@ std::vector<Segment> parsePath(const char *pathText) {
 
         case 'c':
           // curve defined with relative points - convert to absolute coordinates
-          Seg.type = Segment::Curve;
+          Seg.type = Segment::Type::Curve;
           Seg.p[0] = lastX + getParam();
           Seg.p[1] = lastY + getParam();
           Seg.p[2] = lastX + getParam();
@@ -1121,35 +1100,35 @@ std::vector<Segment> parsePath(const char *pathText) {
 
         case 'H':
           // Horizontal line with absolute horizontal end point coordinate - convert to absolute line
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           lastX = Seg.p[0] = getParam();
           Seg.p[1] = lastY;  // stay;
           break;
 
         case 'h':
           // Horizontal line with relative horizontal end-point coordinate - convert to absolute line
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           lastX = Seg.p[0] = lastX + getParam();
           Seg.p[1] = lastY;  // stay;
           break;
 
         case 'V':
           // Vertical line with absolute vertical end point coordinate - convert to absolute line
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           Seg.p[0] = lastX;  // stay;
           lastY = Seg.p[1] = getParam();
           break;
 
         case 'v':
           // Vertical line with relative horizontal end-point coordinate - convert to absolute line
-          Seg.type = Segment::Line;
+          Seg.type = Segment::Type::Line;
           Seg.p[0] = lastX;  // stay;
           lastY = Seg.p[1] = lastY + getParam();
           break;
 
         case 'A':
           // Ellipsis arc with absolute end-point coordinate. - calculate center and
-          Seg.type = Segment::Arc;
+          Seg.type = Segment::Type::Arc;
           Seg.p[0] = getParam();       // rx
           Seg.p[1] = getParam();       // ry
           Seg.p[2] = getParam();       // rotation
@@ -1162,7 +1141,7 @@ std::vector<Segment> parsePath(const char *pathText) {
         case 'a':
           // Ellipsis arc with absolute end-point coordinate. - calculate center and
           // Ellipsis arc with absolute end-point coordinate. - calculate center and
-          Seg.type = Segment::Arc;
+          Seg.type = Segment::Type::Arc;
           Seg.p[0] = getParam();       // rx
           Seg.p[1] = getParam();       // ry
           Seg.p[2] = getParam();       // rotation
@@ -1172,9 +1151,18 @@ std::vector<Segment> parsePath(const char *pathText) {
           lastY = Seg.p[5] = lastY + getParam();
           break;
 
+        case 'O':
+          // Draw a whole circle by center and radius
+          Seg.type = Segment::Type::Circle;
+          Seg.p[0] = getParam();  // Center.x
+          Seg.p[1] = getParam();  // Center.y
+          Seg.p[2] = getParam();  // radius
+          lastX = lastY = 0;
+          break;
+
         case 'z':
         case 'Z':
-          Seg.type = Segment::Close;
+          Seg.type = Segment::Type::Close;
           break;
       }
       vSeg.push_back(Seg);
