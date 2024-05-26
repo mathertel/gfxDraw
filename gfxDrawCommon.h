@@ -62,8 +62,53 @@ public:
     return (p1.x < p2.x);
   };
 
+
+  // Quadrants
+  //      y
+  //    2 | 3
+  //  x---|--->
+  //    1 | 0
+  //      v
+
+  static int16_t circleQuadrant(const Point &p) {
+    if ((p.x > 0) && (p.y >= 0)) { return (0); }
+    if ((p.x <= 0) && (p.y > 0)) { return (1); }
+    if ((p.x < 0) && (p.y <= 0)) { return (2); }
+    if ((p.x >= 0) && (p.y < 0)) { return (3); }
+    return (0);
+  }
+
+  // compare 2 points on a circle.
+  // return true if the first is less than the second
+  static bool compareCircle(Point p1, Point p2) {
+
+    if (p1 == p2) return (false);
+
+    int16_t q1 = circleQuadrant(p1);
+    int16_t q2 = circleQuadrant(p2);
+
+    if (q1 < q2) return (true);
+    if (q1 > q2) return (false);
+
+    if (q1 == 0) {
+      return ((p1.x > p2.x) || (p1.y < p2.y));
+    } else if (q1 == 1) {
+      return ((p1.x > p2.x) || (p1.y > p2.y));
+    } else if (q1 == 2) {
+      return ((p1.x < p2.x) || (p1.y > p2.y));
+    } else if (q1 == 3) {
+      return ((p1.x < p2.x) || (p1.y < p2.y));
+    }
+    return (false);
+  }
+
   constexpr bool operator==(const Point &p2) {
     return ((x == p2.x) && (y == p2.y));
+  };
+
+  friend Point operator-(const Point &p1, const Point &p2) {
+    Point p(p1.x - p2.x, p1.y - p2.y);
+    return (p);
   };
 };
 
