@@ -19,13 +19,12 @@
 
 #pragma once
 
-#include "gfxDrawCommon.h"
-
 #include <vector>
 #include <algorithm>
 
 #include <cctype>
 
+#include "gfxDrawCommon.h"
 #include "gfxDrawColors.h"
 
 // scaling: factors are in unit 100 (percent)
@@ -185,7 +184,7 @@ void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorde
 /// @brief Calculate the angle of a vector in degrees
 /// @param dx x value of the vector
 /// @param dy y value of the vector
-/// @return the angle n range 0 - 359
+/// @return the angle n range 0...359
 int16_t vectorAngle(int16_t dx, int16_t dy);
 
 

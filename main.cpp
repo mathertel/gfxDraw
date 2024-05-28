@@ -7,9 +7,8 @@
 #include <math.h>
 #include <complex>
 
-#include "fixed4.h"
-
 #include "gfxDraw.h"
+#include "gfxDrawCircle.h"
 #include "gfxDrawObject.h"
 
 #include "lodepng.h"
@@ -59,7 +58,7 @@ void fillImage(gfxDraw::RGBA color) {
 }
 
 #define bmpSet(col) [](int16_t x, int16_t y) { \
-  setImagePixel(x, y, col); \
+  setImagePixel(x, y, (col)); \
 }
 
 #define bmpDraw() [](int16_t x, int16_t y, gfxDraw::RGBA col) { \
@@ -352,6 +351,15 @@ void drawTest02() {
 };
 
 
+void drawTest04() {
+  // 
+  // const char *heard = "M24 10a1 1 0 00-18 18l18 18 18-18a1 1 0 00-18-18z";
+  const char *heard = "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
+
+  gfxDraw::pathByText(heard, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+}
+
 void drawTest03() {
 
 
@@ -360,7 +368,7 @@ void drawTest03() {
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
   // Simple Arc drawing test cases
-  gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z",       2, 2, 200, bmpSet(gfxDraw::BLUE), nullptr);
+  // gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z", 2, 2, 200, bmpSet(gfxDraw::BLUE), nullptr);
   // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, bmpSet(gfxDraw::BLUE), nullptr);
 
   // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
@@ -370,14 +378,18 @@ void drawTest03() {
 
   // gfxDraw::drawSolidRect(210, 120, 99, 99, bmpSet(gfxDraw::GREEN));
 
-  // char *pie = "M275,175 v-150 a150,150 0 0,0 -150,150 z M300,200 h-150 a150,150 0 1,0 150,-150 z";
-  // gfxDraw::pathByText(pie, 0, 0, 30, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  const char *pie = R"==(
+   M150,150 v-150 a150,150 0 0,0 -150,150 z
+   M175,175 h-150 a150,150 0 1,0 150,-150 z
+   )==";
+  gfxDraw::pathByText(pie, 8, 8, 30, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-  const char *svgkey = R"==(
+  const char *Sword = R"==(
 M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
 )==";
+  gfxDraw::pathByText(Sword, 10, 160, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-// M44 24a20 20 0 01-20 20A20 20 0 014 24 20 20 0 0124 4a20 20 0 0120 20zM20 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 32a12 4 0 01-12 4 12 4 0 01-12-4 12 4 0 0112-4 12 4 0 0112 4z
+  // M44 24a20 20 0 01-20 20A20 20 0 014 24 20 20 0 0124 4a20 20 0 0120 20zM20 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 32a12 4 0 01-12 4 12 4 0 01-12-4 12 4 0 0112-4 12 4 0 0112 4z
   const char *SmileyArc = R"==(
 M44 24 a20 20 0 0 1 -20 20A20 20 0 0 1 4 24 A20 20 0 0 1 24 4 a20 20 0 0 1 20 20z
 M20 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
@@ -385,11 +397,13 @@ M36 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
 M36 32 a 12 4 0 0 1 -12 4 a12 4 0 0 1-12-4 a12 4 0 0 1 12-4 a12 4 0 0 1 12 4z
 )==";
 
-  // gfxDraw::pathByText(svgkey, 20, 20, 220, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::WHITE));
-  gfxDraw::pathByText(SmileyArc, 110, 10, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
-  gfxDraw::pathByText(SmileyArc, 110, 40, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArc, 200, 100, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArc, 140, 10, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::GREEN));
+  gfxDraw::pathByText(SmileyArc, 220, 10, 50, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArc, 100, 80, 150, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-  gfxDraw::pathByText("O 20 20 20", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  // gfxDraw::pathByText("O 20 20 20", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::RGBA(0xFF, 0xFF, 0)));
 }
 
 
@@ -474,6 +488,15 @@ int main() {
   drawTest03();
 
   saveImage("test03.png");
+#endif
+
+#if (1)
+  newImage(400, 300);
+  fillImage(gfxDraw::WHITE);
+
+  drawTest04();
+
+  saveImage("test04.png");
 #endif
 
   // gfxDraw::rect(10, 50, 12, 8, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::CYAN), 2);

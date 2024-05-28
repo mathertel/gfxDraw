@@ -190,7 +190,7 @@ void dumpColorTable() {
 /// @param y1 Ending Point Y coordinate.
 /// @param cbDraw Callback with coordinates of line pixels.
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
-  // TRACE("Draw Line %d/%d %d/%d\n", x0, y0, x1, y1);
+  TRACE("Draw Line %d/%d %d/%d\n", x0, y0, x1, y1);
 
   int16_t dx = abs(x1 - x0);
   int16_t dy = abs(y1 - y0);
@@ -302,7 +302,7 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
 
 /// @brief Calculate the center parameterization for an arc from endpoints
 /// The radius values may be scaled up when there is no arc possible.
-void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int16_t &ry, int16_t phi, int16_t flags, int32_t &cx, int32_t &cy) {
+void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int16_t &ry, int16_t phi, int16_t flags, int32_t &cx256, int32_t &cy256) {
   // Conversion from endpoint to center parameterization
   // see also http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
 
@@ -352,20 +352,17 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
   double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
 
-  cx = (256 * centerX);
-  cy = (256 * centerY);
+  cx256 = (256 * centerX);
+  cy256 = (256 * centerY);
 }  // arcCenter()
 
 
+/// Calculate the angle of a vector in degrees
 int16_t vectorAngle(int16_t dx, int16_t dy) {
   // TRACE("vectorAngle(%d, %d)\n", dx, dy);
-
-  double rad = acos((double)dx / sqrt((dx * dx) + (dy * dy)));
+  double rad = atan2(dy, dx);
   int16_t angle = ((rad * 180 / M_PI) + 0.5);
-
-  if (dy < 0) { angle = 360 - angle; }
-  // TRACE(" = %d\n", angle);
-
+  if (angle < 0) angle = 360 + angle;
   return (angle % 360);
 }  // vectorAngle()
 
@@ -465,19 +462,20 @@ void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
 
 
 /// @brief Draw an arc according to svg path arc parameters.
-/// @param x0 Starting Point X coordinate.
-/// @param y0 Starting Point Y coordinate.
+/// @param x1 Starting Point X coordinate.
+/// @param y1 Starting Point Y coordinate.
+/// @param x2 Ending Point X coordinate.
+/// @param y2 Ending Point Y coordinate.
 /// @param rx
 /// @param ry
 /// @param phi  rotation of the ellipsis
 /// @param flags
-/// @param x1 Ending Point X coordinate.
-/// @param y1 Ending Point Y coordinate.
 /// @param cbDraw Callback with coordinates of line pixels.
 void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
              int16_t rx, int16_t ry,
              int16_t phi, int16_t flags,
              fSetPixel cbDraw) {
+  TRACE("drawArc(%d/%d)-(%d/%d)\n", x1, y1, x2, y2);
 
 #if (STAT)
   stat_skipped = 0;
@@ -485,25 +483,38 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   stat_removed = 0;
 #endif
 
-  int32_t cx, cy;
+  int32_t cx256, cy256;
 
-  arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx, cy);
+  arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx256, cy256);
 
-  TRACE("flags   = 0x%02x\n", flags);
-  TRACE("center = %d/%d\n", cx, cy);
+  TRACE("  flags   = 0x%02x\n", flags);
+  TRACE("  center = %d/%d\n", SCALE256(cx256), SCALE256(cy256));
+  TRACE("  radius = %d/%d\n", rx, ry);
 
-  int startAngle = vectorAngle(256 * x1 - cx, 256 * y1 - cy);
-  int endAngle = vectorAngle(256 * x2 - cx, 256 * y2 - cy);
-  int stepAngle = (flags & 0x02) ? 1 : 359;
-
-  // Iterate through the ellipse
   _addPixel(x1, y1, cbDraw);
-  for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
-    int16_t x = SCALE256(cx + (rx * cos256(angle)));
-    int16_t y = SCALE256(cy + (ry * sin256(angle)));
-    _addPixel(x, y, cbDraw);
+  if (rx == ry) {
+    // draw a circle segment faster. ellipsis rotation can be ignored.
+    gfxDraw::drawCircle(gfxDraw::Point(SCALE256(cx256), SCALE256(cy256)), rx,
+                        gfxDraw::Point(x1, y1),
+                        gfxDraw::Point(x2, y2),
+                        (gfxDraw::ArcFlags)(flags & gfxDraw::ArcFlags::Clockwise),
+                        [&](int16_t x, int16_t y) {
+                          _addPixel(x, y, cbDraw);
+                        });
+  } else {
+    int startAngle = vectorAngle(256 * x1 - cx256, 256 * y1 - cy256);
+    int endAngle = vectorAngle(256 * x2 - cx256, 256 * y2 - cy256);
+    int stepAngle = (flags & 0x02) ? 1 : 359;
+
+    // Iterate through the ellipse
+    for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
+      int16_t x = SCALE256(cx256 + (rx * cos256(angle)));
+      int16_t y = SCALE256(cy256 + (ry * sin256(angle)));
+      _addPixel(x, y, cbDraw);
+    }
   }
   _addPixel(x2, y2, cbDraw);
+
   _addPixel(0, POINT_BREAK_Y, cbDraw);
 
 #if (STAT)
@@ -697,7 +708,14 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
           break;
 
         case Segment::Type::Circle:
-          gfxDraw::drawCircle(Point(pSeg.p[0] + dx, pSeg.p[1] + dy), pSeg.p[2], cbDraw);
+          if (1) {
+            Point pCenter(pSeg.p[0] + dx, pSeg.p[1] + dy);
+            Point pStart(pSeg.p[0] + dx + pSeg.p[2], pSeg.p[1] + dy);
+
+            // drawCircle(gfxDraw::Point(30, 190), 20, gfxDraw::Point(30 + 20, 190), gfxDraw::Point(30 + 20, 190), true, bmpSet(gfxDraw::RED));
+            // The simplified drawCircle cannot be used as for filling the circle the pixels must be in order.
+            gfxDraw::drawCircle(pCenter, pSeg.p[2], pStart, pStart, ArcFlags::Clockwise | ArcFlags::LongPath, cbDraw);
+          }
           break;
 
         case Segment::Type::Close:
@@ -1028,11 +1046,18 @@ std::vector<Segment> parsePath(const char *pathText) {
   char *path = (char *)pathText;
   int16_t lastX = 0, lastY = 0;
 
-  /// A lambda function to parse a parameter from the inputText.
-  auto getParam = [&]() {
+  /// A lambda function to parse a numeric parameter from the inputText.
+  auto getNumParam = [&]() {
     while (isspace(*path) || (*path == ',')) { path++; }
     int16_t p = strtol(path, &path, 10);
     return (p);
+  };
+
+  /// A lambda function to parse a flag parameter from the inputText.
+  auto getBoolParam = [&]() {
+    while (isspace(*path) || (*path == ',')) { path++; }
+    bool flag = (*path++ == '1');
+    return (flag);
   };
 
   Segment Seg;
@@ -1043,72 +1068,74 @@ std::vector<Segment> parsePath(const char *pathText) {
     if (isspace(*path)) {
       path++;
 
-    } else if (strchr("MmLlCcZHhVvAazO", *path)) {
-      command = *path++;
+    } else {
+      if (strchr("MmLlCcZHhVvAazO", *path))
+        command = *path++;
 
       memset(&Seg, 0, sizeof(Seg));
       int parameters = -1;
+      bool f1, f2;  // flags
 
       switch (command) {
         case 'M':
           Seg.type = Segment::Type::Move;
-          lastX = Seg.p[0] = getParam();
-          lastY = Seg.p[1] = getParam();
+          lastX = Seg.p[0] = getNumParam();
+          lastY = Seg.p[1] = getNumParam();
           break;
 
         case 'm':
           // convert to absolute coordinates
           Seg.type = Segment::Type::Move;
-          lastX = Seg.p[0] = lastX + getParam();
-          lastY = Seg.p[1] = lastY + getParam();
+          lastX = Seg.p[0] = lastX + getNumParam();
+          lastY = Seg.p[1] = lastY + getNumParam();
           break;
 
         case 'L':
           Seg.type = Segment::Type::Line;
-          lastX = Seg.p[0] = getParam();
-          lastY = Seg.p[1] = getParam();
+          lastX = Seg.p[0] = getNumParam();
+          lastY = Seg.p[1] = getNumParam();
           break;
 
         case 'l':
           // convert to absolute coordinates
           Seg.type = Segment::Type::Line;
-          lastX = Seg.p[0] = lastX + getParam();
-          lastY = Seg.p[1] = lastY + getParam();
+          lastX = Seg.p[0] = lastX + getNumParam();
+          lastY = Seg.p[1] = lastY + getNumParam();
           break;
 
         case 'C':
           // curve defined with absolute points - no convertion required
           Seg.type = Segment::Type::Curve;
-          Seg.p[0] = getParam();
-          Seg.p[1] = getParam();
-          Seg.p[2] = getParam();
-          Seg.p[3] = getParam();
-          lastX = Seg.p[4] = getParam();
-          lastY = Seg.p[5] = getParam();
+          Seg.p[0] = getNumParam();
+          Seg.p[1] = getNumParam();
+          Seg.p[2] = getNumParam();
+          Seg.p[3] = getNumParam();
+          lastX = Seg.p[4] = getNumParam();
+          lastY = Seg.p[5] = getNumParam();
           break;
 
         case 'c':
           // curve defined with relative points - convert to absolute coordinates
           Seg.type = Segment::Type::Curve;
-          Seg.p[0] = lastX + getParam();
-          Seg.p[1] = lastY + getParam();
-          Seg.p[2] = lastX + getParam();
-          Seg.p[3] = lastY + getParam();
-          lastX = Seg.p[4] = lastX + getParam();
-          lastY = Seg.p[5] = lastY + getParam();
+          Seg.p[0] = lastX + getNumParam();
+          Seg.p[1] = lastY + getNumParam();
+          Seg.p[2] = lastX + getNumParam();
+          Seg.p[3] = lastY + getNumParam();
+          lastX = Seg.p[4] = lastX + getNumParam();
+          lastY = Seg.p[5] = lastY + getNumParam();
           break;
 
         case 'H':
           // Horizontal line with absolute horizontal end point coordinate - convert to absolute line
           Seg.type = Segment::Type::Line;
-          lastX = Seg.p[0] = getParam();
+          lastX = Seg.p[0] = getNumParam();
           Seg.p[1] = lastY;  // stay;
           break;
 
         case 'h':
           // Horizontal line with relative horizontal end-point coordinate - convert to absolute line
           Seg.type = Segment::Type::Line;
-          lastX = Seg.p[0] = lastX + getParam();
+          lastX = Seg.p[0] = lastX + getNumParam();
           Seg.p[1] = lastY;  // stay;
           break;
 
@@ -1116,59 +1143,59 @@ std::vector<Segment> parsePath(const char *pathText) {
           // Vertical line with absolute vertical end point coordinate - convert to absolute line
           Seg.type = Segment::Type::Line;
           Seg.p[0] = lastX;  // stay;
-          lastY = Seg.p[1] = getParam();
+          lastY = Seg.p[1] = getNumParam();
           break;
 
         case 'v':
           // Vertical line with relative horizontal end-point coordinate - convert to absolute line
           Seg.type = Segment::Type::Line;
           Seg.p[0] = lastX;  // stay;
-          lastY = Seg.p[1] = lastY + getParam();
+          lastY = Seg.p[1] = lastY + getNumParam();
           break;
 
         case 'A':
-          // Ellipsis arc with absolute end-point coordinate. - calculate center and
+          // Ellipsis arc with absolute end-point coordinates.
           Seg.type = Segment::Type::Arc;
-          Seg.p[0] = getParam();       // rx
-          Seg.p[1] = getParam();       // ry
-          Seg.p[2] = getParam();       // rotation
-          Seg.p[3] = getParam();       // flag1
-          Seg.p[3] += getParam() * 2;  // flag2
-          lastX = Seg.p[4] = getParam();
-          lastY = Seg.p[5] = getParam();
+          Seg.p[0] = getNumParam();  // rx
+          Seg.p[1] = getNumParam();  // ry
+          Seg.p[2] = getNumParam();  // rotation
+          f1 = getBoolParam();
+          f2 = getBoolParam();
+          Seg.p[3] = (f1 ? 0x01 : 0x00) + (f2 ? 0x02 : 0x00);  // flags
+          lastX = Seg.p[4] = getNumParam();
+          lastY = Seg.p[5] = getNumParam();
           break;
 
         case 'a':
-          // Ellipsis arc with absolute end-point coordinate. - calculate center and
-          // Ellipsis arc with absolute end-point coordinate. - calculate center and
+          // Ellipsis arc with relative end-point coordinates.
           Seg.type = Segment::Type::Arc;
-          Seg.p[0] = getParam();       // rx
-          Seg.p[1] = getParam();       // ry
-          Seg.p[2] = getParam();       // rotation
-          Seg.p[3] = getParam();       // flag1
-          Seg.p[3] += getParam() * 2;  // flag2
-          lastX = Seg.p[4] = lastX + getParam();
-          lastY = Seg.p[5] = lastY + getParam();
-          break;
-
-        case 'O':
-          // Draw a whole circle by center and radius
-          Seg.type = Segment::Type::Circle;
-          Seg.p[0] = getParam();  // Center.x
-          Seg.p[1] = getParam();  // Center.y
-          Seg.p[2] = getParam();  // radius
-          lastX = lastY = 0;
+          Seg.p[0] = getNumParam();  // rx
+          Seg.p[1] = getNumParam();  // ry
+          Seg.p[2] = getNumParam();  // rotation
+          f1 = getBoolParam();
+          f2 = getBoolParam();
+          Seg.p[3] = (f1 ? 0x01 : 0x00) + (f2 ? 0x02 : 0x00);  // flags
+          lastX = Seg.p[4] = lastX + getNumParam();
+          lastY = Seg.p[5] = lastY + getNumParam();
           break;
 
         case 'z':
         case 'Z':
           Seg.type = Segment::Type::Close;
           break;
+
+          // non svg path types:
+        case 'O':
+          // Draw a whole circle by center and radius
+          Seg.type = Segment::Type::Circle;
+          Seg.p[0] = getNumParam();  // Center.x
+          Seg.p[1] = getNumParam();  // Center.y
+          Seg.p[2] = getNumParam();  // radius
+          lastX = lastY = 0;
+          break;
       }
       vSeg.push_back(Seg);
-
-    } else {
-      printf("unknown segment '%c'\n", *path);
+    // } else { TRACE("unknown segment '%c'\n", *path);
     }
   }
 

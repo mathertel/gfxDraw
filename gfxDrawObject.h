@@ -32,6 +32,8 @@
 #define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
 #define GFXSCALE1000(p, f1000) (((int32_t)(p) * f1000 + 500) / 1000)
 
+#define TRACE(...)  // printf(__VA_ARGS__)
+
 namespace gfxDraw {
 
 // Matrix type definition for transformation using 1000 factor and numbers.
@@ -146,10 +148,10 @@ public:
 
 
   void draw(gfxDraw::fDrawPixel cbDraw) {
-    printf("draw()\n");
+    TRACE("draw()\n");
 
-    printf(" stroke = %02x.%02x.%02x.%02x\n", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
-    printf(" fill   = %02x.%02x.%02x.%02x\n", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
+    TRACE(" stroke = %02x.%02x.%02x.%02x\n", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
+    TRACE(" fill   = %02x.%02x.%02x.%02x\n", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
 
     // create a copy
     std::vector<gfxDraw::Segment> tSegments = _segments;
@@ -192,7 +194,7 @@ public:
 
 
   void setFillGradient(gfxDraw::RGBA fill1, int16_t x1, int16_t y1, gfxDraw::RGBA fill2, int16_t x2, int16_t y2) {
-    printf("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
+    TRACE("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
 
     _fillColor1 = fill1;
     _fillColor2 = fill2;
@@ -216,12 +218,12 @@ public:
       // This is the orthogonal line through p1 (slope = 1/m)
       int16_t dx = (x2 - x1);
       int16_t dy = (y2 - y1);
-      printf(" dx=%d, dy=%d\n", dx, dy);
+      TRACE(" dx=%d, dy=%d\n", dx, dy);
 
       m1000 = -dx * 1000 / dy;  // = -2000
-      printf(" m1000=%d\n", m1000);
+      TRACE(" m1000=%d\n", m1000);
       b1000 = (y1 * 1000) - (m1000 * x1);  // 6000 - ( -2000 * 4)
-      printf(" b1000=%d\n", b1000);
+      TRACE(" b1000=%d\n", b1000);
 
       // distance of the 2 gradient points.
       d1000 = sqrt(dx * dx + dy * dy) * 1000;
@@ -229,7 +231,7 @@ public:
       // Distance formula: `d = (mx - y + b) / sqrt(m*m + 1)`
       // divisor for the distance formula
       int16_t nen1000 = sqrt(m1000 * m1000 + 1000000);
-      printf(" nen1000=%d\n", nen1000);
+      TRACE(" nen1000=%d\n", nen1000);
 
       // `y = (m1000 * x + b1000) / 1000`
 
@@ -252,9 +254,9 @@ public:
       int16_t px = 5;
       int16_t py = 9;
       int16_t pd = 1000 * ((1000 * py - m1000 * px - b1000) + 500) / nen1000;
-      printf(" pd=%d\n", pd);
+      TRACE(" pd=%d\n", pd);
     };
-    printf(" d1000=%d\n", d1000);
+    TRACE(" d1000=%d\n", d1000);
   };
 
 
