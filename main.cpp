@@ -20,6 +20,9 @@ using namespace std;
 
 // ===== image memory allocation and functions
 
+// The image memory is "just" an 2-dimensional array of bytes (4 * width * height)
+// each pixel is using 4 bytes for (RGBA)
+
 std::vector<unsigned char> image;
 uint16_t imageWidth;
 uint16_t imageHeight;
@@ -64,21 +67,36 @@ void fillImage(gfxDraw::RGBA color) {
 #define bmpDraw() [](int16_t x, int16_t y, gfxDraw::RGBA col) { \
   setImagePixel(x, y, col); \
 }
-// printf("-set(%d/%d)\n", x, y); \
 
 // ===== Test paths
 
-char *SmilieCurvePath =
+const char *SmilieCurvePath =
   "M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z"
   "M16 12c5 0 5 7 0 7 c-5 0-5-7 0-7Z"
   "M32 12c5 0 5 7 0 7 c-5 0-5-7 0-7Z"
   "M38 32c0 1-1 2-2 3 c-6 5-12 6-19 3 c-2-2-5-3-5-6 c1-2 3 0 4 1 c4 3 9 5 15 2 c3-2 3-2 5-4 c1-1 2-1 2 1Z";
 
-char *RadioPath =
+const char *SmileyArcPath =
+  "M44 24 a20 20 0 0 1 -20 20A20 20 0 0 1 4 24 A20 20 0 0 1 24 4 a20 20 0 0 1 20 20z"
+  "M20 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z"
+  "M36 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z"
+  "M36 32 a 12 4 0 0 1 -12 4 a12 4 0 0 1-12-4 a12 4 0 0 1 12-4 a12 4 0 0 1 12 4z";
+
+const char *RadioPath =
   "M12,2h64c4,0 8,4 8,8v48c0,4 -4,8 -8,8h-64c-4,0 -8,-4 -8,-8v-48c0,-4 4,-8 8,-8z"
   "M12,10 h60v20h-60z"
   "M24,36c6,0 12,6 12,12c0,6 -6,12 -12,12c-6,0 -12,-6 -12,-12c0,-6 6,-12 12,-12z";
 
+const char *PiePath = R"==(
+   M150,150 v-150 a150,150 0 0,0 -150,150 z
+   M175,175 h-150 a150,150 0 1,0 150,-150 z
+   )==";
+
+const char *SwordPath = R"==(
+M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
+)==";
+
+const char *heardPath = "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 
 // =====
 
@@ -135,14 +153,14 @@ void drawDigits7(int n, uint16_t x, uint16_t y, gfxDraw::fSetPixel cbBorder, gfx
   };
   uint16_t sd = SD[n % 10];
 
-  if (sd & 0b00000001) gfxDraw::pathByText100("M3 1h23l-4 4h-15z", x, y, cbBorder, cbFill);
-  if (sd & 0b00000010) gfxDraw::pathByText100("M 1 2 l4 4 v15 l-4 4 z", x, y, cbBorder, cbFill);
-  if (sd & 0b00000100) gfxDraw::pathByText100("M28 2 l-4 4 v15 l4 4 z", x, y, cbBorder, cbFill);
-  if (sd & 0b00001000) gfxDraw::pathByText100("M3 26 l2-2 h19 l2 2 l -2 2 h-19z", x, y, cbBorder, cbFill);
-  if (sd & 0b00010000) gfxDraw::pathByText100("M1 27 l4 4 v15 l-4 4 z", x, y, cbBorder, cbFill);
-  if (sd & 0b00100000) gfxDraw::pathByText100("M28 27 l-4 4 v15 l4 4 z", x, y, cbBorder, cbFill);
-  if (sd & 0b01000000) gfxDraw::pathByText100("M3 51 h23 l-4 -4h-15z", x, y, cbBorder, cbFill);
-}
+  if (sd & 0b00000001) gfxDraw::pathByText("M3 1h23l-4 4h-15z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b00000010) gfxDraw::pathByText("M 1 2 l4 4 v15 l-4 4 z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b00000100) gfxDraw::pathByText("M28 2 l-4 4 v15 l4 4 z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b00001000) gfxDraw::pathByText("M3 26 l2-2 h19 l2 2 l -2 2 h-19z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b00010000) gfxDraw::pathByText("M1 27 l4 4 v15 l-4 4 z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b00100000) gfxDraw::pathByText("M28 27 l-4 4 v15 l4 4 z", x, y, 100, cbBorder, cbFill);
+  if (sd & 0b01000000) gfxDraw::pathByText("M3 51 h23 l-4 -4h-15z", x, y, 100, cbBorder, cbFill);
+}  // drawDigits7()
 
 
 // draw the test paths for outTest.bmp
@@ -155,7 +173,7 @@ void assert(bool b, char *text) {
 // draw the test paths for outTest.bmp
 void silentTests() {
   uint16_t count;
-  printf("\nSilent Tests:\n");
+  TRACE("\nSilent Tests:\n");
 
   if (sizeof(gfxDraw::RGBA) != 4) {
     // cout << "size(Segment):" << sizeof(gfxDraw::Segment) << endl;
@@ -207,54 +225,54 @@ void silentTests() {
   a = gfxDraw::vectorAngle(1, -1);
   assert((a == 315), "vectorAngle( 1, -1) error");
 
-  printf("\n");
+  TRACE("\n");
 }
 
 
 void drawTest01() {
-  printf("\nDraw Tests #1\n");
+  TRACE("\nDraw Tests #1\n");
 
   auto drawHelper = [](const char *pathText, int16_t x, int16_t y) {
     std::vector<gfxDraw::Segment> vSeg = gfxDraw::parsePath(pathText);
     fillSegments(vSeg, x, y, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::RGBA(255, 255, 128)));
   };
 
-  printf("\nTest-01:\n");
+  TRACE("\nTest-01:\n");
   // 8*8 rectange needs 2 edges on horizontal lines
   gfxDraw::drawSolidRect(10, 10, 10, 10, bmpSet(gfxDraw::SILVER));
   drawHelper("M1 1 h7 v7 h-7 z", 10, 10);
 
-  printf("\nTest-02:\n");
+  TRACE("\nTest-02:\n");
   // 7*8 rectange needs 2 more points on horizontal lines
   gfxDraw::drawSolidRect(20, 10, 10, 10, bmpSet(gfxDraw::GRAY));
   drawHelper("M1 1 h6 v7 h-6 z", 20, 10);
 
-  printf("\nTest-03:\n");
+  TRACE("\nTest-03:\n");
   // closed W
   gfxDraw::drawSolidRect(30, 10, 11, 10, bmpSet(gfxDraw::SILVER));
   drawHelper("M1 1 h8 v7 l-4,-4 l-4 4 z", 30, 10);
 
-  printf("\nTest-04: closed M\n");
+  TRACE("\nTest-04: closed M\n");
   gfxDraw::drawSolidRect(41, 10, 11, 10, bmpSet(gfxDraw::GRAY));
   drawHelper("M1 1 l4,4 l4 -4 v7 h-8 z", 41, 10);
 
-  printf("\nTest-05: route\n");
+  TRACE("\nTest-05: route\n");
   gfxDraw::drawSolidRect(52, 10, 11, 10, bmpSet(gfxDraw::SILVER));
   drawHelper("M5 1 l4,4 l-4 4 l-4 -4 z", 52, 10);
 
-  printf("\nTest-06: |> symbol\n");
+  TRACE("\nTest-06: |> symbol\n");
   gfxDraw::drawSolidRect(63, 10, 10, 10, bmpSet(gfxDraw::GRAY));
   drawHelper("M1 1 l7,4 l-7 4 z", 63, 10);
 
-  printf("\nTest-07: <| symbol\n");
+  TRACE("\nTest-07: <| symbol\n");
   gfxDraw::drawSolidRect(73, 10, 10, 10, bmpSet(gfxDraw::SILVER));
   drawHelper("M8 1 l-7,4 l7 4 z", 73, 10);
 
-  printf("\nTest-10: [[]] \n");
+  TRACE("\nTest-10: [[]] \n");
   gfxDraw::drawSolidRect(10, 22, 10, 10, bmpSet(gfxDraw::SILVER));
   drawHelper("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z", 10, 22);
 
-  printf("\nTest-11: [*] \n");
+  TRACE("\nTest-11: [*] \n");
   gfxDraw::drawSolidRect(20, 22, 10, 10, bmpSet(gfxDraw::GRAY));
   drawHelper("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z", 20, 22);
 
@@ -283,10 +301,14 @@ void drawTest01() {
   gfxDraw::drawSolidRect(10, 80, 99, 99, bmpSet(gfxDraw::GREEN));
   gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-  gfxDraw::drawCubicBezier(5, 10, 10, -5, 20, 25, 26, 10,
-                           [](int16_t x, int16_t y) {
-                             setImagePixel(x + 110, y + 80, gfxDraw::RED);
-                           });
+  // smiley with Arcs
+  gfxDraw::drawSolidRect(120, 80, 99, 99, bmpSet(gfxDraw::GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  // gfxDraw::drawCubicBezier(5, 10, 10, -5, 20, 25, 26, 10,
+  //                          [](int16_t x, int16_t y) {
+  //                            setImagePixel(x + 110, y + 80, gfxDraw::RED);
+  //                          });
 
 }  // drawTest01()
 
@@ -314,11 +336,16 @@ void drawTest02() {
   gfxDraw::moveSegments(segs, 40, 40);                                         // move right down
   gfxDraw::fillSegments(segs, bmpSet(gfxDraw::BLACK), bmpSet(gfxDraw::LIME));  // hard-coded fill color here.
 
-  gfxDraw::gfxDrawObject *rect = new gfxDraw::gfxDrawObject(gfxDraw::TRANSPARENT, gfxDraw::BLUE);
-  rect->setRect(18, 9);
-  // rect->rotate(15);
+  gfxDraw::gfxDrawObject *rect = new gfxDraw::gfxDrawObject(gfxDraw::BLUE, gfxDraw::YELLOW);
+  rect->setRect(32, 16);
+
+  // rotate around center
+  rect->move(-16, -8);
+  rect->rotate(30);
+  rect->move(16, 8);
+
   rect->scale(200);
-  rect->move(10, 2);
+  rect->move(20, 20);
   rect->draw(bmpDraw());
 
   // // rect2->setFillGradient(gfxDraw::YELLOW, 10, 0, gfxDraw::ORANGE, 36, 0);
@@ -352,17 +379,11 @@ void drawTest02() {
 
 
 void drawTest04() {
-  // 
-  // const char *heard = "M24 10a1 1 0 00-18 18l18 18 18-18a1 1 0 00-18-18z";
-  const char *heard = "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 
-  gfxDraw::pathByText(heard, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
-
+  gfxDraw::pathByText(heardPath, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 }
 
 void drawTest03() {
-
-
 
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
@@ -378,29 +399,14 @@ void drawTest03() {
 
   // gfxDraw::drawSolidRect(210, 120, 99, 99, bmpSet(gfxDraw::GREEN));
 
-  const char *pie = R"==(
-   M150,150 v-150 a150,150 0 0,0 -150,150 z
-   M175,175 h-150 a150,150 0 1,0 150,-150 z
-   )==";
-  gfxDraw::pathByText(pie, 8, 8, 30, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(PiePath, 8, 8, 30, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-  const char *Sword = R"==(
-M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
-)==";
-  gfxDraw::pathByText(Sword, 10, 160, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SwordPath, 10, 160, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
-  // M44 24a20 20 0 01-20 20A20 20 0 014 24 20 20 0 0124 4a20 20 0 0120 20zM20 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 16a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4 4 4 0 014 4zM36 32a12 4 0 01-12 4 12 4 0 01-12-4 12 4 0 0112-4 12 4 0 0112 4z
-  const char *SmileyArc = R"==(
-M44 24 a20 20 0 0 1 -20 20A20 20 0 0 1 4 24 A20 20 0 0 1 24 4 a20 20 0 0 1 20 20z
-M20 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
-M36 16 a 4 4 0 0 1  -4 4 a4 4 0 0 1 -4 -4 a4 4 0 0 1 4-4 a4 4 0 0 1 4 4z
-M36 32 a 12 4 0 0 1 -12 4 a12 4 0 0 1-12-4 a12 4 0 0 1 12-4 a12 4 0 0 1 12 4z
-)==";
-
-  gfxDraw::pathByText(SmileyArc, 200, 100, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
-  gfxDraw::pathByText(SmileyArc, 140, 10, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::GREEN));
-  gfxDraw::pathByText(SmileyArc, 220, 10, 50, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
-  gfxDraw::pathByText(SmileyArc, 100, 80, 150, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
 
   // gfxDraw::pathByText("O 20 20 20", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
   gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::RGBA(0xFF, 0xFF, 0)));
@@ -456,22 +462,17 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 #endif
 
 
-// fSetPixel fBlack(CBitmap *bm, int32_t x, int32_t y) {
-//   bm->setPixel(x, y, gfxDraw::BLACK);
-// }
-
 int main() {
-
   // silentTests();
 
-#if 0
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
   drawTest01();
   saveImage("test01.png");
 #endif
 
-#if (0)
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::WHITE);
 

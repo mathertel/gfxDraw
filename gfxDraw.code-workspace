@@ -62,10 +62,15 @@
 			"xmemory": "cpp",
 			"xstring": "cpp",
 			"xtr1common": "cpp",
-			"xutility": "cpp"
+			"xutility": "cpp",
+			"complex": "cpp",
+			"map": "cpp",
+			"sstream": "cpp",
+			"xtree": "cpp"
 		},
 		"cSpell.words": [
 			"lodepng"
-		]
+		],
+		"FSharp.suggestGitignore": false
 	}
 }

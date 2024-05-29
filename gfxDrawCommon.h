@@ -34,10 +34,18 @@ typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
 typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
 
 
+/// ===== Points =====
+
+/// POINT_BREAK_Y marks the end of a path when pixels are streamed through a fSetPixel callback.
 #define POINT_BREAK_Y INT16_MAX
+
+/// POINT_INVALID_Y marks ivalid pixels that must be ignored for drawing.
 #define POINT_INVALID_Y INT16_MAX - 1
 
-/// @brief The Point holds a pixel position and provides some useful static methods.
+
+/// @brief A Point holds a pixel position and provides some useful static methods.
+/// There are 2 "special" locations when the Y value is about INT16_MAX and INT16_MAX-1
+/// that cannot be used for drawing.
 class Point {
 public:
   Point()
@@ -62,6 +70,30 @@ public:
     return (p1.x < p2.x);
   };
 
+  constexpr bool operator==(const Point &p2) {
+    return ((x == p2.x) && (y == p2.y));
+  };
+
+  /// @brief Add 2 point vectors or move a point by a vector.
+  /// @param p1 Point 1
+  /// @param p2 Point 2
+  /// @return Sum of the 2 point vectors.
+  friend Point operator+(const Point &p1, const Point &p2) {
+    Point p(p1.x + p2.x, p1.y + p2.y);
+    return (p);
+  };  // operator+
+
+  /// @brief subtract 2 point vectors or move a point by a opposite vector.
+  /// @param p1 Point 1
+  /// @param p2 Point 2
+  /// @return Difference of the 2 point vectors.
+  friend Point operator-(const Point &p1, const Point &p2) {
+    Point p(p1.x - p2.x, p1.y - p2.y);
+    return (p);
+  };  // operator-
+
+
+  // ===== Circle related functions.
 
   // Quadrants
   //      y
@@ -70,6 +102,7 @@ public:
   //    1 | 0
   //      v
 
+  // return Quadrant of a vector
   static int16_t circleQuadrant(const Point &p) {
     if ((p.x > 0) && (p.y >= 0)) { return (0); }
     if ((p.x <= 0) && (p.y > 0)) { return (1); }
@@ -78,8 +111,11 @@ public:
     return (0);
   }
 
-  // compare 2 points on a circle.
-  // return true if the first is less than the second
+
+  /// @brief Compare 2 points on a circle in clockwise direction.
+  /// @param p1 Point #1
+  /// @param p2 Point #2
+  /// @return true if the first is less than the second.
   static bool compareCircle(Point p1, Point p2) {
 
     if (p1 == p2) return (false);
@@ -101,16 +137,21 @@ public:
     }
     return (false);
   }
-
-  constexpr bool operator==(const Point &p2) {
-    return ((x == p2.x) && (y == p2.y));
-  };
-
-  friend Point operator-(const Point &p1, const Point &p2) {
-    Point p(p1.x - p2.x, p1.y - p2.y);
-    return (p);
-  };
 };
+
+
+/// @brief Propose a next pixel of the path.
+/// @param x X value of the pixel
+/// @param y Y value of the pixel
+/// @param cbDraw callback function for the effective pixels of the path.
+///
+/// @details
+/// This function buffers up to 3 pixels and analysis for pixel unwanted sequences and missing pixels.
+/// * ignore duplicates
+/// * remove corner-type pixels
+/// * fill missing 1-pixel
+/// * draw streight line when more pixels are missing.
+void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw);
 
 
 }  // gfxDraw:: namespace

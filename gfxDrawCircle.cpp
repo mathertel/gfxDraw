@@ -50,21 +50,6 @@ void drawCircleQuadrant(int16_t r, int16_t q, fSetPixel cbDraw) {
   } while (x < 0);
 }  // drawCircleQuadrant()
 
-// Quadrants
-//      y
-//    2 | 3
-//  x---|--->
-//    1 | 0
-//      v
-
-int16_t Quadrant(const Point &p) {
-  if ((p.x > 0) && (p.y >= 0)) { return (0); }
-  if ((p.x <= 0) && (p.y > 0)) { return (1); }
-  if ((p.x < 0) && (p.y <= 0)) { return (2); }
-  if ((p.x >= 0) && (p.y < 0)) { return (3); }
-  return (0);
-}
-
 
 /// @brief draw a circle segment
 void drawCircle(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw) {

@@ -14,21 +14,11 @@
 // #include <iostream>
 
 #include "gfxDraw.h"
-#include "gfxDrawColors.h"
 
+#include "gfxDrawBezier.h"
 #include "gfxDrawCircle.h"
 
-
 #define TRACE(...)  // printf(__VA_ARGS__)
-
-#define STAT 1
-
-#if (STAT)
-uint16_t stat_skipped = 0;
-uint16_t stat_added = 0;
-uint16_t stat_removed = 0;
-#endif
-
 
 #define SLOPE_UNKNOWN 0
 #define SLOPE_FALLING 1
@@ -357,7 +347,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 }  // arcCenter()
 
 
-/// Calculate the angle of a vector in degrees
+/// Calculate the angle of a vector in degrees.
 int16_t vectorAngle(int16_t dx, int16_t dy) {
   // TRACE("vectorAngle(%d, %d)\n", dx, dy);
   double rad = atan2(dy, dx);
@@ -365,100 +355,6 @@ int16_t vectorAngle(int16_t dx, int16_t dy) {
   if (angle < 0) angle = 360 + angle;
   return (angle % 360);
 }  // vectorAngle()
-
-
-// add the next path pixel to cbDraw
-// * ignore duplicates
-// * remove corner-type pixels
-// * fill missing 1-pixel
-// * draw streight line when more pixels are missing.
-
-void _addPixel(int16_t x, int16_t y, fSetPixel cbDraw) {
-  static Point lastPoints[3];
-
-  TRACE("_addPixel(%d, %d)\n", x, y);
-
-  if ((x == lastPoints[0].x) && (y == lastPoints[0].y)) {
-    // don't collect duplicates
-    TRACE("  duplicate!\n");
-#if (STAT)
-    stat_skipped++;
-#endif
-
-  } else if (y == POINT_BREAK_Y) {
-    // draw all remaining points and invalidate lastPoints
-    TRACE("  flush!\n");
-    for (int n = 2; n >= 0; n--) {
-      if (lastPoints[n].y != POINT_INVALID_Y)
-        cbDraw(lastPoints[n].x, lastPoints[n].y);
-      lastPoints[n].y = POINT_INVALID_Y;
-    }  // for
-
-  } else if (lastPoints[0].y == POINT_BREAK_Y) {
-    lastPoints[0].x = x;
-    lastPoints[0].y = y;
-
-  } else {
-    // draw oldest point and shift new point in
-    if (lastPoints[2].y != POINT_INVALID_Y)
-      cbDraw(lastPoints[2].x, lastPoints[2].y);
-    lastPoints[2] = lastPoints[1];
-    lastPoints[1] = lastPoints[0];
-    lastPoints[0].x = x;
-    lastPoints[0].y = y;
-
-    if (lastPoints[1].y != POINT_INVALID_Y) {
-      bool delFlag = false;
-      bool insFlag = false;
-
-      // don't draw "corner" points
-      if ((lastPoints[0].y == lastPoints[1].y) && (abs(lastPoints[0].x - lastPoints[1].x) == 1)) {
-        delFlag = (lastPoints[1].x == lastPoints[2].x);
-      } else if ((lastPoints[0].x == lastPoints[1].x) && (abs(lastPoints[0].y - lastPoints[1].y) == 1)) {
-        delFlag = (lastPoints[1].y == lastPoints[2].y);
-      }
-
-      // draw between unconnected points
-      if (!delFlag) {
-        if ((abs(lastPoints[0].x - lastPoints[1].x) <= 1) && (abs(lastPoints[0].y - lastPoints[1].y) <= 1)) {
-          // points are connected -> no additional draw required
-
-        } else if ((abs(lastPoints[0].x - lastPoints[1].x) <= 2) && (abs(lastPoints[0].y - lastPoints[1].y) <= 2)) {
-          // simple interpolate new lastPoints[1]
-          // TRACE("  gap!\n");
-          if (lastPoints[2].y != POINT_INVALID_Y)
-            cbDraw(lastPoints[2].x, lastPoints[2].y);
-          lastPoints[2] = lastPoints[1];
-          lastPoints[1].x = (lastPoints[0].x + lastPoints[1].x) / 2;
-          lastPoints[1].y = (lastPoints[0].y + lastPoints[1].y) / 2;
-#if (STAT)
-          stat_added++;
-#endif
-        } else if ((abs(lastPoints[0].x - lastPoints[1].x) > 2) || (abs(lastPoints[0].y - lastPoints[1].y) > 2)) {
-          // TRACE("  big gap!\n");
-
-          // draw a streight line from lastPoints[1] to lastPoints[0]
-          if (lastPoints[2].y != POINT_INVALID_Y)
-            cbDraw(lastPoints[2].x, lastPoints[2].y);
-          drawLine(lastPoints[1].x, lastPoints[1].y, lastPoints[0].x, lastPoints[0].y, cbDraw);
-          lastPoints[2].y = POINT_INVALID_Y;
-          lastPoints[1].y = POINT_INVALID_Y;
-          // lastPoints[0] stays.
-        }
-      }
-
-      if (delFlag) {
-        // remove lastPoints[1];
-        lastPoints[1] = lastPoints[2];
-        lastPoints[2].y = POINT_INVALID_Y;
-#if (STAT)
-        stat_removed++;
-#endif
-      }
-    }
-  }
-}  // _addPixel()
-
 
 
 /// @brief Draw an arc according to svg path arc parameters.
@@ -477,12 +373,6 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
              fSetPixel cbDraw) {
   TRACE("drawArc(%d/%d)-(%d/%d)\n", x1, y1, x2, y2);
 
-#if (STAT)
-  stat_skipped = 0;
-  stat_added = 0;
-  stat_removed = 0;
-#endif
-
   int32_t cx256, cy256;
 
   arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx256, cy256);
@@ -491,7 +381,7 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   TRACE("  center = %d/%d\n", SCALE256(cx256), SCALE256(cy256));
   TRACE("  radius = %d/%d\n", rx, ry);
 
-  _addPixel(x1, y1, cbDraw);
+  proposePixel(x1, y1, cbDraw);
   if (rx == ry) {
     // draw a circle segment faster. ellipsis rotation can be ignored.
     gfxDraw::drawCircle(gfxDraw::Point(SCALE256(cx256), SCALE256(cy256)), rx,
@@ -499,7 +389,7 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
                         gfxDraw::Point(x2, y2),
                         (gfxDraw::ArcFlags)(flags & gfxDraw::ArcFlags::Clockwise),
                         [&](int16_t x, int16_t y) {
-                          _addPixel(x, y, cbDraw);
+                          proposePixel(x, y, cbDraw);
                         });
   } else {
     int startAngle = vectorAngle(256 * x1 - cx256, 256 * y1 - cy256);
@@ -510,18 +400,12 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
     for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
       int16_t x = SCALE256(cx256 + (rx * cos256(angle)));
       int16_t y = SCALE256(cy256 + (ry * sin256(angle)));
-      _addPixel(x, y, cbDraw);
+      proposePixel(x, y, cbDraw);
     }
   }
-  _addPixel(x2, y2, cbDraw);
+  proposePixel(x2, y2, cbDraw);
 
-  _addPixel(0, POINT_BREAK_Y, cbDraw);
-
-#if (STAT)
-  TRACE("skipped: %d\n", stat_skipped);
-  TRACE("added:   %d\n", stat_added);
-  TRACE("removed: %d\n", stat_removed);
-#endif
+  proposePixel(0, POINT_BREAK_Y, cbDraw);
 
 }  // drawArc()
 
@@ -941,16 +825,6 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
 }
 
 
-/// @brief draw a path using a border and optional fill drawing function.
-/// @param path The path definition using SVG path syntax.
-/// @param x Starting Point X coordinate.
-/// @param y Starting Point Y coordinate.
-/// @param cbBorder Draw function for border pixels. cbFill is used when cbBorder is null.
-/// @param cbFill Draw function for filling pixels.
-void pathByText100(const char *pathText, int16_t x, int16_t y, fSetPixel cbBorder, fSetPixel cbFill) {
-  pathByText(pathText, x, y, 100, cbBorder, cbFill);
-}
-
 /// @brief draw the a path.
 /// @param path The path definition using SVG path syntax.
 /// @param cbDraw Draw function for border pixels. cbFill is used when cbBorder is null.
@@ -958,81 +832,6 @@ void drawPath(const char *pathText, fSetPixel cbDraw) {
   std::vector<Segment> vSeg = parsePath(pathText);
   drawSegments(vSeg, 0, 0, cbDraw);
 }
-
-
-// ===== Cubic Bezier Curve Segments =====
-
-
-
-// This implementation of cubic bezier curve with a start and an end point given and by using 2 control points.
-// C x1 y1, x2 y2, x y
-// good article for reading: <https://pomax.github.io/bezierinfo/>
-// Here the Casteljau's algorithm approach is used.
-
-void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
-  // TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
-
-  // Line 1 is x0/y0 to x1/y1, dx1/dy1 is the relative vector from x0/y0 to x1/y1
-  int16_t dx1 = (x1 - x0);
-  int16_t dy1 = (y1 - y0);
-  int16_t dx2 = (x2 - x1);
-  int16_t dy2 = (y2 - y1);
-  int16_t dx3 = (x3 - x2);
-  int16_t dy3 = (y3 - y2);
-
-  // heuristic: calc the steps we need
-  uint16_t steps = (abs(dx1) + abs(dy1) + abs(dx2) + abs(dy2) + abs(dx3) + abs(dy3)) / 2;  // p0 - 1 - 2 - 3 - 4 - p3
-                                                                                           // TRACE("steps:%d\n", steps);
-#if (STAT)
-  stat_skipped = 0;
-  stat_added = 0;
-  stat_removed = 0;
-#endif
-
-  _addPixel(x0, y0, cbDraw);
-
-  for (uint16_t n = 1; n <= steps; n++) {
-    int16_t f = (1000 * n) / steps;
-    // 3 points and 3 deltas in 1000 units
-    int32_t x4 = x0 * 1000 + (f * dx1);
-    int32_t y4 = y0 * 1000 + (f * dy1);
-    int32_t x5 = x1 * 1000 + (f * dx2);
-    int32_t y5 = y1 * 1000 + (f * dy2);
-    int32_t x6 = x2 * 1000 + (f * dx3);
-    int32_t y6 = y2 * 1000 + (f * dy3);
-    int32_t dx5 = (x5 - x4);
-    int32_t dy5 = (y5 - y4);
-    int32_t dx6 = (x6 - x5);
-    int32_t dy6 = (y6 - y5);
-
-    // 2 points
-    int32_t x7 = x4 + (f * dx5) / 1000;
-    int32_t y7 = y4 + (f * dy5) / 1000;
-    int32_t x8 = x5 + (f * dx6) / 1000;
-    int32_t y8 = y5 + (f * dy6) / 1000;
-    int32_t dx8 = (x8 - x7);
-    int32_t dy8 = (y8 - y7);
-
-    // 1 points
-    int32_t x9 = x7 + (f * dx8) / 1000;
-    int32_t y9 = y7 + (f * dy8) / 1000;
-
-    int16_t nextX = (x9 + 500) / 1000;
-    int16_t nextY = (y9 + 500) / 1000;
-
-    _addPixel(nextX, nextY, cbDraw);
-  }  // for
-  _addPixel(x3, y3, cbDraw);
-
-  // flush all Pixels
-  _addPixel(0, POINT_BREAK_Y, cbDraw);
-
-#if (STAT)
-  TRACE("skipped: %d\n", stat_skipped);
-  TRACE("added:   %d\n", stat_added);
-  TRACE("removed: %d\n", stat_removed);
-#endif
-}  // drawCubicBezier()
 
 
 /// @brief Scan and parset a path text with the svg/path/d syntax to create a vector(array) of Segments.
@@ -1195,7 +994,7 @@ std::vector<Segment> parsePath(const char *pathText) {
           break;
       }
       vSeg.push_back(Seg);
-    // } else { TRACE("unknown segment '%c'\n", *path);
+      // } else { TRACE("unknown segment '%c'\n", *path);
     }
   }
 

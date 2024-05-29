@@ -136,12 +136,21 @@ public:
   };
 
 
-  // apply the scaling factors to the transformation matrix;
+  // apply the rotation factors to the transformation matrix;
   void rotate(int16_t angle) {
     if (angle != 0) {
       Matrix1000 rotMatrix;
       _initMatrix(rotMatrix);
-      // rotMatrix[0][0] = rotMatrix[1][1] = scale100 * 10;
+
+      double radians = (angle * M_PI) / 180;
+
+      int32_t sinFactor1000 = floor(sin(radians) * 1000);
+      int32_t cosFactor1000 = floor(cos(radians) * 1000);
+
+      rotMatrix[0][0] = rotMatrix[1][1] = cosFactor1000;
+      rotMatrix[1][0] = sinFactor1000;
+      rotMatrix[0][1] = -sinFactor1000;
+
       _multiplyMatrix(_matrix, rotMatrix);
     }
   };
