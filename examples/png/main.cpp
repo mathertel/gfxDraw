@@ -96,8 +96,6 @@ const char *SwordPath = R"==(
 M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
 )==";
 
-const char *heardPath = "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
-
 // =====
 
 
@@ -378,9 +376,30 @@ void drawTest02() {
 };
 
 
-void drawTest04() {
+using namespace gfxDraw;
 
-  gfxDraw::pathByText(heardPath, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+// A SVG path defining the shape of a heard
+const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
+
+void drawTest04() {
+  // gfxDraw::pathByText(heardPath, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
+
+  drawSolidRect(8, 8, 87, 80, bmpSet(SILVER));
+  // pathByText(heardPath, 8, 8, 100, bmpSet(BLUE), bmpSet(YELLOW));
+
+  // gfxDrawObject *widget = new gfxDrawObject();
+  // widget->setStrokeColor(YELLOW);
+  // widget->setFillColor(RED);
+  // widget->setPath(heardPath);
+  // widget->move(8, 8);
+  // widget->draw(bmpDraw());
+
+  gfxDrawObject widget;
+  widget.setStrokeColor(YELLOW);
+  widget.setFillColor(RED);
+  widget.setPath(heardPath);
+  widget.move(8, 8);
+  widget.draw(bmpDraw());
 }
 
 void drawTest03() {
