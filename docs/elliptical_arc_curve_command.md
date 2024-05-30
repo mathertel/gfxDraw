@@ -42,11 +42,13 @@ TODO: avoid sin, cos, acos functions
 
 However there are implementations that are maybe more efficient - See references below.
 
+## Examples with ARCs
 
-Pie:
-M275,175 v-150 a150,150 0 0,0 -150,150 z
-M300,200 h-150 a150,150 0 1,0 150,-150 z
+* Pie: "M275,175 v-150 a150,150 0 0,0 -150,150 zM300,200 h-150 a150,150 0 1,0 150,-150 z"
+* Smiley: 
 
+
+[bresenhams circle drawing algorithm](https://jainamtechno.blogspot.com/2018/08/develop-bresenhams-circle-drawing.html)
 
 ## See also
 
@@ -85,6 +87,7 @@ M300,200 h-150 a150,150 0 1,0 150,-150 z
 
 * [fix point ellipse drawing algorithm](http://wscg.zcu.cz/wscg2001/Papers_2001/R18.pdf)
 
+[calculate focus-of-ellipse](https://www.mathwarehouse.com/ellipse/focus-of-ellipse.php)
 
 ## future work (maybe)
 
