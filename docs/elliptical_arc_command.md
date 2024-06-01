@@ -1,7 +1,7 @@
-# Elliptical Arc Curve Command
+# Elliptical Arc Command
 
 Paths may can segments that are defined by parts of an ellipse or a circle.  The
-[SVG elliptical arc curve command](https://www.w3.org/TR/SVG11/paths.html#PathDataEllipticalArcCommands) as defined by
+[SVG elliptical arc command](https://www.w3.org/TR/SVG11/paths.html#PathDataEllipticalArcCommands) as defined by
 the SVG specification enables drawing these curves defined by using the following notation:
 
 ```txt
@@ -54,7 +54,7 @@ However there are implementations that are maybe more efficient - See references
 
 * [SVG specification](https://www.w3.org/TR/SVG2/)
 * [SVG paths](https://www.w3.org/TR/SVG2/paths.html)
-* [SVG elliptical arc curve command](https://www.w3.org/TR/SVG2/paths.html#PathDataEllipticalArcCommands)
+* [SVG elliptical arc command](https://www.w3.org/TR/SVG2/paths.html#PathDataEllipticalArcCommands)
 * [SVG arc reference implementation notes](https://www.w3.org/TR/SVG2/implnote.html#ArcImplementationNotes)
 * [SVG Arc Conversion from Endpoint to Center](https://www.w3.org/TR/SVG2/implnote.html#ArcConversionEndpointToCenter)
 
