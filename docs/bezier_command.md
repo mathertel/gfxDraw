@@ -1,3 +1,3 @@
-# Bezier Command
+# Bezier Curve Command
 
 t.b.d. ???

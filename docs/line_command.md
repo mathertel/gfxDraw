@@ -1,4 +1,4 @@
-# Line Command
+# Line Commands
 
 Paths may have segments that are defined by straight lines.  The various
 [SVG "lineto" commands](https://www.w3.org/TR/SVG11/paths.html#PathDataLinetoCommands) draw straight lines from the
@@ -11,6 +11,7 @@ current point to a new point as defined by the SVG specification:
   h <xDest-delta>
   V <yDest>
   v <yDest-delta>
+  z and Z
 ```
 
 ## Implementation
@@ -21,8 +22,8 @@ horizontal and vertical lines and is using a Bresenham algorithm for drawing oth
 The function calculates all pixels of the line in the order from start to end and calls the `setPixel` callback function
 for each pixel.
 
-The drawLine() function is also used by the [textarc drawing function](elliptical_arc_command.md) and
-[bezier drawing function](???) when they calculate pixel sequences that are not continuous.
+The drawLine() function is also used by the [Arc drawing functions](elliptical_arc_command.md) and
+[Bezier curve drawing functions](bezier_command.md) when they calculate pixel sequences that are not continuous.
 
 
 ## See also
