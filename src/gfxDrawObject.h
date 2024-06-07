@@ -6,7 +6,7 @@
 //  * All transformations are combined into a transformation matrix to avoid intermediate transformations with rounding
 //    effects.
 //  * The fill color can be specified using simple linear gradients.
-//  * The Transformations can be 
+//  * The Transformations can be
 //  * Example of a gauge based on gfxDrawObject that manipulates segments based on a given value.
 
 // https://svg-path-visualizer.netlify.app/#M2%2C2%20Q8%2C2%208%2C8
@@ -36,6 +36,9 @@
 
 namespace gfxDraw {
 
+/// @brief Callback function definition to address a pixel on a display
+typedef std::function<void(int16_t x, int16_t y, RGBA color)> fDrawPixel;
+
 // Matrix type definition for transformation using 1000 factor and numbers.
 typedef int32_t Matrix1000[3][3];
 
@@ -58,7 +61,7 @@ public:
 
   gfxDrawObject() {
     _fillMode = None;
-    _stroke = gfxDraw::BLACK;
+    _stroke = gfxDraw::RGBA_BLACK;
     _initMatrix(_matrix);
   };
 
@@ -136,22 +139,39 @@ public:
   };
 
 
-  // apply the rotation factors to the transformation matrix;
-  void rotate(int16_t angle) {
+  // apply the rotation factors to the transformation matrix.
+  // rotating is using the center 0/0 by default
+  void rotate(int16_t angle, int16_t cx = 0, int16_t cy = 0) {
     if (angle != 0) {
-      Matrix1000 rotMatrix;
-      _initMatrix(rotMatrix);
+      Matrix1000 m;
+
+      if ((cx != 0) && (cy != 0)) {
+        // move given center to 0/0
+        _initMatrix(m);
+        m[0][2] = -cx * 1000;
+        m[1][2] = -cy * 1000;
+        _multiplyMatrix(_matrix, m);
+      }
 
       double radians = (angle * M_PI) / 180;
 
       int32_t sinFactor1000 = floor(sin(radians) * 1000);
       int32_t cosFactor1000 = floor(cos(radians) * 1000);
 
-      rotMatrix[0][0] = rotMatrix[1][1] = cosFactor1000;
-      rotMatrix[1][0] = sinFactor1000;
-      rotMatrix[0][1] = -sinFactor1000;
+      _initMatrix(m);
+      m[0][0] = m[1][1] = cosFactor1000;
+      m[1][0] = sinFactor1000;
+      m[0][1] = -sinFactor1000;
 
-      _multiplyMatrix(_matrix, rotMatrix);
+      _multiplyMatrix(_matrix, m);
+
+      if ((cx != 0) && (cy != 0)) {
+        // move given center back
+        _initMatrix(m);
+        m[0][2] = cx * 1000;
+        m[1][2] = cy * 1000;
+        _multiplyMatrix(_matrix, m);
+      }
     }
   };
 
@@ -319,7 +339,7 @@ public:
       };
     } else {
       // not implemented yet
-      return (gfxDraw::PURPLE);
+      return (gfxDraw::RGBA_PURPLE);
     }
   }
 

@@ -153,24 +153,6 @@ void dumpEdges(std::vector<_Edge> &edges) {
   TRACE("\n");
 }
 
-// ===== gfxDraw helper functions =====
-
-void dumpColor(char *name, RGBA col) {
-  TRACE(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
-  int_fast16_t t1 = INT16_MIN;
-}
-
-void dumpColorTable() {
-  TRACE("        Color: A  R  G  B  #col24\n");
-  dumpColor("Red", gfxDraw::RED);
-  dumpColor("Green", gfxDraw::GREEN);
-  dumpColor("Blue", gfxDraw::BLUE);
-  dumpColor("Orange", gfxDraw::ORANGE);
-  dumpColor("Transparent", gfxDraw::TRANSPARENT);
-}
-
-
-
 // ===== Basic drawing algorithm implementations =====
 
 /// @brief Draw a line using the most efficient algorithm

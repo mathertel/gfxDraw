@@ -1,6 +1,6 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxdraw.h: Library header file
+// gfxDraw.h: Library header file
 // 
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
@@ -23,25 +23,21 @@
 #include <algorithm>
 
 #include <cctype>
+#include <string.h>
+#include <math.h>
 
 #include "gfxDrawCommon.h"
-#include "gfxDrawColors.h"
+// #include "gfxDrawColors.h"
 
 // scaling: factors are in unit 100 (percent)
 
 #define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
 
-#define GFXPOINT100(p) (((int32_t)(p) + 50) / 100)
-
 namespace gfxDraw {
-
 
 /// @brief Callback function definition to address a pixel on a display
 typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
 
-
-/// @brief Callback function definition to address a pixel on a display
-typedef std::function<void(int16_t x, int16_t y, RGBA color)> fDrawPixel;
 
 /// @brief Callback function to transform all points in the segments
 typedef std::function<void(int16_t &x, int16_t &y)> fTransform;

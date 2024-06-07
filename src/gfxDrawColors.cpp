@@ -33,6 +33,30 @@ uint32_t RGBA::toColor24() {
   return ((Red << 16) | (Green << 8) | Blue);
 }
 
+// Convert into a 16 bit value using 5(R)+6(G)+5(B)
+uint16_t RGBA::toColor16() {
+  return ((((Red) & 0xF8) << 8) | (((Green) & 0xFC) << 3) | ((Blue) >> 3));
+}
+
+// ===== gfxDraw helper functions =====
+
+void dumpColor(char *name, RGBA col) {
+  TRACE(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
+  int_fast16_t t1 = INT16_MIN;
+}
+
+void dumpColorTable() {
+  TRACE("        Color: A  R  G  B  #col24\n");
+  dumpColor("Red", gfxDraw::RGBA_RED);
+  dumpColor("Green", gfxDraw::RGBA_GREEN);
+  dumpColor("Blue", gfxDraw::RGBA_BLUE);
+  dumpColor("Orange", gfxDraw::RGBA_ORANGE);
+  dumpColor("Transparent", gfxDraw::RGBA_TRANSPARENT);
+}
+
+
+
+
 
 }  // gfxDraw:: namespace
 

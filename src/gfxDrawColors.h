@@ -29,6 +29,10 @@ public:
   /// @brief Convert into a 3*8 bit value using #rrggbb.
   /// @return color value.
   uint32_t toColor24();
+
+  /// @brief Convert into a 16 bit value using 5(R)+6(G)+5(B) .
+  /// @return color value.
+  uint16_t toColor16();
 };
 #pragma pack(pop)
 
@@ -36,20 +40,20 @@ public:
 // Some useful constants for simple colors
 
 // clang-format off
-const RGBA BLACK (    0,    0,    0);
-const RGBA SILVER( 0xDD, 0xDD, 0xDD);
-const RGBA GRAY  ( 0xCC, 0xCC, 0xCC);
-const RGBA RED   ( 0xFF,    0,    0);
-const RGBA ORANGE( 0xE9, 0x76,    0);
-const RGBA YELLOW( 0xF6, 0xC7,    0);
-const RGBA GREEN (    0, 0x80,    0);
-const RGBA LIME  ( 0x32, 0xCD, 0x32);
-const RGBA BLUE  (    0,    0, 0xFF);
-const RGBA CYAN  (    0, 0xFF, 0xFF);
-const RGBA PURPLE( 0x99, 0x46, 0x80);
-const RGBA WHITE ( 0xFF, 0xFF, 0xFF);
+const RGBA RGBA_BLACK (    0,    0,    0);
+const RGBA RGBA_SILVER( 0xDD, 0xDD, 0xDD);
+const RGBA RGBA_GRAY  ( 0xCC, 0xCC, 0xCC);
+const RGBA RGBA_RED   ( 0xFF,    0,    0);
+const RGBA RGBA_ORANGE( 0xE9, 0x76,    0);
+const RGBA RGBA_YELLOW( 0xF6, 0xC7,    0);
+const RGBA RGBA_GREEN (    0, 0x80,    0);
+const RGBA RGBA_LIME  ( 0x32, 0xCD, 0x32);
+const RGBA RGBA_BLUE  (    0,    0, 0xFF);
+const RGBA RGBA_CYAN  (    0, 0xFF, 0xFF);
+const RGBA RGBA_PURPLE( 0x99, 0x46, 0x80);
+const RGBA RGBA_WHITE ( 0xFF, 0xFF, 0xFF);
 
-const RGBA TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
+const RGBA RGBA_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
 // c lang-format on
 
 void dumpColorTable();
