@@ -58,7 +58,6 @@ However there are implementations that are maybe more efficient - See references
 * [SVG arc reference implementation notes](https://www.w3.org/TR/SVG2/implnote.html#ArcImplementationNotes)
 * [SVG Arc Conversion from Endpoint to Center](https://www.w3.org/TR/SVG2/implnote.html#ArcConversionEndpointToCenter)
 
-
 * [Ellipse on wikipedia](https://en.wikipedia.org/wiki/Ellipse) including illustrations of drawing methods and many
   references.
 
@@ -101,16 +100,3 @@ However there are implementations that are maybe more efficient - See references
   efficient algorithms are needed to draw curves interactively.  
   url: <https://doi.ieeecomputersociety.org/10.1109/MCG.1984.275994>  
   url: <https://arxiv.org/pdf/2009.03434>
-
-
-## existing rastering implementations
-
-* [rasterx on GO](https://github.com/srwiley/rasterx/blob/master/shapes.go)
-
-* [canvg - A NodeJS implementation of Paths using Canvas](https://github.com/canvg/canvg/blob/937668eced93e0335c67a255d0d2277ea708b2cb/src/Document/PathElement.ts#L581)
-
-* [About ellipse rendering](https://stackoverflow.com/questions/49619231/calculating-and-storing-pixelated-ellipse)
-
-* [graphics.h ellipse function](https://github.com/genpfault/sdl-bgi/blob/master/src/SDL_bgi.c)
-
-* [SDL2 bresenhams style optimized drawing](https://github.com/giroletm/SDL2_gfx/blob/master/SDL2_gfxPrimitives.c#L1175)

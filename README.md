@@ -59,14 +59,26 @@ transformations and colors by attributes.
   widget.draw(bmpDraw());
 ```
 
-The gfxDrawObject class offers further functions for scaling and rotating the given path.
+The gfxDrawObject class offers further functions for moving, scaling and rotating the given path.
+See [Widgets Class](docs/widgets.md).
 
 
-## Path Syntax
+## SVG Path Syntax
 
-To create a vector (array) of segments the `path` syntax from the SVG is used.  There are several helpful web sites
-and tools to create such paths definitions like the [yqnn SVG Path Editor](https://yqnn.github.io/svg-path-editor/) or
-the [aydos SVG Path Editor](https://aydos.com/svgedit/).
+To create a vector (array) of segments that build the borders of the vector graphics object the `path` syntax from the SVG standard is used.  
+
+There are helpful web applications to create or edit such paths definitions:
+
+* The [SVG Path Editor](https://yqnn.github.io/svg-path-editor/) with source available in
+  [Github/Yqnn](https://github.com/Yqnn/svg-path-editor) from Yann Armelin
+
+* The [SVG Path Editor](https://aydos.com/svgedit/) with source available in
+  [Github/aydos](https://github.com/aydos/svgpath) from Fahri Aydos.
+
+Both tools let you directly change the individual segments of paths and also offer some graphical view or even edit capabilities. You can also use full SVG editors and extract the path from there.
+
+For using paths with pixel oriented displays is is important to use integer based coordinates and scalar values only. Better to use larger numbers as scaling the result down to a smaller size is possible.
+
 
 Examples for paths are:
 
@@ -96,37 +108,38 @@ The examples that come with this library demonstrate on how to use gfxdraw in se
 * draw primitives
 * path drawing and transformation functions
 
-
-### adafruitgfx Example
+<!-- ### Adafruit GFX Example
 
 This example demonstrates how to use gfxDraw with the
-[Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) that is the most often used GFX library.
+[Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) that is on of the most often used GFX libraries
+for Arduino. -->
 
 
-### moongfx Example
+### Moon GFX Example
 
 This example demonstrates how to use gfxDraw with the
 [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX) that has some excellent support for devices
 based on the ESP32 chips and graphics displays.
 
 
-### gfxprimitives Example
+### VSCode PNG Example
 
-To draw the paths the primitive functions for drawing lines, arc and curves are part of the library and also can be used directly.
+In the `examples/png` folder you can find a implementation for using the library by a windows executable to produce
+several png files with test images.
+
+This example is especially helpful while engineering the library with fast turn-around cycles and debugging capabilities.
 
 
-### gfxsegments Example
+<!-- ### gfxprimitives Example
+
+To draw the paths the primitive functions for drawing lines, arc and curves are part of the library and also can be used directly. -->
+
+
+<!-- ### gfxsegments Example
 
 After parsing the path syntax a list (vector) of segments is created than can be used for transformations and drawing.
 
-This example shows how to draw using these functions. They are also used by the gfxDrawObject implementation.
-
-
-### VSCode PNG Example
-
-In the `examples/png` folder you can find a implementation for using the library by a windows executable to produce several png files with test images.
-
-This example is especially helpful while engineering the library with fast turn-around cycles and debugging capabilities.
+This example shows how to draw using these functions. They are also used by the gfxDrawObject implementation. -->
 
 
 ## See also
@@ -135,4 +148,5 @@ This example is especially helpful while engineering the library with fast turn-
 * [Wikipedia Bresenham Algorithm](https://de.wikipedia.org/wiki/Bresenham-Algorithmus)
 * [Wikipedia Scanline Rendering](https://en.wikipedia.org/wiki/Scanline_rendering)
 * [Math background for using transformation matrixes in 2D drawings](https://www.matheretter.de/wiki/homogene-koordinaten)
-
+* [SVG Game Icons](https://game-icons.net/)
+* [SVG IoT Icons](https://github.com/HomeDing/WebFiles/tree/master/i)

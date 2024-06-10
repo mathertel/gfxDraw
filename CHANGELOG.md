@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 * arc command parsing without spaces around the flag parameters
 * arc command implementation with optimized drawing for circular arcs.
 * more docu and references
-* `png` Example for building and testing on Windows.
+* [png Example](examples/png/README.md) for building and testing on Windows.
 * library.properties file added.
 
 ## 2024-04-19
