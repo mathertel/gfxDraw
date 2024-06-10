@@ -1,4 +1,14 @@
-// gfxDraw.cpp
+// - - - - -
+// GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
+// gfxDrawColors.cpp: Library implementation for handling Color values.
+//
+// Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
+// This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
+//
+// Changelog: See gfxDraw.h and documentation files in this library.
+//
+// - - - - -
+
 
 #include "gfxDrawColors.h"
 

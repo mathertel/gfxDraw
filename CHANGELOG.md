@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## unpublished
 
+* gfxDrawObject supports undraw by saving background pixels during drawing and restoring background.
+* [moongfx example](examples/moongfx/README.md) using [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX).
+
+
 ## 2024-05-30 Version 0.8.0
 
 * arc command parsing without spaces around the flag parameters

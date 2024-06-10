@@ -18,12 +18,18 @@ public:
   RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
   RGBA(uint32_t col24);
 
-  uint8_t Red;
-  uint8_t Green;
-  uint8_t Blue;
-  uint8_t Alpha;
-  
-  constexpr bool operator==(const RGBA &col2);
+  union {
+    struct {
+      uint8_t Red;
+      uint8_t Green;
+      uint8_t Blue;
+      uint8_t Alpha;
+    };
+    uint32_t raw;
+  };
+
+  constexpr bool
+  operator==(const RGBA &col2);
   constexpr bool operator!=(const RGBA &col2);
 
   /// @brief Convert into a 3*8 bit value using #rrggbb.
@@ -33,6 +39,7 @@ public:
   /// @brief Convert into a 16 bit value using 5(R)+6(G)+5(B) .
   /// @return color value.
   uint16_t toColor16();
+
 };
 #pragma pack(pop)
 

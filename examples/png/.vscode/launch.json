@@ -11,19 +11,19 @@
       "cwd": "${workspaceFolder}",
       "environment": [],
       "console": "integratedTerminal",
-      "preLaunchTask": "C/C++: cl.exe build active file"
+      "preLaunchTask": "Build example"
     },
     {
       "name": "C/C++: cl.exe build and debug active file",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${fileDirname}\\main.exe",
+      "program": "${workspaceFolder}/main.exe",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
       "environment": [],
       "console": "internalConsole",
-      "preLaunchTask": "C/C++: cl.exe build active file"
+      "preLaunchTask": "Build example"
     }
   ]
 }

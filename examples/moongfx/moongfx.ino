@@ -26,13 +26,24 @@ uint16_t mode = 0;
 uint16_t step = 0;
 unsigned long nextDraw;
 
-// a path drawing a heard. size = (87/80), center = (44/40)
+// A SVG path defining the shape of a heard
+// Size = (87/80), center = (44/40)
 const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 
-#define gfxWrite(col) [](int16_t x, int16_t y) { \
+// A SVG path defining the shape of an arrow
+// Size = (20/24), center / points to = (0/0)
+const char *arrowPath = "M0 0l12-12 0 8 22 0 0 8-22 0 0 8Z";
+
+
+// helpful "inline" function to
+#define gfxSetPixel(col) [](int16_t x, int16_t y) { \
   gfx->writePixel(x, y, (col)); \
 }
 
+// draw on gfx
+void gfxDrawColor(int16_t x, int16_t y, gfxDraw::RGBA col) {
+  gfx->writePixel(x, y, col.toColor16());
+}
 
 void setup() {
   Serial.begin(115200);
@@ -140,7 +151,7 @@ void loop(void) {
       });
 
       // (int16_t x, int16_t y, uint16_t color));
-      gfxDraw::pathByText(heardPath, 8, 8, 100, gfxWrite(RGB565_BLUE), gfxWrite(RGB565_YELLOW));
+      gfxDraw::pathByText(heardPath, 8, 8, 100, gfxSetPixel(RGB565_BLUE), gfxSetPixel(RGB565_YELLOW));
 
     } else if (mode == 2) {
       gfx->fillScreen(RGB565_LIGHTGREY);
@@ -148,11 +159,11 @@ void loop(void) {
       for (int n = 0; n < 220; n += 8) {
 
         gfxDraw::drawSolidRect(10 - 8 + n, 10 - 8 + n, 87, 80,
-                               gfxWrite(RGB565_LIGHTGREY));
+                               gfxSetPixel(RGB565_LIGHTGREY));
 
         gfxDraw::pathByText(heardPath, 10 + n, 10 + n, 100,
-                            gfxWrite(RGB565_BLUE),
-                            gfxWrite(RGB565_YELLOW));
+                            gfxSetPixel(RGB565_BLUE),
+                            gfxSetPixel(RGB565_YELLOW));
         delay(20);
       }
 
@@ -174,26 +185,30 @@ void loop(void) {
 
     } else if (mode == 4) {
       gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawObject widget;
-      widget.setStrokeColor(gfxDraw::RGBA_BLUE);
-      widget.setFillColor(gfxDraw::RGBA_RED);
-      widget.setPath(heardPath);
+      gfxDraw::gfxDrawObject heard;
+      heard.setStrokeColor(gfxDraw::RGBA_BLUE);
+      heard.setFillColor(gfxDraw::RGBA_RED);
+      heard.setPath(heardPath);
 
       int16_t posX = 0;
       int16_t posY = 0;
       for (int n = 0; n < 72; n++) {
-        widget.move(1, 1);
+        heard.move(1, 1);
         posX += 1;
         posY += 1;
-
-        widget.rotate(5, posX + 44, posY + 40);
-
-        widget.draw([](int16_t x, int16_t y, gfxDraw::RGBA col) {
-          gfx->writePixel(x, y, col.toColor16());
-        });
-
+        heard.rotate(5, posX + 44, posY + 40);
+        heard.draw(gfxDrawColor);
         delay(1);
       }
+
+      delay(100);
+      gfxDraw::gfxDrawObject arrow;
+      arrow.setFillColor(gfxDraw::RGBA_YELLOW);
+      arrow.setPath(arrowPath);
+      arrow.scale(200);
+      arrow.rotate(-45);
+      arrow.move(posX + 44, posY + 40);
+      arrow.draw(gfxDrawColor);
     }
 
 

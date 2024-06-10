@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../src"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			".fantomasignore": "ignore",
+			"vector": "cpp"
+		}
+	}
+}

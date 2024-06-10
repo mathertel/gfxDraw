@@ -14,16 +14,24 @@
 //
 // CHANGELOG:
 // 15.05.2024  creation of the GFXDraw library.
+// 09.06.2024  extended gfxDrawObject
 //
 // - - - - -
 
 #pragma once
 
+#ifdef ARDUINO
+#include <Arduino.h>
+#endif
+
+#include <functional>
 #include <vector>
 #include <algorithm>
 
 #include <cctype>
 #include <string.h>
+
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "gfxDrawCommon.h"
