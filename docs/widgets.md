@@ -1,6 +1,6 @@
 # gfxDraw Widgets
 
-The `gfxDrawObject` class implements the necessary steps to draw an object based on a path with transformation and
+The `gfxDrawWidget` class implements the necessary steps to draw an object based on a path with transformation and
 coloring options. This class simplifies drawing by avoiding using the gfxDraw basic functions.
 
 * All transformations are combined into a transformation matrix to avoid intermediate transformations with rounding
@@ -8,7 +8,7 @@ coloring options. This class simplifies drawing by avoiding using the gfxDraw ba
 * The fill color can be specified using simple linear gradients.
 * The Transformations can be cascaded
 
-* Example of a gauge based on gfxDrawObject that manipulates segments based on a given value.
+* Example of a gauge based on gfxDrawWidget that manipulates segments based on a given value.
 <!-- * Several Widget Examples ... ??? -->
 
 In the documentation you can find some internal details explained about transformation procedures to draw the path in different

@@ -8,7 +8,7 @@
 
 #include "../../src/gfxDraw.h"
 #include "../../src/gfxDrawCircle.h"
-#include "../../src/gfxDrawObject.h"
+#include "../../src/gfxDrawWidget.h"
 
 #include "lodepng.h"
 
@@ -357,7 +357,7 @@ void drawTest02() {
   gfxDraw::moveSegments(segs, 40, 40);                                                             // move right down
   gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA_LIME));  // hard-coded fill color here.
 
-  gfxDraw::gfxDrawObject *rect = new gfxDraw::gfxDrawObject(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_YELLOW);
+  gfxDraw::gfxDrawWidget *rect = new gfxDraw::gfxDrawWidget(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_YELLOW);
   rect->setRect(32, 16);
 
   // rotate around center
@@ -377,11 +377,11 @@ void drawTest02() {
   // gfxDraw::rect(4, 200, 47, 31, nullptr, pngSetPixel(gfxDraw::SILVER));
   // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
 
-  // gfxDrawObject *rect1 = new gfxDrawObject(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
+  // gfxDrawWidget *rect1 = new gfxDrawWidget(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
   // rect1->setRect(46, 30);
   // rect1->draw(4, 200, setImagePixel);
 
-  // gfxDrawObject *draw1 = new gfxDrawObject(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_ORANGE);
+  // gfxDrawWidget *draw1 = new gfxDrawWidget(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_ORANGE);
   // draw1->setPath("M0 12 l24-12 l20 20 h-16 v8 h-12 z");
   // draw1->draw(5, 201, setImagePixel);
 
@@ -432,13 +432,13 @@ void drawTest03() {
 
 using namespace gfxDraw;
 
-// draw a heard by using the gfxDrawObject functionality
+// draw a heard by using the gfxDrawWidget functionality
 // demonstrate on how to undraw
 void drawTest04() {
   // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
 
   // setup the widget for drawing a heard
-  gfxDrawObject widget;
+  gfxDrawWidget widget;
   widget.setStrokeColor(RGBA_BLACK);
   widget.setFillColor(RGBA_RED);
   widget.setPath(heardPath);

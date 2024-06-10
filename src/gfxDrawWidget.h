@@ -1,12 +1,12 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxDrawObject.cpp: Library implementation of a widget base class functionality
+// gfxDrawWidget.cpp: Library implementation of a widget base class functionality
 // based on vector graphics and paths with transformation, coloring options to simplify drawing with gfxDraw functions.
 //  * All transformations are combined into a transformation matrix to avoid intermediate transformations with rounding
 //    effects.
 //  * The fill color can be specified using simple linear gradients.
 //  * The Transformations can be
-//  * Example of a gauge based on gfxDrawObject that manipulates segments based on a given value.
+//  * Example of a gauge based on gfxDrawWidget that manipulates segments based on a given value.
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
@@ -40,13 +40,13 @@ typedef std::function<RGBA(int16_t x, int16_t y)> fReadPixel;
 typedef int32_t Matrix1000[3][3];
 
 
-/// @brief A gfxDrawObject is used to define a stroke path and coloring of a graphical object.
+/// @brief A gfxDrawWidget is used to define a stroke path and coloring of a graphical object.
 /// It supports creating paths by simple functions like lines and rectangles or by using the svg path notation (not fully supported)
 /// The stroke color can be set.
 /// The fill color can be set to solid or gradient functions.
 /// TODO: collect the current colors from the canvas so the object can be "un-drawn" later.
 
-class gfxDrawObject {
+class gfxDrawWidget {
 public:
   enum FillMode { None,
                   Solid,
@@ -56,14 +56,14 @@ public:
 
   // constructor functions
 
-  gfxDrawObject() {
+  gfxDrawWidget() {
     _fillMode = None;
     _stroke = gfxDraw::RGBA_BLACK;
     _initMatrix(_matrix);
   };
 
-  gfxDrawObject(gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
-    : gfxDrawObject() {
+  gfxDrawWidget(gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
+    : gfxDrawWidget() {
 
     _stroke = stroke;
     if (fill.Alpha != 0) {
@@ -72,8 +72,8 @@ public:
     }
   };
 
-  gfxDrawObject(const char *pathText, gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
-    : gfxDrawObject(stroke, fill) {
+  gfxDrawWidget(const char *pathText, gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
+    : gfxDrawWidget(stroke, fill) {
     setPath(pathText);
   };
 

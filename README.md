@@ -32,12 +32,12 @@ The library offers some entry points for:
 * graphic primitives like lines, arcs and cubic bezier curves
 * text based path definitions that combine the primitives to build a visual graphic element,
 * transformation functions on path based vector graphics
-* a drawing object / widget class that combines path, transformations and fill definitions.
+* a drawing widget class that combines path, transformations and fill definitions.
 
 
 ## Drawing on a display
 
-The easiest way to draw path based widgets is to use the provided Widget class (gfxDrawObject) and specify all the
+The easiest way to draw path based widgets is to use the provided Widget class (gfxDrawWidget) and specify all the
 transformations and colors by attributes.
 
 ```cpp
@@ -51,7 +51,7 @@ transformations and colors by attributes.
   drawSolidRect(8, 8, 87, 80, bmpSet(SILVER));
 
   // draw a heard
-  gfxDrawObject widget;
+  gfxDrawWidget widget;
   widget.setStrokeColor(YELLOW);
   widget.setFillColor(RED);
   widget.setPath(heardPath);
@@ -59,7 +59,7 @@ transformations and colors by attributes.
   widget.draw(bmpDraw());
 ```
 
-The gfxDrawObject class offers further functions for moving, scaling and rotating the given path.
+The gfxDrawWidget class offers further functions for moving, scaling and rotating the given path.
 See [Widgets Class](docs/widgets.md).
 
 
@@ -139,7 +139,7 @@ To draw the paths the primitive functions for drawing lines, arc and curves are 
 
 After parsing the path syntax a list (vector) of segments is created than can be used for transformations and drawing.
 
-This example shows how to draw using these functions. They are also used by the gfxDrawObject implementation. -->
+This example shows how to draw using these functions. They are also used by the gfxDrawWidget implementation. -->
 
 
 ## See also

@@ -14,7 +14,7 @@
 //
 // CHANGELOG:
 // 15.05.2024  creation of the GFXDraw library.
-// 09.06.2024  extended gfxDrawObject
+// 09.06.2024  extended gfxDrawWidget
 //
 // - - - - -
 
