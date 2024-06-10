@@ -37,9 +37,6 @@
 #include "gfxDrawCommon.h"
 // #include "gfxDrawColors.h"
 
-// scaling: factors are in unit 100 (percent)
-
-#define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
 
 namespace gfxDraw {
 

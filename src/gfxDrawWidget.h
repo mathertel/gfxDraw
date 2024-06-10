@@ -20,11 +20,6 @@
 #include "gfxDraw.h"
 #include "gfxDrawColors.h"
 
-// scaling: factors are in unit 100 (percent)
-
-#define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
-#define GFXSCALE1000(p, f1000) (((int32_t)(p) * f1000 + 500) / 1000)
-
 #define TRACE(...)  // printf(__VA_ARGS__)
 
 namespace gfxDraw {
@@ -103,271 +98,43 @@ public:
 
   // ===== transformation functions =====
 
-  // the transformation is recorded to a 3*3 matrix and applied just before drawing.
+  // the transformations are recorded in an internal 3*3 matrix
+  // and is applied just before drawing.
 
-  void resetTransformation() {
-    _initMatrix(_matrix);
-  }
+  /// @brief reset the internal transformation matrix
+  void resetTransformation();
 
-  // apply the scaling factors to the transformation matrix;
-  void move(int16_t dx, int16_t dy) {
-    if ((dx != 0) || (dy != 0)) {
-      Matrix1000 MoveMatrix;
-      _initMatrix(MoveMatrix);
-      MoveMatrix[0][2] = dx * 1000;
-      MoveMatrix[1][2] = dy * 1000;
-      _multiplyMatrix(_matrix, MoveMatrix);
-    }
-  };
+  /// @brief apply a movement vector to the transformation matrix.
+  /// @param dx moving in x direction.
+  /// @param dy moving in y direction.
+  void move(int16_t dx, int16_t dy);
 
-  // apply the scaling factors to the transformation matrix;
-  void scale(int16_t scale100) {
-    if (scale100 != 100) {
-      Matrix1000 scaleMatrix;
-      _initMatrix(scaleMatrix);
-      scaleMatrix[0][0] = scaleMatrix[1][1] = scale100 * 10;
-      _multiplyMatrix(_matrix, scaleMatrix);
-    }
-  };
+  /// @brief apply a scaling factor to the transformation matrix.
+  /// @param scale100 scaling in percent.
+  void scale(int16_t scale100);
+
+  /// @brief apply a rotation to the transformation matrix.
+  /// @param angle Angle of rotation clockwise in degree.
+  /// @param cx x-coordinate of the center of rotation. Default = 0.
+  /// @param cy y-coordinate of the center of rotation. Default = 0.
+  void rotate(int16_t angle, int16_t cx = 0, int16_t cy = 0);
 
 
-  // apply the rotation factors to the transformation matrix.
-  // rotating is using the center 0/0 by default
-  void rotate(int16_t angle, int16_t cx = 0, int16_t cy = 0) {
-    if (angle != 0) {
-      Matrix1000 m;
+  // ===== drawing functions =====
 
-      if ((cx != 0) && (cy != 0)) {
-        // move given center to 0/0
-        _initMatrix(m);
-        m[0][2] = -cx * 1000;
-        m[1][2] = -cy * 1000;
-        _multiplyMatrix(_matrix, m);
-      }
-
-      double radians = (angle * M_PI) / 180;
-
-      int32_t sinFactor1000 = floor(sin(radians) * 1000);
-      int32_t cosFactor1000 = floor(cos(radians) * 1000);
-
-      _initMatrix(m);
-      m[0][0] = m[1][1] = cosFactor1000;
-      m[1][0] = sinFactor1000;
-      m[0][1] = -sinFactor1000;
-
-      _multiplyMatrix(_matrix, m);
-
-      if ((cx != 0) && (cy != 0)) {
-        // move given center back
-        _initMatrix(m);
-        m[0][2] = cx * 1000;
-        m[1][2] = cy * 1000;
-        _multiplyMatrix(_matrix, m);
-      }
-    }
-  };
+  /// @brief transform and draw the widget
+  /// @param cbDraw Pixel drawing callback function
+  /// @param cbRead optional Pixel reading current color from the image
+  /// when `cbRead` is present the background of the drawing is collected and saved to an internal background image.
+  void draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead = nullptr);
 
 
-  class Background {
-  public:
-    // initialize without data.
-    Background() {
-      _w = 0;
-    };
-
-    void set(int16_t x, int16_t y, RGBA color) {
-      TRACE("bg::set(%d,%d)=%08x\n", x, y, color.raw);
-      if (_w == 0) {
-        _createData(x, y);
-        TRACE(" init to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
-      }
-
-      if (x < _x) {
-        _insertLeft(_x - x);
-        TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
-
-      } else if (x >= _x + _w) {
-        _insertRight(x - (_x + _w) + 1);
-        TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
-      }
-
-      if (y < _y) {
-        // _insertTop(_y - y);
-        printf(" resize to %d/%d\n", x, y);
-        printf("undone!\n");
-
-      } else if (y >= _y + _h) {
-        _insertBottom(y - (_y + _h) + 1);
-        TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
-      }
-
-      RGBA *cell = &data[(x - _x) + (y - _y) * _w];
-      if (cell->Alpha > 0) {
-        printf("double write at (%d,%d)!\n", x, y);
-      } else {
-        *cell = color;
-      }
-      // data[(x - _x) + (y - _y) * _w] = color;
-      // data.at((x - _x) + (y - _y) * _w) = color;
-    }
+  /// @brief undo drawing by restoring all background pixels.
+  /// @param cbDraw Pixel drawing callback function
+  void undraw(gfxDraw::fDrawPixel cbDraw);
 
 
-    void draw(gfxDraw::fDrawPixel cbDraw) {
-
-      // insert blanks on each line
-      for (int16_t y = 0; y < _h; y++) {
-        for (int16_t x = 0; x < _w; x++) {
-          RGBA col = data[(y * _w) + x];
-          if (col.Alpha > 0)
-            cbDraw(x + _x, y + _y, col);
-        }
-      }
-
-    }  // draw();
-
-
-
-  private:
-    int16_t _x;
-    int16_t _y;
-    int16_t _w;
-    int16_t _h;
-    std::vector<RGBA> data;
-
-    // first initializing the data
-    void _createData(int16_t x, int16_t y) {
-      // first initialization.
-      _x = x & 0xFFF0;
-      _y = y;
-      _w = 16;
-      _h = 16;
-      data.resize(16 * 16);  // initialized with 0, all pixels with Alpha 0
-    };
-
-
-    // resize the array based 0/0
-    void _insertLeft(uint16_t count) {
-      RGBA blank('L', 'L', 'L', 0x00);
-
-      // expand by multiple of 16
-      count = (count + 15) & 0xFFF0;
-      int16_t x2 = _x - count;
-      int16_t w2 = _w + count;
-
-      TRACE(" l-expand %d -> %d\n", _w, w2);
-      data.reserve(w2 * _h);  // alloc at once.
-
-      // insert blanks on each line
-      for (int16_t l = 0; l < _h; l++) {
-        data.insert(data.begin() + (l * w2), count, blank);
-      }
-      _x = x2;
-      _w = w2;
-    }  // _insertLeft
-
-
-    // resize the array based 0/0
-    void _insertRight(uint16_t count) {
-      RGBA blank('R', 'R', 'R', 0x00);
-
-      // expand by multiple of 16
-      count = (count + 15) & 0xFFF0;
-      int16_t w2 = _w + count;
-      TRACE(" r-expand %d -> %d\n", _w, w2);
-
-      data.reserve(w2 * _h);  // alloc at once.
-
-      // insert blanks on each line
-      for (int16_t l = 0; l < _h; l++) {
-        data.insert(data.begin() + (l * w2) + _w, count, blank);
-      }
-
-      _w = w2;
-    }  // _insertRight
-
-
-    // resize the array based 0/0
-    void _insertBottom(uint16_t count) {
-      RGBA blank('b', 'b', 'b', 0x00);
-
-      // expand by multiple of 16
-      count = (count + 15) & 0xFFF0;
-      int16_t h2 = _h + count;
-      TRACE(" b-expand %d -> %d\n", _h, h2);
-
-      data.reserve(_w * h2);  // alloc at once.
-
-      data.insert(data.end(), count * _w, blank);
-      _h = h2;
-    }  // _insertBottom
-  };  // class Background
-
-
-  void draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead = nullptr) {
-    TRACE("draw()\n");
-
-    TRACE(" stroke = %02x.%02x.%02x.%02x\n", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
-    TRACE(" fill   = %02x.%02x.%02x.%02x\n", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
-
-    // create a copy
-    std::vector<gfxDraw::Segment> tSegments = _segments;
-
-    // transform with matrix
-    transformSegments(tSegments, [&](int16_t &x, int16_t &y) {
-      int32_t tx, ty;
-      tx = x * _matrix[0][0] + y * _matrix[0][1] + _matrix[0][2];
-      ty = x * _matrix[1][0] + y * _matrix[1][1] + _matrix[1][2];
-
-      x = tx / 1000;
-      y = ty / 1000;
-    });
-
-    // create Background
-    if (cbRead) {
-      _bg = new Background();
-    }
-
-    // draw...
-    if (_fillColor1.Alpha == 0) {
-      // need to draw the strike pixels only
-      gfxDraw::drawSegments(tSegments, [&](int16_t x, int16_t y) {
-        if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
-        cbDraw(x, y, _stroke);
-      });
-
-    } else if ((_stroke.Alpha > 0)) {
-      gfxDraw::fillSegments(
-        tSegments,
-        [&](int16_t x, int16_t y) {
-          if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
-          cbDraw(x, y, _stroke);
-        },
-        [&](int16_t x, int16_t y) {
-          if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
-          cbDraw(x, y, _getColor(x, y));
-        });
-
-    } else if (_stroke.Alpha == 0) {
-      gfxDraw::fillSegments(
-        tSegments,
-        nullptr,
-        [&](int16_t x, int16_t y) {
-          if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
-          cbDraw(x, y, _getColor(x, y));
-        });
-    }
-  };
-
-
-  void undraw(gfxDraw::fDrawPixel cbDraw) {
-    if (_bg) {
-      _bg->draw(cbDraw);
-    }
-    free(_bg);  //  = new Background();
-    _bg = nullptr;
-    printf("\n");
-  }
-
+  // ===== gradient filling =====
 
   void setFillGradient(gfxDraw::RGBA fill1, int16_t x1, int16_t y1, gfxDraw::RGBA fill2, int16_t x2, int16_t y2) {
     TRACE("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
@@ -547,37 +314,6 @@ private:
   class Background *_bg = nullptr;
 };
 
-// public:
-
-// void drawCircleIntern(int16_t xc, int16_t yc, int16_t x, int16_t y, fSetPixel fBorderColor) {
-//   fBorderColor(xc + x, yc + y);
-//   fBorderColor(xc - x, yc + y);
-//   fBorderColor(xc + x, yc - y);
-//   fBorderColor(xc - x, yc - y);
-//   fBorderColor(xc + y, yc + x);
-//   fBorderColor(xc - y, yc + x);
-//   fBorderColor(xc + y, yc - x);
-//   fBorderColor(xc - y, yc - x);
-// }
-
-// // Draw a full circle with border and fill color
-// void drawCircle(int16_t xc, int16_t yc, int16_t r, fSetPixel fBorderColor, fSetPixel fFillColor = nullptr) {
-
-
-//   int16_t x = 0, y = r;
-//   int16_t d = 3 - 2 * r;
-//   drawCircleIntern(xc, yc, x, y, fBorderColor);
-//   while (y >= x) {
-//     x++;
-//     if (d > 0) {
-//       y--;
-//       d = d + 4 * (x - y) + 10;
-//     } else {
-//       d = d + 4 * x + 6;
-//     }
-//     drawCircleIntern(xc, yc, x, y, fBorderColor);
-//   }
-// }
-}
+} // namespace gfxDraw
 
 // End.

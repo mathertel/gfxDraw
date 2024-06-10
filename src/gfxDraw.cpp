@@ -9,12 +9,7 @@
 //
 // - - - - -
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-// #include <iostream>
-
 #include "gfxDraw.h"
-
 #include "gfxDrawBezier.h"
 #include "gfxDrawCircle.h"
 
@@ -25,12 +20,12 @@
 #define SLOPE_RAISING 2
 #define SLOPE_HORIZONTAL 3
 
+// scaling: factors are that are in a unit of 100 (percent)
+#define GFXSCALE100(p, f100) (((int32_t)(p) * f100 + 50) / 100)
 
 namespace gfxDraw {
 
 // ===== internal class definitions =====
-
-
 
 
 /// @brief The _Edge class holds a horizontal pixel sequence for path boundaries and provides some useful static methods.
