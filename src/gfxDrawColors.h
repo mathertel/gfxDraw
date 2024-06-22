@@ -11,26 +11,37 @@
 namespace gfxDraw {
 
 #pragma pack(push, 1)
-/// @brief The RGBA class is used to define the color and opacity of a single abstract pixel.
-class RGBA {
+/// @brief The ARGB class is used to define the opacity and color for a single abstract pixel.
+/// using 32-bits per pixel for Alpha, Red, Green, Blue
+/// The layout of this class is to also have a raw 32-bit value in format #aaRRGGBB
+/// and conversions to 16-bit values using 0brrrrrggggggbbbbb.
+
+class ARGB {
 public:
-  RGBA() = default;
-  RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
-  RGBA(uint32_t col24);
+  ARGB() = default;
+  ARGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+  ARGB(uint32_t raw);
 
   union {
     struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+      uint8_t Blue;
+      uint8_t Green;
+      uint8_t Red;
+      uint8_t Alpha;
+#else
+      uint8_t Alpha;
       uint8_t Red;
       uint8_t Green;
       uint8_t Blue;
-      uint8_t Alpha;
+#endif
     };
-    uint32_t raw;
+    uint32_t raw;  // equals #AArrggbb
   };
 
   constexpr bool
-  operator==(const RGBA &col2);
-  constexpr bool operator!=(const RGBA &col2);
+  operator==(const ARGB &col2);
+  constexpr bool operator!=(const ARGB &col2);
 
   /// @brief Convert into a 3*8 bit value using #rrggbb.
   /// @return color value.
@@ -39,7 +50,6 @@ public:
   /// @brief Convert into a 16 bit value using 5(R)+6(G)+5(B) .
   /// @return color value.
   uint16_t toColor16();
-
 };
 #pragma pack(pop)
 
@@ -47,20 +57,20 @@ public:
 // Some useful constants for simple colors
 
 // clang-format off
-const RGBA RGBA_BLACK (    0,    0,    0);
-const RGBA RGBA_SILVER( 0xDD, 0xDD, 0xDD);
-const RGBA RGBA_GRAY  ( 0xCC, 0xCC, 0xCC);
-const RGBA RGBA_RED   ( 0xFF,    0,    0);
-const RGBA RGBA_ORANGE( 0xE9, 0x76,    0);
-const RGBA RGBA_YELLOW( 0xF6, 0xC7,    0);
-const RGBA RGBA_GREEN (    0, 0x80,    0);
-const RGBA RGBA_LIME  ( 0x32, 0xCD, 0x32);
-const RGBA RGBA_BLUE  (    0,    0, 0xFF);
-const RGBA RGBA_CYAN  (    0, 0xFF, 0xFF);
-const RGBA RGBA_PURPLE( 0x99, 0x46, 0x80);
-const RGBA RGBA_WHITE ( 0xFF, 0xFF, 0xFF);
+const ARGB ARGB_BLACK (    0,    0,    0);
+const ARGB ARGB_SILVER( 0xDD, 0xDD, 0xDD);
+const ARGB ARGB_GRAY  ( 0xCC, 0xCC, 0xCC);
+const ARGB ARGB_RED   ( 0xFF,    0,    0);
+const ARGB ARGB_ORANGE( 0xE9, 0x76,    0);
+const ARGB ARGB_YELLOW( 0xF6, 0xC7,    0);
+const ARGB ARGB_GREEN (    0, 0x80,    0);
+const ARGB ARGB_LIME  ( 0x32, 0xCD, 0x32);
+const ARGB ARGB_BLUE  (    0,    0, 0xFF);
+const ARGB ARGB_CYAN  (    0, 0xFF, 0xFF);
+const ARGB ARGB_PURPLE( 0x99, 0x46, 0x80);
+const ARGB ARGB_WHITE ( 0xFF, 0xFF, 0xFF);
 
-const RGBA RGBA_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
+const ARGB ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
 // c lang-format on
 
 void dumpColorTable();

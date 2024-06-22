@@ -25,10 +25,10 @@
 namespace gfxDraw {
 
 /// @brief Callback function definition to address a pixel on a display
-typedef std::function<void(int16_t x, int16_t y, RGBA color)> fDrawPixel;
+typedef std::function<void(int16_t x, int16_t y, ARGB color)> fDrawPixel;
 
 /// @brief Callback function definition to read a pixel from a display
-typedef std::function<RGBA(int16_t x, int16_t y)> fReadPixel;
+typedef std::function<ARGB(int16_t x, int16_t y)> fReadPixel;
 
 
 // Matrix type definition for transformation using 1000 factor and numbers.
@@ -53,11 +53,11 @@ public:
 
   gfxDrawWidget() {
     _fillMode = None;
-    _stroke = gfxDraw::RGBA_BLACK;
+    _stroke = gfxDraw::ARGB_BLACK;
     _initMatrix(_matrix);
   };
 
-  gfxDrawWidget(gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
+  gfxDrawWidget(gfxDraw::ARGB stroke, gfxDraw::ARGB fill)
     : gfxDrawWidget() {
 
     _stroke = stroke;
@@ -67,7 +67,7 @@ public:
     }
   };
 
-  gfxDrawWidget(const char *pathText, gfxDraw::RGBA stroke, gfxDraw::RGBA fill)
+  gfxDrawWidget(const char *pathText, gfxDraw::ARGB stroke, gfxDraw::ARGB fill)
     : gfxDrawWidget(stroke, fill) {
     setPath(pathText);
   };
@@ -86,11 +86,11 @@ public:
 
   // ===== coloring functions =====
 
-  void setStrokeColor(gfxDraw::RGBA stroke) {
+  void setStrokeColor(gfxDraw::ARGB stroke) {
     _stroke = stroke;
   };
 
-  void setFillColor(gfxDraw::RGBA fill) {
+  void setFillColor(gfxDraw::ARGB fill) {
     _fillMode = Solid;
     _fillColor1 = fill;
   };
@@ -136,7 +136,7 @@ public:
 
   // ===== gradient filling =====
 
-  void setFillGradient(gfxDraw::RGBA fill1, int16_t x1, int16_t y1, gfxDraw::RGBA fill2, int16_t x2, int16_t y2) {
+  void setFillGradient(gfxDraw::ARGB fill1, int16_t x1, int16_t y1, gfxDraw::ARGB fill2, int16_t x2, int16_t y2) {
     TRACE("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
 
     _fillColor1 = fill1;
@@ -208,7 +208,7 @@ public:
   /// @param x
   /// @param y
   /// @return
-  gfxDraw::RGBA _getColor(int16_t x, int16_t y) {
+  gfxDraw::ARGB _getColor(int16_t x, int16_t y) {
     if (_fillMode == Solid) {
       return (_fillColor1);
 
@@ -224,7 +224,7 @@ public:
 
       } else {
         int32_t q100 = (100 - f100);
-        gfxDraw::RGBA col = gfxDraw::RGBA(
+        gfxDraw::ARGB col = gfxDraw::ARGB(
           (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
           (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
           (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
@@ -244,7 +244,7 @@ public:
 
       } else {
         int32_t q100 = (100 - f100);
-        gfxDraw::RGBA col = gfxDraw::RGBA(
+        gfxDraw::ARGB col = gfxDraw::ARGB(
           (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
           (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
           (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
@@ -253,9 +253,15 @@ public:
       };
     } else {
       // not implemented yet
-      return (gfxDraw::RGBA_PURPLE);
+      return (gfxDraw::ARGB_PURPLE);
     }
   }
+
+  // outer dimension of last drawn Widget
+  int16_t x_min;
+  int16_t y_min;
+  int16_t x_max;
+  int16_t y_max;
 
 protected:
   std::vector<gfxDraw::Segment> _segments;
@@ -286,18 +292,19 @@ private:
     memcpy(&m1, &r, sizeof(Matrix1000));
   };
 
+  void _extendBox(int16_t x, int16_t y);
 
   // Stroke coloring
-  gfxDraw::RGBA _stroke;
+  gfxDraw::ARGB _stroke;
 
   // Fill coloring
   FillMode _fillMode;
 
   /// @brief used for solid filling and gradient start color.
-  gfxDraw::RGBA _fillColor1;
+  gfxDraw::ARGB _fillColor1;
 
   /// @brief used for gradient end color.
-  gfxDraw::RGBA _fillColor2;
+  gfxDraw::ARGB _fillColor2;
 
   // point of fillColor1
   int16_t _gradientX1 = 0;
@@ -314,6 +321,6 @@ private:
   class Background *_bg = nullptr;
 };
 
-} // namespace gfxDraw
+}  // namespace gfxDraw
 
 // End.

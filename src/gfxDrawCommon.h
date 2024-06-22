@@ -70,9 +70,10 @@ public:
     return (p1.x < p2.x);
   };
 
-  constexpr bool operator==(const Point &p2) {
-    return ((x == p2.x) && (y == p2.y));
-  };
+  friend bool operator==(const Point &p1, const Point &p2) {
+    return ((p1.x == p2.x) && (p1.y == p2.y));
+  };  // operator=
+
 
   /// @brief Add 2 point vectors or move a point by a vector.
   /// @param p1 Point 1

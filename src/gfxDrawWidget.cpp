@@ -12,14 +12,18 @@
 
 #include "gfxDrawWidget.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+/// unconditional print out this
+#define LOG_PRINT(fmt, ...) printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
 
+// tracing information (left from development for future problem analysis) can be disabled
+#define LOG_TRACE(...)  // LOG_PRINT(__VA_ARGS__)
 
 namespace gfxDraw {
 
 /// @brief Create segments from a textual path definition.
 void gfxDrawWidget::setPath(const char *path) {
   _segments = parsePath(path);
+  _initMatrix(_matrix);
 }
 
 /// @brief Create segments that form a with rectangle.
@@ -44,35 +48,35 @@ public:
     _w = 0;
   };
 
-  void set(int16_t x, int16_t y, RGBA color) {
-    TRACE("bg::set(%d,%d)=%08x\n", x, y, color.raw);
+  void set(int16_t x, int16_t y, ARGB color) {
+    LOG_TRACE("bg::set(%d,%d)=%08x", x, y, color.raw);
     if (_w == 0) {
       _createData(x, y);
-      TRACE(" init to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
+      LOG_TRACE(" init to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
     }
 
     if (x < _x) {
       _insertLeft(_x - x);
-      TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
+      LOG_TRACE(" resize to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
 
     } else if (x >= _x + _w) {
       _insertRight(x - (_x + _w) + 1);
-      TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
+      LOG_TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
     }
 
     if (y < _y) {
       // _insertTop(_y - y);
-      printf(" resize to %d/%d\n", x, y);
-      printf("undone!\n");
+      LOG_PRINT(" resize to %d/%d", x, y);
+      LOG_PRINT("== undone!");
 
     } else if (y >= _y + _h) {
       _insertBottom(y - (_y + _h) + 1);
-      TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
+      LOG_TRACE(" resize to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
     }
 
-    RGBA *cell = &data[(x - _x) + (y - _y) * _w];
+    ARGB *cell = &data[(x - _x) + (y - _y) * _w];
     if (cell->Alpha > 0) {
-      printf("double write at (%d,%d)!\n", x, y);
+      LOG_PRINT("double write at (%d,%d)!", x, y);
     } else {
       *cell = color;
     }
@@ -82,16 +86,14 @@ public:
 
 
   void draw(gfxDraw::fDrawPixel cbDraw) {
-
     // insert blanks on each line
     for (int16_t y = 0; y < _h; y++) {
       for (int16_t x = 0; x < _w; x++) {
-        RGBA col = data[(y * _w) + x];
+        ARGB col = data[(y * _w) + x];
         if (col.Alpha > 0)
           cbDraw(x + _x, y + _y, col);
       }
     }
-
   }  // draw();
 
 
@@ -101,7 +103,7 @@ private:
   int16_t _y;
   int16_t _w;
   int16_t _h;
-  std::vector<RGBA> data;
+  std::vector<ARGB> data;
 
   // first initializing the data
   void _createData(int16_t x, int16_t y) {
@@ -116,14 +118,14 @@ private:
 
   // resize the array based 0/0
   void _insertLeft(uint16_t count) {
-    RGBA blank('L', 'L', 'L', 0x00);
+    ARGB blank('L', 'L', 'L', 0x00);
 
     // expand by multiple of 16
     count = (count + 15) & 0xFFF0;
     int16_t x2 = _x - count;
     int16_t w2 = _w + count;
 
-    TRACE(" l-expand %d -> %d\n", _w, w2);
+    LOG_TRACE(" l-expand %d -> %d", _w, w2);
     data.reserve(w2 * _h);  // alloc at once.
 
     // insert blanks on each line
@@ -137,12 +139,12 @@ private:
 
   // resize the array based 0/0
   void _insertRight(uint16_t count) {
-    RGBA blank('R', 'R', 'R', 0x00);
+    ARGB blank('R', 'R', 'R', 0x00);
 
     // expand by multiple of 16
     count = (count + 15) & 0xFFF0;
     int16_t w2 = _w + count;
-    TRACE(" r-expand %d -> %d\n", _w, w2);
+    LOG_TRACE(" r-expand %d -> %d", _w, w2);
 
     data.reserve(w2 * _h);  // alloc at once.
 
@@ -157,12 +159,12 @@ private:
 
   // resize the array based 0/0
   void _insertBottom(uint16_t count) {
-    RGBA blank('b', 'b', 'b', 0x00);
+    ARGB blank('b', 'b', 'b', 0x00);
 
     // expand by multiple of 16
     count = (count + 15) & 0xFFF0;
     int16_t h2 = _h + count;
-    TRACE(" b-expand %d -> %d\n", _h, h2);
+    LOG_TRACE(" b-expand %d -> %d", _h, h2);
 
     data.reserve(_w * h2);  // alloc at once.
 
@@ -240,11 +242,24 @@ void gfxDrawWidget::rotate(int16_t angle, int16_t cx, int16_t cy) {
 
 // ===== Drawing =====
 
-void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead) {
-  TRACE("draw()\n");
+void gfxDrawWidget::_extendBox(int16_t x, int16_t y) {
+  if (x < x_min) { x_min = x; }
+  if (x > x_max) { x_max = x; }
 
-  TRACE(" stroke = %02x.%02x.%02x.%02x\n", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
-  TRACE(" fill   = %02x.%02x.%02x.%02x\n", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
+  if (y < y_min) { y_min = y; }
+  if (y > y_max) { y_max = y; }
+}
+
+void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead) {
+  LOG_TRACE("draw()");
+
+  LOG_TRACE(" stroke = %02x.%02x.%02x.%02x", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
+  LOG_TRACE(" fill   = %02x.%02x.%02x.%02x", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
+
+  x_min = INT16_MAX;
+  y_min = INT16_MAX;
+  x_max = INT16_MIN;
+  y_max = INT16_MIN;
 
   // create a copy
   std::vector<gfxDraw::Segment> tSegments = _segments;
@@ -266,9 +281,10 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
 
   // draw...
   if (_fillColor1.Alpha == 0) {
-    // need to draw the strike pixels only
+    // need to draw the border pixels only
     gfxDraw::drawSegments(tSegments, [&](int16_t x, int16_t y) {
       if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
+      _extendBox(x, y);
       cbDraw(x, y, _stroke);
     });
 
@@ -277,10 +293,12 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
       tSegments,
       [&](int16_t x, int16_t y) {
         if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
+        _extendBox(x, y);
         cbDraw(x, y, _stroke);
       },
       [&](int16_t x, int16_t y) {
         if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
+        _extendBox(x, y);
         cbDraw(x, y, _getColor(x, y));
       });
 
@@ -290,6 +308,7 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
       nullptr,
       [&](int16_t x, int16_t y) {
         if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
+        _extendBox(x, y);
         cbDraw(x, y, _getColor(x, y));
       });
   }
@@ -302,8 +321,7 @@ void gfxDrawWidget::undraw(gfxDraw::fDrawPixel cbDraw) {
   }
   free(_bg);  //  = new Background();
   _bg = nullptr;
-  printf("\n");
-}
+}  // undraw
 
 
 

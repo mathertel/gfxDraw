@@ -9,6 +9,8 @@
         "/EHsc",
         "/I${workspaceFolder}/../../src",
         "/nologo",
+        "/std:c++20",
+        "/Zc:preprocessor", // use conformant preprocessor
         "/Fe${workspaceFolder}\\main.exe",
         "${workspaceFolder}/*.cpp",
         "${workspaceFolder}/../../src/*.cpp",

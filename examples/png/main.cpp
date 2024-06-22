@@ -20,7 +20,7 @@ using namespace std;
 // ===== image memory allocation and functions
 
 // The image memory is "just" an 2-dimensional array of bytes (4 * width * height)
-// each pixel is using 4 bytes for (RGBA)
+// each pixel is using 4 bytes for (ARGB)
 
 std::vector<unsigned char> image;
 uint16_t imageWidth;
@@ -32,7 +32,7 @@ void newImage(uint16_t w, uint16_t h) {
   image.resize(w * h * 4);
 }
 
-void saveImage(char *fileName) {
+void saveImage(const char *fileName) {
   std::vector<unsigned char> png;
   unsigned error = lodepng::encode(png, image, imageWidth, imageHeight);
   if (!error) lodepng::save_file(png, fileName);
@@ -43,7 +43,7 @@ void saveImage(char *fileName) {
 
 
 // Draw a pixel using a color.
-void setImagePixel(int16_t x, int16_t y, gfxDraw::RGBA color) {
+void setImagePixel(int16_t x, int16_t y, gfxDraw::ARGB color) {
   if ((x >= 0) && (x < imageWidth) && (y >= 0) && (y < imageHeight)) {
     image[4 * imageWidth * y + 4 * x + 0] = color.Red;
     image[4 * imageWidth * y + 4 * x + 1] = color.Green;
@@ -52,8 +52,8 @@ void setImagePixel(int16_t x, int16_t y, gfxDraw::RGBA color) {
   }
 };
 
-gfxDraw::RGBA readImagePixel(int16_t x, int16_t y) {
-  gfxDraw::RGBA col;
+gfxDraw::ARGB readImagePixel(int16_t x, int16_t y) {
+  gfxDraw::ARGB col;
   if ((x >= 0) && (x < imageWidth) && (y >= 0) && (y < imageHeight)) {
     col.Red = image[4 * imageWidth * y + 4 * x + 0];
     col.Green = image[4 * imageWidth * y + 4 * x + 1];
@@ -63,7 +63,7 @@ gfxDraw::RGBA readImagePixel(int16_t x, int16_t y) {
   return (col);
 }
 
-void fillImage(gfxDraw::RGBA color) {
+void fillImage(gfxDraw::ARGB color) {
   for (unsigned y = 0; y < imageHeight; y++) {
     for (unsigned x = 0; x < imageWidth; x++) {
       setImagePixel(x, y, color);
@@ -185,7 +185,7 @@ void drawDigits7(int n, uint16_t x, uint16_t y, gfxDraw::fSetPixel cbBorder, gfx
 
 
 // draw the test paths for outTest.bmp
-void assert(bool b, char *text) {
+void assert(bool b, const char *text) {
   if (!b) {
     printf("ALERT: %s\n", text);
   }
@@ -196,13 +196,11 @@ void silentTests() {
   uint16_t count;
   TRACE("\nSilent Tests:\n");
 
-  if (sizeof(gfxDraw::RGBA) != 4) {
-    // cout << "size(Segment):" << sizeof(gfxDraw::Segment) << endl;
-    cout << "error: size(RGBA) is not 4!" << endl;
+  if (sizeof(gfxDraw::ARGB) != 4) {
+    cout << "error: size(ARGB) is not 4!" << endl;
   }
 
   if (sizeof(gfxDraw::Segment) != 14) {
-    // cout << "size(RGBA):" << sizeof(testRGBA) << endl;
     cout << "error: size(Segment) is not 14!" << endl;
   }
 
@@ -255,76 +253,76 @@ void drawTest01() {
 
   auto drawHelper = [](const char *pathText, int16_t x, int16_t y) {
     std::vector<gfxDraw::Segment> vSeg = gfxDraw::parsePath(pathText);
-    fillSegments(vSeg, x, y, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA(255, 255, 128)));
+    fillSegments(vSeg, x, y, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(255, 255, 128)));
   };
 
   TRACE("\nTest-01:\n");
   // 8*8 rectange needs 2 edges on horizontal lines
-  gfxDraw::drawSolidRect(10, 10, 10, 10, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(10, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z", 10, 10);
 
   TRACE("\nTest-02:\n");
   // 7*8 rectange needs 2 more points on horizontal lines
-  gfxDraw::drawSolidRect(20, 10, 10, 10, pngSetPixel(gfxDraw::RGBA_GRAY));
+  gfxDraw::drawSolidRect(20, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h6 v7 h-6 z", 20, 10);
 
   TRACE("\nTest-03:\n");
   // closed W
-  gfxDraw::drawSolidRect(30, 10, 11, 10, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(30, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h8 v7 l-4,-4 l-4 4 z", 30, 10);
 
   TRACE("\nTest-04: closed M\n");
-  gfxDraw::drawSolidRect(41, 10, 11, 10, pngSetPixel(gfxDraw::RGBA_GRAY));
+  gfxDraw::drawSolidRect(41, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l4,4 l4 -4 v7 h-8 z", 41, 10);
 
   TRACE("\nTest-05: route\n");
-  gfxDraw::drawSolidRect(52, 10, 11, 10, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(52, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M5 1 l4,4 l-4 4 l-4 -4 z", 52, 10);
 
   TRACE("\nTest-06: |> symbol\n");
-  gfxDraw::drawSolidRect(63, 10, 10, 10, pngSetPixel(gfxDraw::RGBA_GRAY));
+  gfxDraw::drawSolidRect(63, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l7,4 l-7 4 z", 63, 10);
 
   TRACE("\nTest-07: <| symbol\n");
-  gfxDraw::drawSolidRect(73, 10, 10, 10, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(73, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M8 1 l-7,4 l7 4 z", 73, 10);
 
   TRACE("\nTest-10: [[]] \n");
-  gfxDraw::drawSolidRect(10, 22, 10, 10, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(10, 22, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z", 10, 22);
 
   TRACE("\nTest-11: [*] \n");
-  gfxDraw::drawSolidRect(20, 22, 10, 10, pngSetPixel(gfxDraw::RGBA_GRAY));
+  gfxDraw::drawSolidRect(20, 22, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z", 20, 22);
 
-  gfxDraw::drawSolidRect(10, 34, 27, 24, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(10, 34, 27, 24, pngSetPixel(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText("M2 52 l60-50 v20 h20 l-30 50z", 10, 34, 30,
-                      pngSetPixel(gfxDraw::RGBA_BLUE),
+                      pngSetPixel(gfxDraw::ARGB_BLUE),
                       [](int16_t x, int16_t y) {
-                        gfxDraw::RGBA col = gfxDraw::RGBA(0xC0, 0x0, 0, 0xFF);
+                        gfxDraw::ARGB col = gfxDraw::ARGB(0xC0, 0x0, 0, 0xFF);
                         col.Green += (7 * x);
                         col.Blue += (7 * y);
                         setImagePixel(x, y, col);
                       });
 
 
-  gfxDraw::drawSolidRect(40, 34, 43, 26, pngSetPixel(gfxDraw::RGBA_SILVER));
+  gfxDraw::drawSolidRect(40, 34, 43, 26, pngSetPixel(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText(
     "M2 42 l20-33 l20 38 l20 -38 l20 33 l0 -40 l-70 0 z",
     40, 34, 50,
-    pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+    pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // radio with 2 inner paths
-  gfxDraw::drawSolidRect(91, 34, 43, 35, pngSetPixel(gfxDraw::RGBA_SILVER));
-  gfxDraw::pathByText(RadioPath, 90, 34, 50, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::drawSolidRect(91, 34, 43, 35, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::pathByText(RadioPath, 90, 34, 50, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // smiley with bezier curves
-  gfxDraw::drawSolidRect(10, 80, 99, 99, pngSetPixel(gfxDraw::RGBA_GREEN));
-  gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::drawSolidRect(10, 80, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // smiley with Arcs
-  gfxDraw::drawSolidRect(120, 80, 99, 99, pngSetPixel(gfxDraw::RGBA_GREEN));
-  gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::drawSolidRect(120, 80, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // gfxDraw::drawCubicBezier(5, 10, 10, -5, 20, 25, 26, 10,
   //                          [](int16_t x, int16_t y) {
@@ -339,25 +337,25 @@ void drawTest02() {
   std::vector<gfxDraw::Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
   gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
   gfxDraw::moveSegments(segs, 100, 0);                                                                    // move to the right
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
   gfxDraw::moveSegments(segs, 22, 15);                                                                    // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
   segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
   gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
   gfxDraw::rotateSegments(segs, 25);                                                                      // rotate some degrees
   gfxDraw::moveSegments(segs, 200, 40);                                                                   // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
 
   segs = gfxDraw::parsePath(SmilieCurvePath);
   gfxDraw::scaleSegments(segs, 200);
   gfxDraw::rotateSegments(segs, 25);                                                               // rotate some degrees
   gfxDraw::moveSegments(segs, 40, 40);                                                             // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA_LIME));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_LIME));  // hard-coded fill color here.
 
-  gfxDraw::gfxDrawWidget *rect = new gfxDraw::gfxDrawWidget(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_YELLOW);
+  gfxDraw::gfxDrawWidget *rect = new gfxDraw::gfxDrawWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_YELLOW);
   rect->setRect(32, 16);
 
   // rotate around center
@@ -370,28 +368,28 @@ void drawTest02() {
 
   rect->draw(setImagePixel);
 
-  // // rect2->setFillGradient(gfxDraw::RGBA_YELLOW, 10, 0, gfxDraw::RGBA_ORANGE, 36, 0);
-  // rect2->setFillGradient(gfxDraw::RGBA_YELLOW, 0, 2, gfxDraw::RGBA_BLUE, 0, 22);
+  // // rect2->setFillGradient(gfxDraw::ARGB_YELLOW, 10, 0, gfxDraw::ARGB_ORANGE, 36, 0);
+  // rect2->setFillGradient(gfxDraw::ARGB_YELLOW, 0, 2, gfxDraw::ARGB_BLUE, 0, 22);
   // rect2->draw(4, 240, setImagePixel);
 
   // gfxDraw::rect(4, 200, 47, 31, nullptr, pngSetPixel(gfxDraw::SILVER));
-  // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // gfxDrawWidget *rect1 = new gfxDrawWidget(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
   // rect1->setRect(46, 30);
   // rect1->draw(4, 200, setImagePixel);
 
-  // gfxDrawWidget *draw1 = new gfxDrawWidget(gfxDraw::RGBA_BLUE, gfxDraw::RGBA_ORANGE);
+  // gfxDrawWidget *draw1 = new gfxDrawWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_ORANGE);
   // draw1->setPath("M0 12 l24-12 l20 20 h-16 v8 h-12 z");
   // draw1->draw(5, 201, setImagePixel);
 
 
 #if 0
 
-  // gfxDraw::drawCubicBezier(80, 200, 80, 240, 150, 240, 150, 200, pngSetPixel(gfxDraw::RGBA_BLACK));
+  // gfxDraw::drawCubicBezier(80, 200, 80, 240, 150, 240, 150, 200, pngSetPixel(gfxDraw::ARGB_BLACK));
 
-  // da->rect(180, 200, 84, 74, nullptr, pngSetPixel(gfxDraw::RGBA_SILVER), 2);
-  // gfxDraw::pathByText("M80 200 C 80,240 150,240 150,200 z", 0,0, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // da->rect(180, 200, 84, 74, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER), 2);
+  // gfxDraw::pathByText("M80 200 C 80,240 150,240 150,200 z", 0,0, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_YELLOW));
 #endif
 
 
@@ -403,30 +401,30 @@ void drawTest02() {
 void drawTest03() {
 
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
-  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // Simple Arc drawing test cases
-  // gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z", 2, 2, 200, pngSetPixel(gfxDraw::RGBA_BLUE), nullptr);
-  // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, pngSetPixel(gfxDraw::RGBA_BLUE), nullptr);
+  // gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z", 2, 2, 200, pngSetPixel(gfxDraw::ARGB_BLUE), nullptr);
+  // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, pngSetPixel(gfxDraw::ARGB_BLUE), nullptr);
 
-  // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawSolidRect(210, 10, 99, 99, pngSetPixel(gfxDraw::RGBA_GREEN));
-  // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // gfxDraw::drawSolidRect(210, 10, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawSolidRect(210, 120, 99, 99, pngSetPixel(gfxDraw::RGBA_GREEN));
+  // gfxDraw::drawSolidRect(210, 120, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
 
-  gfxDraw::pathByText(PiePath, 8, 8, 30, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::pathByText(PiePath, 8, 8, 30, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::pathByText(SwordPath, 10, 160, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::pathByText(SwordPath, 10, 160, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_GREEN));
-  gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::pathByText("O 20 20 20", 10, 120, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA(0xFF, 0xFF, 0)));
+  // gfxDraw::pathByText("O 20 20 20", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xFF, 0)));
 }
 
 
@@ -435,16 +433,16 @@ using namespace gfxDraw;
 // draw a heard by using the gfxDrawWidget functionality
 // demonstrate on how to undraw
 void drawTest04() {
-  // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::RGBA_BLUE), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // setup the widget for drawing a heard
   gfxDrawWidget widget;
-  widget.setStrokeColor(RGBA_BLACK);
-  widget.setFillColor(RGBA_RED);
+  widget.setStrokeColor(ARGB_BLACK);
+  widget.setFillColor(ARGB_RED);
   widget.setPath(heardPath);
 
   // draw a background
-  drawSolidRect(10, 10, 87, 80, pngSetPixel(RGBA_SILVER));
+  drawSolidRect(10, 10, 87, 80, pngSetPixel(ARGB_SILVER));
 
   // simple drawing on the rectangle behind
   widget.move(10, 10);
@@ -456,7 +454,7 @@ void drawTest04() {
 
   // with undraw
   // draw a background
-  drawSolidRect(110, 10, 87, 80, pngSetPixel(RGBA_SILVER));
+  drawSolidRect(110, 10, 87, 80, pngSetPixel(ARGB_SILVER));
 
   // simple drawing on the rectangle behind
   // no saving of background
@@ -486,7 +484,7 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
   da->drawCircle(
     _cx, _cy, _radius,
     [bmp](int16_t x, int16_t y) {
-      bmp->setPixel(x, y, gfxDraw::RGBA_BLACK);
+      bmp->setPixel(x, y, gfxDraw::ARGB_BLACK);
     });
 
 
@@ -502,17 +500,17 @@ void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
     if ((i % 15) == 0) {
       // x1 = (x0 * 9.0) / 12.0;
       // y1 = (y0 * 9.0) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::RGBA_BLUE), 5);
+      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_BLUE), 5);
 
     } else if ((i % 5) == 0) {
       // x1 = (x0 * 10.0) / 12.0;
       // y1 = (y0 * 10.0) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::RGBA_GREEN), 3);
+      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_GREEN), 3);
 
     } else {
       // x1 = (x0 * 11.5) / 12.0;
       // y1 = (y0 * 11.5) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::RGBA_BLACK), 1);
+      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_BLACK), 1);
     }
   }  // for
 }
@@ -525,14 +523,14 @@ int main() {
 
 #if (0)
   newImage(400, 300);
-  fillImage(gfxDraw::RGBA_WHITE);
+  fillImage(gfxDraw::ARGB_WHITE);
   drawTest01();
   saveImage("test01.png");
 #endif
 
 #if (0)
   newImage(400, 300);
-  fillImage(gfxDraw::RGBA_WHITE);
+  fillImage(gfxDraw::ARGB_WHITE);
 
   drawTest02();
 
@@ -542,7 +540,7 @@ int main() {
 
 #if (0)
   newImage(400, 300);
-  fillImage(gfxDraw::RGBA_WHITE);
+  fillImage(gfxDraw::ARGB_WHITE);
 
   drawTest03();
 
@@ -551,45 +549,45 @@ int main() {
 
 #if (1)
   newImage(400, 300);
-  fillImage(gfxDraw::RGBA_WHITE);
+  fillImage(gfxDraw::ARGB_WHITE);
 
   drawTest04();
 
   saveImage("test04.png");
 #endif
 
-  // gfxDraw::rect(10, 50, 12, 8, pngSetPixel(gfxDraw::RGBA_BLACK), pngSetPixel(gfxDraw::CYAN), 2);
+  // gfxDraw::rect(10, 50, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::CYAN), 2);
   // gfxDraw::rect(10, 60, 12, 8, nullptr, pngSetPixel(gfxDraw::CYAN), 2);
-  // gfxDraw::rect(10, 70, 12, 8, pngSetPixel(gfxDraw::RGBA_BLACK), nullptr, 2);
+  // gfxDraw::rect(10, 70, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), nullptr, 2);
 
   // gfxDraw::rect(30, 70, 10, 8, pngSetPixel(gfxDraw::RED), nullptr, 2);
-  // gfxDraw::rect(39, 70, -10, 8, pngSetPixel(gfxDraw::RGBA_BLACK), nullptr, 2);
+  // gfxDraw::rect(39, 70, -10, 8, pngSetPixel(gfxDraw::ARGB_BLACK), nullptr, 2);
 
   // gfxDraw::rect(42, 70, 10, 8, nullptr, pngSetPixel(gfxDraw::RED), 2);
-  // gfxDraw::rect(51, 70, -10, 8, nullptr, pngSetPixel(gfxDraw::RGBA_BLACK), 2);
+  // gfxDraw::rect(51, 70, -10, 8, nullptr, pngSetPixel(gfxDraw::ARGB_BLACK), 2);
 
   // gfxDraw::rect(54, 70, 10, 8, nullptr, pngSetPixel(gfxDraw::RED), 2);
-  // gfxDraw::rect(54, 77, 10, -8, nullptr, pngSetPixel(gfxDraw::RGBA_BLACK), 2);
+  // gfxDraw::rect(54, 77, 10, -8, nullptr, pngSetPixel(gfxDraw::ARGB_BLACK), 2);
 
 
   // drawClock(120, 205, 80);
 
 
-  // drawDigits14(1, 0, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits14(2, 80, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits14(5, 160, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits14(9, 250, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // drawDigits14(1, 0, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(2, 80, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(5, 160, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(9, 250, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // drawDigits7(0, 0, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(1, 34, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(2, 68, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(3, 102, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(4, 136, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(5, 170, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(6, 204, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(7, 238, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(8, 282, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
-  // drawDigits7(9, 316, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::RGBA_YELLOW));
+  // drawDigits7(0, 0, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(1, 34, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(2, 68, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(3, 102, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(4, 136, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(5, 170, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(6, 204, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(7, 238, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(8, 282, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(9, 316, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   printf("end.");
 }
