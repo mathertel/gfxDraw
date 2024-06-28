@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## todo
+
+* estimate bounding box from segments.
+* adjust bounding box on drawing.
+
 ## unpublished
 
-* gfxDrawObject supports undraw by saving background pixels during drawing and restoring background.
+* gfxDrawWidget supports undraw by saving background pixels during drawing and restoring background.
 * [moongfx example](examples/moongfx/README.md) using [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX).
+* gfxDrawBitmap class to save background while drawing
+* ARGB color class using 32-bits per pixel for Alpha + Red, Green, Blue
+
 
 
 ## 2024-05-30 Version 0.8.0

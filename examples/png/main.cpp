@@ -12,6 +12,8 @@
 
 #include "lodepng.h"
 
+#define TRACE(...) // GFXD_TRACE(__VA_ARGS__)
+
 
 // https://doc.magnum.graphics/magnum/
 
@@ -253,7 +255,8 @@ void drawTest01() {
 
   auto drawHelper = [](const char *pathText, int16_t x, int16_t y) {
     std::vector<gfxDraw::Segment> vSeg = gfxDraw::parsePath(pathText);
-    fillSegments(vSeg, x, y, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(255, 255, 128)));
+    moveSegments(vSeg, x, y);
+    fillSegments(vSeg, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(255, 255, 128)));
   };
 
   TRACE("\nTest-01:\n");
@@ -452,21 +455,50 @@ void drawTest04() {
   widget.rotate(40, 44 + 10, 40 + 10);  // rotate on current center
   widget.draw(setImagePixel);
 
-  // with undraw
-  // draw a background
+  // simple drawing on the rectangle behind and complete undraw.
+  // and save of background colors
   drawSolidRect(110, 10, 87, 80, pngSetPixel(ARGB_SILVER));
-
-  // simple drawing on the rectangle behind
-  // no saving of background
   widget.resetTransformation();
   widget.move(110, 10);
   widget.draw(setImagePixel, readImagePixel);
   widget.undraw(setImagePixel);
 
-  // // draw a rotated heard on top
-  widget.rotate(40, 44 + 110, 40 + 10);  // rotate on current center
+  // draw and draw after transformations
+  // with removing not overdrawn pixels.
+  drawSolidRect(210, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  widget.resetTransformation();
+  widget.move(210, 10);
   widget.draw(setImagePixel, readImagePixel);
-  widget.undraw(setImagePixel);
+
+  saveImage("test04.png");
+
+  // rotate heard on top
+  widget.rotate(45, 44 + 210, 40 + 10);  // rotate on current center
+  widget.draw(setImagePixel, readImagePixel);
+  saveImage("test04.png");
+
+  widget.rotate(-45, 44 + 210, 40 + 10);  // rotate on current center
+  widget.draw(setImagePixel, readImagePixel);
+  saveImage("test04.png");
+
+  // non solid version of the same
+  drawSolidRect(310, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  widget.setFillColor(ARGB_TRANSPARENT);
+  widget.resetBackground();
+  widget.resetTransformation();
+  widget.move(310, 10);
+  widget.draw(setImagePixel, readImagePixel);
+
+  saveImage("test04.png");
+
+  // rotate heard on top
+  widget.rotate(45, 44 + 310, 40 + 10);  // rotate on current center
+  widget.draw(setImagePixel, readImagePixel);
+  saveImage("test04.png");
+
+  widget.rotate(-45, 44 + 310, 40 + 10);  // rotate on current center
+  widget.draw(setImagePixel, readImagePixel);
+  saveImage("test04.png");
 }
 
 #if 0
@@ -551,9 +583,8 @@ int main() {
   newImage(400, 300);
   fillImage(gfxDraw::ARGB_WHITE);
 
+  // test using test04.png
   drawTest04();
-
-  saveImage("test04.png");
 #endif
 
   // gfxDraw::rect(10, 50, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::CYAN), 2);

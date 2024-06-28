@@ -296,8 +296,8 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 
     if (dist2 > 1) {
       double dist = sqrt(dist2);
-      rx = (rx * dist) + 0.5;
-      ry = (ry * dist) + 0.5;
+      rx = std::round(rx * dist);
+      ry = std::round(ry * dist);
     }
     TRACE("rx=%d ry=%d \n", rx, ry);
   }
@@ -328,7 +328,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 int16_t vectorAngle(int16_t dx, int16_t dy) {
   // TRACE("vectorAngle(%d, %d)\n", dx, dy);
   double rad = atan2(dy, dx);
-  int16_t angle = ((rad * 180 / M_PI) + 0.5);
+  int16_t angle = std::round(rad * 180 / M_PI);
   if (angle < 0) angle = 360 + angle;
   return (angle % 360);
 }  // vectorAngle()
@@ -436,8 +436,6 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
 
 /// @brief transform all points in the segment list.
 /// @param segments Segment vector to be changed
-/// @param dx X-Offset
-/// @param dy Y-Offset
 void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
   int16_t p0_x, p0_y, p1_x, p1_y;
   int16_t angle;
@@ -520,11 +518,6 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
 
 // Draw a path (no fill).
 void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
-  drawSegments(segments, 0, 0, cbDraw);
-};
-
-// Draw a path (no fill).
-void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw) {
   TRACE("drawSegments()\n");
   int16_t startPosX = 0;
   int16_t startPosY = 0;
@@ -544,34 +537,34 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
         case Segment::Type::Line:
           endPosX = pSeg.x1;
           endPosY = pSeg.y1;
-          gfxDraw::drawLine(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
+          gfxDraw::drawLine(posX, posY, endPosX, endPosY, cbDraw);
           break;
 
         case Segment::Type::Curve:
           endPosX = pSeg.p[4];
           endPosY = pSeg.p[5];
           gfxDraw::drawCubicBezier(
-            dx + posX, dy + posY,
-            dx + pSeg.p[0], dy + pSeg.p[1],
-            dx + pSeg.p[2], dy + pSeg.p[3],
-            dx + endPosX, dy + endPosY, cbDraw);
+            posX, posY,
+            pSeg.p[0], pSeg.p[1],
+            pSeg.p[2], pSeg.p[3],
+            endPosX, endPosY, cbDraw);
           break;
 
         case Segment::Type::Arc:
           endPosX = pSeg.p[4];
           endPosY = pSeg.p[5];
-          gfxDraw::drawArc(posX + dx, posY + dy,        // start-point
-                           endPosX + dx, endPosY + dy,  // end-point
-                           pSeg.p[0], pSeg.p[1],        // x & y radius
-                           pSeg.p[2],                   // phi, ellipsis rotation
-                           pSeg.p[3],                   // flags
+          gfxDraw::drawArc(posX, posY,            // start-point
+                           endPosX, endPosY,      // end-point
+                           pSeg.p[0], pSeg.p[1],  // x & y radius
+                           pSeg.p[2],             // phi, ellipsis rotation
+                           pSeg.p[3],             // flags
                            cbDraw);
           break;
 
         case Segment::Type::Circle:
           if (1) {
-            Point pCenter(pSeg.p[0] + dx, pSeg.p[1] + dy);
-            Point pStart(pSeg.p[0] + dx + pSeg.p[2], pSeg.p[1] + dy);
+            Point pCenter(pSeg.p[0], pSeg.p[1]);
+            Point pStart(pSeg.p[0] + pSeg.p[2], pSeg.p[1]);
 
             // drawCircle(gfxDraw::Point(30, 190), 20, gfxDraw::Point(30 + 20, 190), gfxDraw::Point(30 + 20, 190), true, bmpSet(gfxDraw::RED));
             // The simplified drawCircle cannot be used as for filling the circle the pixels must be in order.
@@ -583,7 +576,7 @@ void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
           endPosX = startPosX;
           endPosY = startPosY;
           if ((posX != endPosX) || (posY != endPosY)) {
-            gfxDraw::drawLine(posX + dx, posY + dy, endPosX + dx, endPosY + dy, cbDraw);
+            gfxDraw::drawLine(posX, posY, endPosX, endPosY, cbDraw);
           }
           cbDraw(0, POINT_BREAK_Y);
           break;
@@ -673,11 +666,6 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
 
 /// @brief Draw a path with filling.
 void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel cbFill) {
-  fillSegments(segments, 0, 0, cbBorder, cbFill);
-}
-
-/// @brief Draw a path with filling.
-void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
   TRACE("fillSegments()\n");
   std::vector<_Edge> edges;
   _Edge *lastEdge = nullptr;
@@ -686,7 +674,7 @@ void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
   fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
 
   // create the path and collect edges
-  drawSegments(segments, dx, dy,
+  drawSegments(segments,
                [&](int16_t x, int16_t y) {
                  //  TRACE("    P(%d/%d)\n", x, y);
                  if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
@@ -778,7 +766,112 @@ void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPi
     // if (p.x + p.len > x)
     x = p.x + p.len;
   }
-};  // fillSegments()
+}
+
+
+// /// @brief Draw a path with filling.
+// void XfillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
+//   TRACE("fillSegments()\n");
+//   std::vector<_Edge> edges;
+//   _Edge *lastEdge = nullptr;
+
+//   size_t n;
+//   fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
+
+//   // create the path and collect edges
+//   drawSegments(segments,  // dx, dy,
+//                [&](int16_t x, int16_t y) {
+//                  //  TRACE("    P(%d/%d)\n", x, y);
+//                  if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
+//                    // fine
+//                  } else {
+//                    // first in sequence on on new line.
+//                    edges.push_back(_Edge(x, y));
+//                    lastEdge = &edges.back();
+//                  }
+//                });
+//   dumpEdges(edges);
+
+//   // sub-paths are separated by (0/POINT_BREAK_Y) points;
+//   size_t eSize = edges.size();
+
+//   size_t eStart = 0;
+//   n = eStart;
+//   while (n < eSize) {
+//     if (edges[n].y != POINT_BREAK_Y) {
+//       n++;
+//     } else {
+//       if (eStart < n - 1) {
+
+//         // Normalize (*2) sub-path for fill algorithm.
+//         // TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
+
+//         if (edges[eStart].expand(edges[n - 1])) {
+//           // last point is in first edge
+//           edges.erase(edges.begin() + n - 1);
+//           TRACE("  del %d\n", n - 1);
+//           n--;
+//         }
+//         // dumpEdges(edges);
+
+//         n = slopeEdges(edges, eStart, n - 1) + 1;
+//         // dumpEdges(edges);
+
+//         TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
+
+//       }  // if
+
+//       n = eStart = n + 1;
+//       eSize = edges.size();
+//     }
+//   }
+//   dumpEdges(edges);
+//   TRACE("\n");
+
+//   // sort edges by ascending lines (y)
+//   std::sort(edges.begin(), edges.end(), _Edge::compare);
+
+//   int16_t y = INT16_MAX;
+//   int16_t x = INT16_MAX;
+
+//   bool isInside = false;
+
+//   // Draw borderpoints and lines on inner segments
+//   for (_Edge &p : edges) {
+
+//     // if (p.y == 38) {
+//     //   TRACE("  P %d/%d-%d\n", p.x, p.y, p.len);
+//     // };
+
+//     if (p.y != y) {
+//       // start a new line
+//       isInside = false;
+//       y = p.y;
+//     }
+
+//     if (y == POINT_BREAK_Y) continue;
+
+//     if (p.len == 0) {
+//       // don't draw, it is just an marker for a extreme sequence.
+
+//     } else {
+//       // draw the border
+//       for (uint16_t l = 0; l < p.len; l++) {
+//         cbStroke(p.x + l, y);
+//       }
+//     }
+
+//     // draw the fill
+//     if (isInside) {
+//       while (x < p.x) {
+//         cbFill(x++, y);
+//       }
+//     }
+//     isInside = (!isInside);
+//     // if (p.x + p.len > x)
+//     x = p.x + p.len;
+//   }
+// };  // fillSegments()
 
 
 /// @brief draw a path using a border and optional fill drawing function.
@@ -793,10 +886,13 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
   if (scale100 != 100)
     gfxDraw::scaleSegments(vSeg, scale100);
 
+  if ((x != 0) || (y != 0))
+    gfxDraw::moveSegments(vSeg, x, y);
+
   if (cbFill) {
-    fillSegments(vSeg, x, y, cbBorder, cbFill);
+    fillSegments(vSeg, cbBorder, cbFill);
   } else {
-    drawSegments(vSeg, x, y, cbBorder);
+    drawSegments(vSeg, cbBorder);
   }
   int a;
 }
@@ -807,7 +903,7 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
 /// @param cbDraw Draw function for border pixels. cbFill is used when cbBorder is null.
 void drawPath(const char *pathText, fSetPixel cbDraw) {
   std::vector<Segment> vSeg = parsePath(pathText);
-  drawSegments(vSeg, 0, 0, cbDraw);
+  drawSegments(vSeg, cbDraw);
 }
 
 

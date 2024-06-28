@@ -19,7 +19,11 @@ namespace gfxDraw {
 class ARGB {
 public:
   ARGB() = default;
+
+  /// create color by components.
   ARGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+
+  /// create opaque color.
   ARGB(uint32_t raw);
 
   union {

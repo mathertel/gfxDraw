@@ -35,17 +35,31 @@
 #include <math.h>
 
 #include "gfxDrawCommon.h"
-// #include "gfxDrawColors.h"
+#include "gfxDrawColors.h"
+
+#ifdef ARDUINO
+#define GFXD_TRACE(fmt, ...)  Serial.printf(fmt "\n" __VA_OPT__(,) __VA_ARGS__)
+#else
+#define GFXD_TRACE(fmt, ...)  printf(fmt "\n" __VA_OPT__(,) __VA_ARGS__)
+#endif
 
 
 namespace gfxDraw {
 
+// ===== Callback function definitions =====
+
 /// @brief Callback function definition to address a pixel on a display
 typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
 
-
 /// @brief Callback function to transform all points in the segments
 typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
+
+/// @brief Callback function definition to address a pixel on a display
+typedef std::function<void(int16_t x, int16_t y, ARGB color)> fDrawPixel;
+
+/// @brief Callback function definition to read a pixel from a display
+typedef std::function<ARGB(int16_t x, int16_t y)> fReadPixel;
+
 
 
 /// @brief The Segment struct holds all information about a segment of a path.
@@ -150,14 +164,11 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform);
 
 /// @brief Draw a path without filling.
 /// @param segments Vector of the segments of the path.
-/// @param dx Position X coordinate for the path.
-/// @param dy Position Y coordinate for the path.
 /// @param cbDraw Callback with coordinates of line pixels.
-void drawSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbDraw);
 void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw);
 
 /// @brief Draw a path with filling.
-void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
+// void fillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
 void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel cbFill = nullptr);
 
 

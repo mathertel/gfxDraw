@@ -12,11 +12,14 @@
 
 #include "gfxDrawWidget.h"
 
+#include "gfxDrawBitmap.h"
+
 /// unconditional print out this
-#define LOG_PRINT(fmt, ...) printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
+#define LOG_PRINT(...) // GFXD_TRACE(__VA_ARGS__)
 
 // tracing information (left from development for future problem analysis) can be disabled
-#define LOG_TRACE(...)  // LOG_PRINT(__VA_ARGS__)
+#define LOG_TRACE(...) // GFXD_TRACE(__VA_ARGS__)
+
 
 namespace gfxDraw {
 
@@ -38,147 +41,17 @@ void gfxDrawWidget::setRect(int16_t width, int16_t height) {
 }
 
 
-// ===== Background ====
-
-/// @brief The Background class is used to save the background of the drawn pixels for later restore / undraw.
-class Background {
-public:
-  // initialize without data.
-  Background() {
-    _w = 0;
-  };
-
-  void set(int16_t x, int16_t y, ARGB color) {
-    LOG_TRACE("bg::set(%d,%d)=%08x", x, y, color.raw);
-    if (_w == 0) {
-      _createData(x, y);
-      LOG_TRACE(" init to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
-    }
-
-    if (x < _x) {
-      _insertLeft(_x - x);
-      LOG_TRACE(" resize to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
-
-    } else if (x >= _x + _w) {
-      _insertRight(x - (_x + _w) + 1);
-      LOG_TRACE(" resize to (%d/%d)-(%d/%d)\n", _x, _y, _x + _w - 1, _y + _h - 1);
-    }
-
-    if (y < _y) {
-      // _insertTop(_y - y);
-      LOG_PRINT(" resize to %d/%d", x, y);
-      LOG_PRINT("== undone!");
-
-    } else if (y >= _y + _h) {
-      _insertBottom(y - (_y + _h) + 1);
-      LOG_TRACE(" resize to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
-    }
-
-    ARGB *cell = &data[(x - _x) + (y - _y) * _w];
-    if (cell->Alpha > 0) {
-      LOG_PRINT("double write at (%d,%d)!", x, y);
-    } else {
-      *cell = color;
-    }
-    // data[(x - _x) + (y - _y) * _w] = color;
-    // data.at((x - _x) + (y - _y) * _w) = color;
-  }
-
-
-  void draw(gfxDraw::fDrawPixel cbDraw) {
-    // insert blanks on each line
-    for (int16_t y = 0; y < _h; y++) {
-      for (int16_t x = 0; x < _w; x++) {
-        ARGB col = data[(y * _w) + x];
-        if (col.Alpha > 0)
-          cbDraw(x + _x, y + _y, col);
-      }
-    }
-  }  // draw();
-
-
-
-private:
-  int16_t _x;
-  int16_t _y;
-  int16_t _w;
-  int16_t _h;
-  std::vector<ARGB> data;
-
-  // first initializing the data
-  void _createData(int16_t x, int16_t y) {
-    // first initialization.
-    _x = x & 0xFFF0;
-    _y = y;
-    _w = 16;
-    _h = 16;
-    data.resize(16 * 16);  // initialized with 0, all pixels with Alpha 0
-  };
-
-
-  // resize the array based 0/0
-  void _insertLeft(uint16_t count) {
-    ARGB blank('L', 'L', 'L', 0x00);
-
-    // expand by multiple of 16
-    count = (count + 15) & 0xFFF0;
-    int16_t x2 = _x - count;
-    int16_t w2 = _w + count;
-
-    LOG_TRACE(" l-expand %d -> %d", _w, w2);
-    data.reserve(w2 * _h);  // alloc at once.
-
-    // insert blanks on each line
-    for (int16_t l = 0; l < _h; l++) {
-      data.insert(data.begin() + (l * w2), count, blank);
-    }
-    _x = x2;
-    _w = w2;
-  }  // _insertLeft
-
-
-  // resize the array based 0/0
-  void _insertRight(uint16_t count) {
-    ARGB blank('R', 'R', 'R', 0x00);
-
-    // expand by multiple of 16
-    count = (count + 15) & 0xFFF0;
-    int16_t w2 = _w + count;
-    LOG_TRACE(" r-expand %d -> %d", _w, w2);
-
-    data.reserve(w2 * _h);  // alloc at once.
-
-    // insert blanks on each line
-    for (int16_t l = 0; l < _h; l++) {
-      data.insert(data.begin() + (l * w2) + _w, count, blank);
-    }
-
-    _w = w2;
-  }  // _insertRight
-
-
-  // resize the array based 0/0
-  void _insertBottom(uint16_t count) {
-    ARGB blank('b', 'b', 'b', 0x00);
-
-    // expand by multiple of 16
-    count = (count + 15) & 0xFFF0;
-    int16_t h2 = _h + count;
-    LOG_TRACE(" b-expand %d -> %d", _h, h2);
-
-    data.reserve(_w * h2);  // alloc at once.
-
-    data.insert(data.end(), count * _w, blank);
-    _h = h2;
-  }  // _insertBottom
-};  // class Background
-
 
 // ===== Transformation Matrix Manipulations =====
 
 
 void gfxDrawWidget::resetTransformation() {
   _initMatrix(_matrix);
+}
+
+void gfxDrawWidget::resetBackground() {
+  free(_bg);  //  = new Background();
+  _bg = nullptr;
 }
 
 // apply the scaling factors to the transformation matrix;
@@ -252,9 +125,8 @@ void gfxDrawWidget::_extendBox(int16_t x, int16_t y) {
 
 void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead) {
   LOG_TRACE("draw()");
-
-  LOG_TRACE(" stroke = %02x.%02x.%02x.%02x", _stroke.Alpha, _stroke.Red, _stroke.Green, _stroke.Blue);
-  LOG_TRACE(" fill   = %02x.%02x.%02x.%02x", _fillColor1.Alpha, _fillColor1.Red, _fillColor1.Green, _fillColor1.Blue);
+  LOG_TRACE(" stroke= %08lX", _stroke.raw);
+  LOG_TRACE(" fill  = %08lX", _fillColor1.raw);
 
   x_min = INT16_MAX;
   y_min = INT16_MAX;
@@ -267,8 +139,8 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
   // transform with matrix
   transformSegments(tSegments, [&](int16_t &x, int16_t &y) {
     int32_t tx, ty;
-    tx = x * _matrix[0][0] + y * _matrix[0][1] + _matrix[0][2];
-    ty = x * _matrix[1][0] + y * _matrix[1][1] + _matrix[1][2];
+    tx = x * _matrix[0][0] + y * _matrix[0][1] + _matrix[0][2] + 500;
+    ty = x * _matrix[1][0] + y * _matrix[1][1] + _matrix[1][2] + 500;
 
     x = tx / 1000;
     y = ty / 1000;
@@ -276,16 +148,27 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
 
   // create Background
   if (cbRead) {
-    _bg = new Background();
+    if (_bg) {
+      // mark all real background (Alpha 0xFF) pixels with (Alpha=0xFE == "old background")
+      _bg->changeColors([&](ARGB color) {
+        if (color.Alpha == 0xFF) color.Alpha = 0xFE;
+        return (color);
+      });
+
+    } else {
+      _bg = new Background();
+    }
   }
 
   // draw...
   if (_fillColor1.Alpha == 0) {
     // need to draw the border pixels only
     gfxDraw::drawSegments(tSegments, [&](int16_t x, int16_t y) {
-      if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
-      _extendBox(x, y);
-      cbDraw(x, y, _stroke);
+      if (y < POINT_INVALID_Y) {
+        if (cbRead) { _bg->set(x, y, cbRead(x, y)); }
+        _extendBox(x, y);
+        cbDraw(x, y, _stroke);
+      }
     });
 
   } else if ((_stroke.Alpha > 0)) {
@@ -312,21 +195,193 @@ void gfxDrawWidget::draw(gfxDraw::fDrawPixel cbDraw, gfxDraw::fReadPixel cbRead)
         cbDraw(x, y, _getColor(x, y));
       });
   }
+
+  // draw background pixels that where not touched during drawing and restore the background color
+  if (_bg) {
+    // uint8_t qa = (drawOld ? 0xFE : 0xFF);
+    _bg->draw(
+      [&](int16_t x, int16_t y, ARGB color) {
+        if (color.Alpha == 0xFE)
+          cbDraw(x, y, color);
+      });
+
+    _bg->changeColors([&](ARGB color) {
+      if (color.Alpha == 0xFE) color.Alpha = 0xFF;
+      return (color);
+    });
+  }
 };
 
 
 void gfxDrawWidget::undraw(gfxDraw::fDrawPixel cbDraw) {
+  LOG_TRACE("gfxDrawWidget::undraw()");
   if (_bg) {
+    LOG_TRACE("  .bg");
     _bg->draw(cbDraw);
   }
-  free(_bg);  //  = new Background();
-  _bg = nullptr;
+  resetBackground();
 }  // undraw
 
+// ===== gradient filling =====
+
+void gfxDrawWidget::setStrokeColor(gfxDraw::ARGB stroke) {
+  LOG_TRACE("gfx::setStroke %08lx", stroke.raw);
+  _stroke = stroke;
+};
+
+void gfxDrawWidget::setFillColor(gfxDraw::ARGB fill) {
+  LOG_TRACE("gfx::setFill %08lx", fill.raw);
+  _fillMode = Solid;
+  _fillColor1 = fill;
+};
 
 
+void gfxDrawWidget::setFillGradient(gfxDraw::ARGB fill1, int16_t x1, int16_t y1, gfxDraw::ARGB fill2, int16_t x2, int16_t y2) {
+  LOG_TRACE("setFillGradient(#%08lx %d/%d #%08lx %d/%d )\n", fill1.toColor24(), x1, y1, fill2.toColor24(), x2, y2);
 
+  _fillColor1 = fill1;
+  _fillColor2 = fill2;
+  _gradientX1 = x1;
+  _gradientY1 = y1;
+
+  if (y1 == y2) {
+    _fillMode = Horizontal;
+    d1000 = (x2 - x1) * 1000;
+
+  } else if (x1 == x2) {
+    _fillMode = Vertical;
+    d1000 = (y2 - y1) * 1000;
+
+  } else {
+    _fillMode = Linear;
+
+    // pre-calculate all factors for dist calculation in linear Gradient color function.
+    // instead of using floats use the factor 1000.
+    // Line formula: `y = mx + b` for the line where fill1 color will be used;
+    // This is the orthogonal line through p1 (slope = 1/m)
+    int16_t dx = (x2 - x1);
+    int16_t dy = (y2 - y1);
+    LOG_PRINT(" dx=%d, dy=%d\n", dx, dy);
+
+    m1000 = -dx * 1000 / dy;  // = -2000
+    LOG_PRINT(" m1000=%d\n", m1000);
+    b1000 = (y1 * 1000) - (m1000 * x1);  // 6000 - ( -2000 * 4)
+    LOG_PRINT(" b1000=%d\n", b1000);
+
+    // distance of the 2 gradient points.
+    d1000 = sqrt(dx * dx + dy * dy) * 1000;
+
+    // Distance formula: `d = (mx - y + b) / sqrt(m*m + 1)`
+    // divisor for the distance formula
+    int16_t nen1000 = sqrt(m1000 * m1000 + 1000000);
+    LOG_PRINT(" nen1000=%d\n", nen1000);
+
+    // `y = (m1000 * x + b1000) / 1000`
+
+    // distance between the 2 points:
+    // int32_t d = sqrt((x2 - x1) * (y2 - y1));
+
+    // distance of point x/y from this line:
+    // d = (mx - y + b) /  sqrt(m*m + 1) // (-2 * x - y + 14) / sqrt(4 +1)
+    // (-2 * 10 - 9 + 14) / sqrt(2*2 +1)
+
+    // sqrt(m*m + 1) = sqrt(m1000*m1000 + 1*1000*1000) / 1000
+    // can be simplified with a small error by just
+    // = sqrt(m1000 / 1000 * m1000 / 1000 + 1)
+    // = sqrt(m1000 / 1000 * m1000 / 1000 ) = m/1000
+
+    // d = (m1000 x - y * 1000 + b1000) /  sqrt(m*m + 1)
+    // (-2000 * 10 - 9 * 1000 + 14000) / sqrt(m1000*m1000 / 1000 / 1000 + 1*1000*1000)
+    // (-2000 * 9 - 5 * 1000 + 14000) / sqrt(m1000*m1000 / 1000 / 1000 + 1*1000*1000)
+
+    int16_t px = 5;
+    int16_t py = 9;
+    int16_t pd = 1000 * ((1000 * py - m1000 * px - b1000) + 500) / nen1000;
+    LOG_PRINT(" pd=%d\n", pd);
+  };
+  LOG_PRINT(" d1000=%d\n", d1000);
+};
+
+
+/// @brief calculate gradient color of coordinate x/y
+/// @param x
+/// @param y
+/// @return
+gfxDraw::ARGB gfxDrawWidget::_getColor(int16_t x, int16_t y) {
+  if (_fillMode == Solid) {
+    return (_fillColor1);
+
+  } else if (_fillMode == Horizontal) {
+    int32_t dp1000 = (x - _gradientX1) * 1000;
+    int32_t f100 = (dp1000 * 100) / d1000;
+
+    if (f100 <= 0) {
+      return (_fillColor1);
+
+    } else if (f100 >= 100) {
+      return (_fillColor2);
+
+    } else {
+      int32_t q100 = (100 - f100);
+      gfxDraw::ARGB col = gfxDraw::ARGB(
+        (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
+        (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
+        (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
+        (q100 * _fillColor1.Alpha + f100 * _fillColor2.Alpha) / 100);
+      return (col);
+    };
+
+  } else if (_fillMode == Vertical) {
+    int32_t dp1000 = (y - _gradientY1) * 1000;
+    int32_t f100 = (dp1000 * 100) / d1000;
+
+    if (f100 <= 0) {
+      return (_fillColor1);
+
+    } else if (f100 >= 100) {
+      return (_fillColor2);
+
+    } else {
+      int32_t q100 = (100 - f100);
+      gfxDraw::ARGB col = gfxDraw::ARGB(
+        (q100 * _fillColor1.Red + f100 * _fillColor2.Red) / 100,
+        (q100 * _fillColor1.Green + f100 * _fillColor2.Green) / 100,
+        (q100 * _fillColor1.Blue + f100 * _fillColor2.Blue) / 100,
+        (q100 * _fillColor1.Alpha + f100 * _fillColor2.Alpha) / 100);
+      return (col);
+    };
+  } else {
+    // not implemented yet
+    return (gfxDraw::ARGB_PURPLE);
+  }
+}
+
+/// ===== Transformations
+
+// Initialize a transformation matrix
+void gfxDrawWidget::_initMatrix(Matrix1000 &m) {
+  memset(&m, 0, sizeof(m));
+  m[0][0] = 1000;
+  m[1][1] = 1000;
+  m[2][2] = 1000;
+}
+
+// Matrix muliplicates for combining transformations.
+void gfxDrawWidget::_multiplyMatrix(Matrix1000 &m1, Matrix1000 &m2) {
+  Matrix1000 r;
+  for (int x = 0; x < 3; x++) {
+    for (int y = 0; y < 3; y++) {
+      r[x][y] = 0;
+      for (int k = 0; k < 3; k++) {
+        r[x][y] += (m2[x][k] * m1[k][y]);
+      }
+      r[x][y] /= 1000;
+    }
+  }
+  memcpy(&m1, &r, sizeof(Matrix1000));
+};
 
 }  // gfxDraw namespace
+
 
 // End.
