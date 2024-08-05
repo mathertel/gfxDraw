@@ -10,6 +10,7 @@
 // - - - - -
 
 #include "gfxDraw.h"
+#include "gfxDrawCommon.h"
 #include "gfxDrawBezier.h"
 #include "gfxDrawCircle.h"
 
@@ -85,36 +86,6 @@ Segment::Segment(Type _type, int16_t p1, int16_t p2) {
 
 // ===== fixed decimal precision sin & cos functions =====
 
-const int32_t tab_sin256[] = {
-  0, 4, 9, 13, 18, 22, 27, 31, 35, 40, 44,
-  49, 53, 57, 62, 66, 70, 75, 79, 83, 87,
-  91, 96, 100, 104, 108, 112, 116, 120, 124, 128,
-  131, 135, 139, 143, 146, 150, 153, 157, 160, 164,
-  167, 171, 174, 177, 180, 183, 186, 190, 192, 195,
-  198, 201, 204, 206, 209, 211, 214, 216, 219, 221,
-  223, 225, 227, 229, 231, 233, 235, 236, 238, 240,
-  241, 243, 244, 245, 246, 247, 248, 249, 250, 251,
-  252, 253, 253, 254, 254, 254, 255, 255, 255, 255
-};
-
-int32_t sin256(int32_t degree) {
-  degree = ((degree % 360) + 360) % 360;  // Math. Modulo Operator
-  if (degree <= 90) {
-    return (tab_sin256[degree]);
-  } else if (degree <= 180) {
-    return (tab_sin256[90 - (degree - 90)]);
-  } else if (degree <= 270) {
-    return (-tab_sin256[degree - 180]);
-  } else {
-    return (-tab_sin256[90 - (degree - 270)]);
-  }
-}
-
-int32_t cos256(int32_t degree) {
-  return (sin256(degree + 90));
-}
-
-#define SCALE256(v) ((v + 127) >> 8)
 
 
 
@@ -375,8 +346,8 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
 
     // Iterate through the ellipse
     for (int16_t angle = startAngle; angle != endAngle; angle = (angle + stepAngle) % 360) {
-      int16_t x = SCALE256(cx256 + (rx * cos256(angle)));
-      int16_t y = SCALE256(cy256 + (ry * sin256(angle)));
+      int16_t x = SCALE256(cx256 + (rx * gfxDraw::cos256(angle)));
+      int16_t y = SCALE256(cy256 + (ry * gfxDraw::sin256(angle)));
       proposePixel(x, y, cbDraw);
     }
   }

@@ -93,10 +93,44 @@ void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw) {
       }
     }
   }
+};
 
+// ===== Fast but non-precise sin / cos functions
+
+const int32_t tab_sin256[] = {
+  0, 4, 9, 13, 18, 22, 27, 31, 35, 40, 44,
+  49, 53, 57, 62, 66, 70, 75, 79, 83, 87,
+  91, 96, 100, 104, 108, 112, 116, 120, 124, 128,
+  131, 135, 139, 143, 146, 150, 153, 157, 160, 164,
+  167, 171, 174, 177, 180, 183, 186, 190, 192, 195,
+  198, 201, 204, 206, 209, 211, 214, 216, 219, 221,
+  223, 225, 227, 229, 231, 233, 235, 236, 238, 240,
+  241, 243, 244, 245, 246, 247, 248, 249, 250, 251,
+  252, 253, 253, 254, 254, 254, 255, 255, 255, 255
 };
 
 
-}  // gfxDraw:: namespace
 
-// End.
+/// @brief table drive sin(degree) function
+/// @param degree Degree in ruan 0...360
+/// @return non-precise sin value as integer in range 0...256
+int32_t sin256(int32_t degree) {
+   degree = ((degree % 360) + 360) % 360;  // Math. Modulo Operator
+   if (degree <= 90) {
+     return (tab_sin256[degree]);
+   } else if (degree <= 180) {
+     return (tab_sin256[90 - (degree - 90)]);
+   } else if (degree <= 270) {
+     return (-tab_sin256[degree - 180]);
+   } else {
+     return (-tab_sin256[90 - (degree - 270)]);
+   }
+ }
+
+ int32_t cos256(int32_t degree) {
+   return (sin256(degree + 90));
+ }
+
+ }  // gfxDraw:: namespace
+
+ // End.

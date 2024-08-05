@@ -8,12 +8,11 @@ the SVG specification enables drawing these curves defined by using the followin
     A <rx> <ry> <rot> <flag1> <flag2> <xDest> <yDest>
 ```
 
+* The curve starts at the end of the previous command.
 * `<rx>` and `<ry>` are the minor and major radius of the ellipse.
 * `<rot>` defines the rotation of the ellipse.
 * `<flag1>` and `<flag2>` define which of the possible arcs has to be used.
-* `<xDest>` and `<yDest>` define which of the possible arcs has to be used.
-
-In addition the last point from the path also is part of the curve.
+* `<xDest>` / `<yDest>` defines the end point of the arc.
 
 When `<rx>` is equal to `<ry>` the arc is a segment of a circle and the `<rot>` parameter can be ignored.
 

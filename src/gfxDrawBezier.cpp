@@ -23,8 +23,6 @@ namespace gfxDraw {
 
 // This implementation of cubic bezier curve with a start and an end point given and by using 2 control points.
 // C x1 y1, x2 y2, x y
-// good article for reading: <https://pomax.github.io/bezierinfo/>
-// Here the Casteljau's algorithm approach is used.
 
 void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
   // TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);

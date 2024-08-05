@@ -25,7 +25,7 @@ The functions are optimized for pixel oriented displays, do not implement antial
 and arc arithmetics.  This makes this library usable in microprocessor programming like ESP32 based boards with graphic
 displays.
 
-The library supports up to 16 bit display resolutions and 32-bit (or less) colors.
+The library supports up to 16 bit display resolutions.
 
 The library offers some entry points for:
 
@@ -33,6 +33,9 @@ The library offers some entry points for:
 * text based path definitions that combine the primitives to build a visual graphic element,
 * transformation functions on path based vector graphics
 * a drawing widget class that combines path, transformations and fill definitions.
+
+By design the drawing functionionality is independent of the color size.  The Widget Class supports drawing using
+a 32-bit (or less) color setup using RGB+Alpha.
 
 
 ## Drawing on a display

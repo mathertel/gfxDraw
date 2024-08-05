@@ -154,15 +154,16 @@ public:
 /// * draw streight line when more pixels are missing.
 void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw);
 
+// ===== Fast but non-precise sin / cos functions
+
+int32_t sin256(int32_t degree);
+
+int32_t cos256(int32_t degree);
+
+#define SCALE256(v) ((v + 127) >> 8)
+
 
 }  // gfxDraw:: namespace
-
-
-// typedef uint32_t COLOR32;
-
-// /// @brief Callback function definition to address a pixel on a display
-// typedef std::function<void(int16_t x, int16_t y, COLOR32 color)> fDrawPixel;
-
 
 
 // End.
