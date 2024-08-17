@@ -33,7 +33,7 @@ namespace gfxDraw {
 class _Edge : public Point {
 public:
   _Edge(int16_t _x, int16_t _y)
-    : Point(_x, _y), len(1){};
+    : Point(_x, _y), len(1) {};
 
   uint16_t len;
 
@@ -176,9 +176,14 @@ void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) 
 /// @param y0 Starting Point Y coordinate.
 /// @param w width of the rect in pixels
 /// @param h height of the rect in pixels
-/// @param cbDraw Callback with coordinates of rect pixels.
-void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
-  if ((w != 0) && (h != 0)) {
+/// @param cbBorder Callback with coordinates of rect border pixels.
+/// @param cbFill Callback with coordinates of rect fill pixels.
+void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder, fSetPixel cbFill) {
+
+  // draw the border in fill color
+  if (!cbBorder) { cbBorder = cbFill; }
+
+  if ((cbBorder) && (w != 0) && (h != 0)) {
 
     // ensure w > 0
     if (w < 0) {
@@ -192,27 +197,42 @@ void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
       y0 = y0 - h + 1;
     }
 
+
     int16_t endX = x0 + w - 1;
     int16_t endY = y0 + h - 1;
 
-    // draw lines on the border clockwise
-    for (int16_t x = x0; x <= endX; x++) cbDraw(x, y0);
-    for (int16_t y = y0; y <= endY; y++) cbDraw(endX, y);
-    for (int16_t x = endX; x >= x0; x--) cbDraw(x, endY);
-    for (int16_t y = endY; y >= y0; y--) cbDraw(x0, y);
+    // draw lowest line
+    for (int16_t x = x0; x <= endX; x++) cbBorder(x, y0);
+
+    // draw first point, fill color and last point
+    for (int16_t y = y0 + 1; y < endY; y++) {
+      cbBorder(x0, y);
+      if (cbFill) {
+        for (int16_t x = x0 + 1; x < endX; x++) cbFill(x, y);
+      }
+      cbBorder(endX, y);
+    }
+
+    // draw highest line
+    for (int16_t x = x0; x <= endX; x++) cbBorder(x, endY);
   }
-}  // rect()
+}  // drawRect()
 
 
-/// @brief Draw a solidrectangle with border and fill callbacks
+/// @brief Draw a rectangle with border and fill callbacks
 /// @param x0 Starting Point X coordinate.
 /// @param y0 Starting Point Y coordinate.
 /// @param w width of the rect in pixels
 /// @param h height of the rect in pixels
-/// @param cbDraw Callback with coordinates of rect pixels.
-void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw) {
-  if ((w != 0) && (h != 0)) {
+/// @param radius corner radius
+/// @param cbBorder Callback with coordinates of rect border pixels.
+/// @param cbFill Callback with coordinates of rect fill pixels.
+void drawRoundedRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, fSetPixel cbBorder, fSetPixel cbFill) {
 
+  // draw the border in fill color
+  if (!cbBorder) { cbBorder = cbFill; }
+
+  if ((cbBorder) && (w != 0) && (h != 0)) {
     // ensure w > 0
     if (w < 0) {
       w = -w;
@@ -225,17 +245,62 @@ void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDra
       y0 = y0 - h + 1;
     }
 
+    // ensure meaningful radius
+    if (radius > h / 2) radius = h / 2;
+    if (radius > w / 2) radius = w / 2;
+
     int16_t endX = x0 + w - 1;
     int16_t endY = y0 + h - 1;
+    int16_t oldY = y0 - 1;  // cy = current y line, start with
 
-    // draw all pixels in the rect.
-    for (int16_t y = y0; y <= endY; y++) {
-      for (int16_t x = x0; x <= endX; x++) {
-        cbDraw(x, y);
+    // draw upper part: rounded start corner, fill between the corner, rounded end-corner
+    drawCircleQuadrant(radius, 0, [&](int16_t x, int16_t y) {
+      int16_t cx = x0 + radius - y;
+      int16_t cy = y0 + radius - x;
+
+      cbBorder(cx, cy);
+      if (cy != oldY) {
+        cx++;
+        if (cy == y0) {
+          while (cx < endX - radius + y) cbBorder(cx++, cy);
+        } else {
+          while (cx < endX - radius + y) cbFill(cx++, cy);
+        }
+        oldY = cy;
       }
+      cbBorder(endX - radius + y, cy);
+    });
+
+    oldY++;
+    // draw first point, fill color and last point
+    while (oldY <= endY - radius) {
+      cbBorder(x0, oldY);
+      if (cbFill) {
+        for (int16_t x = x0 + 1; x < endX; x++) cbFill(x, oldY);
+      }
+      cbBorder(endX, oldY);
+      oldY++;
     }
+
+    // draw lower part: rounded start corner, fill between the corner, rounded end-corner
+    drawCircleQuadrant(radius, 0, [&](int16_t x, int16_t y) {
+      int16_t cx = x0 + radius - y;
+      int16_t cy = endY - radius + x;
+
+      cbBorder(cx, cy);
+      if (cy != oldY) {
+        cx++;
+        if (cy == endY) {
+          while (cx < endX - radius + y) cbBorder(cx++, cy);
+        } else {
+          while (cx < endX - radius + y) cbFill(cx++, cy);
+        }
+        oldY = cy;
+      }
+      cbBorder(endX - radius + y, cy);
+    });
   }
-}  // rect()
+}  // drawRoundedRect()
 
 
 /// @brief Calculate the center parameterization for an arc from endpoints

@@ -1,13 +1,13 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
 // gfxDraw.h: Library header file
-// 
+//
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
-// 
+//
 // These pixel oriented drawing functions are implemented to use callback functions for the effective drawing
 // to make them independent from an specific canvas or GFX implementation and can be used for drawing and un-drawing.
-// 
+//
 // The functions have minimized use of float and arc arithmetics.
 // Path drawing is supporting on any given path.
 // Filled paths are supported on closed paths only.
@@ -38,9 +38,9 @@
 #include "gfxDrawColors.h"
 
 #ifdef ARDUINO
-#define GFXD_TRACE(fmt, ...)  Serial.printf(fmt "\n" __VA_OPT__(,) __VA_ARGS__)
+#define GFXD_TRACE(fmt, ...) Serial.printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
 #else
-#define GFXD_TRACE(fmt, ...)  printf(fmt "\n" __VA_OPT__(,) __VA_ARGS__)
+#define GFXD_TRACE(fmt, ...) printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
 #endif
 
 
@@ -69,7 +69,7 @@ public:
     Move = 0x0100 + 2,
     Line = 0x0200 + 2,
     Curve = 0x0300 + 6,
-    Arc   = 0x0400 + 7,
+    Arc = 0x0400 + 7,
     Circle = 0x0800 + 3,
     Close = 0xFF00 + 0,
   };
@@ -110,9 +110,11 @@ public:
 /// @param w Width of line.
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
 
-/// @brief Draw the border line of a rectangle.
-void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
-void drawSolidRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbDraw);
+/// @brief Draw the border line of a rectangle and optionally fill pixels.
+void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
+
+/// @brief Draw the border of a rounded rectangle and optionally fill pixels.
+void drawRoundedRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t r, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
 
 /// @brief Draw a bezier curve.
 void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw);

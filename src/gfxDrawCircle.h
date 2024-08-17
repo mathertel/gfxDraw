@@ -44,6 +44,15 @@ inline ArcFlags operator|(ArcFlags a, ArcFlags b) {
 /// @param cbDraw SetPixel callback
 void drawCircle(Point center, int16_t radius, fSetPixel cbDraw);
 
+
+/// @brief create all points on the specified quadrant of a circle with center 0/0.
+/// The draw function is not called in order of the pixels on the circle quadrant.
+/// @param radius radius of the circle
+/// @param q
+/// @param cbDraw SetPixel callback
+void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw);
+
+
 /// @brief draw a circle segment or a whole circle.
 /// @param center center of the circle
 /// @param radius radius of the circle

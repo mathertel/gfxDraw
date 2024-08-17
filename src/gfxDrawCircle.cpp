@@ -24,15 +24,15 @@ namespace gfxDraw {
 
 // from: http://members.chello.at/easyfilter/bresenham.html
 
-/// @brief Draw a full circle quadrant with the pixels in the given order.
-/// @param r
+/// @brief Draw the circle quadrant with the pixels in the given order.
+/// @param radius radius of the circle
 /// @param q
 /// @param cbDraw will be called for all pixels in the Circle Quadrant where (x > 0) and (y >= 0).
-void drawCircleQuadrant(int16_t r, int16_t q, fSetPixel cbDraw) {
-  TRACE("drawCircleQuadrant(r=%d)\n", r);
+void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
+  TRACE("drawCircleQuadrant(r=%d)\n", radius);
 
-  int x = -r, y = 0;
-  int err = 2 - 2 * r; /* II. Quadrant */
+  int x = -radius, y = 0;
+  int err = 2 - 2 * radius; /* II. Quadrant */
 
   do {
     if (q == 0) {
@@ -44,9 +44,9 @@ void drawCircleQuadrant(int16_t r, int16_t q, fSetPixel cbDraw) {
     } else if (q == 3) {
       cbDraw(y, x);
     }
-    r = err;
-    if (r <= y) err += ++y * 2 + 1;           /* e_xy+e_y < 0 */
-    if (r > x || err > y) err += ++x * 2 + 1; /* e_xy+e_x > 0 or no 2nd y-step */
+    radius = err;
+    if (radius <= y) err += ++y * 2 + 1;           /* e_xy+e_y < 0 */
+    if (radius > x || err > y) err += ++x * 2 + 1; /* e_xy+e_x > 0 or no 2nd y-step */
   } while (x < 0);
 }  // drawCircleQuadrant()
 
@@ -142,7 +142,7 @@ void drawCircle(Point center, int16_t radius, fSetPixel cbDraw) {
   int16_t xm = center.x;
   int16_t ym = center.y;
 
-  drawCircleQuadrant(radius, true, [&](int16_t x, int16_t y) {
+  drawCircleQuadrant(radius, 0, [&](int16_t x, int16_t y) {
     cbDraw(xm + x, ym + y);
     cbDraw(xm - y, ym + x);
     cbDraw(xm - x, ym - y);
