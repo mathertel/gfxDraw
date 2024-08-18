@@ -121,56 +121,6 @@ void dumpEdges(std::vector<_Edge> &edges) {
 
 // ===== Basic drawing algorithm implementations =====
 
-/// @brief Draw a line using the most efficient algorithm
-/// @param x0 Starting Point X coordinate.
-/// @param y0 Starting Point Y coordinate.
-/// @param x1 Ending Point X coordinate.
-/// @param y1 Ending Point Y coordinate.
-/// @param cbDraw Callback with coordinates of line pixels.
-void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
-  TRACE("Draw Line %d/%d %d/%d\n", x0, y0, x1, y1);
-
-  int16_t dx = abs(x1 - x0);
-  int16_t dy = abs(y1 - y0);
-  int16_t sx = (x0 < x1) ? 1 : -1;
-  int16_t sy = (y0 < y1) ? 1 : -1;
-
-  if (x0 == x1) {
-    // fast draw vertical lines
-    int16_t endY = y1 + sy;
-    for (int16_t y = y0; y != endY; y += sy) {
-      cbDraw(x0, y);
-    }
-
-  } else if (y0 == y1) {
-    // fast draw horizontal lines
-    int16_t endX = x1 + sx;
-    for (int16_t x = x0; x != endX; x += sx) {
-      cbDraw(x, y0);
-    }
-
-  } else {
-    int16_t err = dx - dy;
-
-    while (true) {
-      cbDraw(x0, y0);
-      if ((x0 == x1) && (y0 == y1)) break;
-
-      int16_t err2 = err << 1;
-
-      if (err2 > -dy) {
-        err -= dy;
-        x0 += sx;
-      }
-      if (err2 < dx) {
-        err += dx;
-        y0 += sy;
-      }
-    }
-  }
-};
-
-
 /// @brief Draw a rectangle with border and fill callbacks
 /// @param x0 Starting Point X coordinate.
 /// @param y0 Starting Point Y coordinate.
@@ -397,7 +347,7 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   proposePixel(x1, y1, cbDraw);
   if (rx == ry) {
     // draw a circle segment faster. ellipsis rotation can be ignored.
-    gfxDraw::drawCircle(gfxDraw::Point(SCALE256(cx256), SCALE256(cy256)), rx,
+    gfxDraw::drawCircleSegment(gfxDraw::Point(SCALE256(cx256), SCALE256(cy256)), rx,
                         gfxDraw::Point(x1, y1),
                         gfxDraw::Point(x2, y2),
                         (gfxDraw::ArcFlags)(flags & gfxDraw::ArcFlags::Clockwise),
@@ -603,8 +553,8 @@ void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
             Point pStart(pSeg.p[0] + pSeg.p[2], pSeg.p[1]);
 
             // drawCircle(gfxDraw::Point(30, 190), 20, gfxDraw::Point(30 + 20, 190), gfxDraw::Point(30 + 20, 190), true, bmpSet(gfxDraw::RED));
-            // The simplified drawCircle cannot be used as for filling the circle the pixels must be in order.
-            gfxDraw::drawCircle(pCenter, pSeg.p[2], pStart, pStart, ArcFlags::Clockwise | ArcFlags::LongPath, cbDraw);
+            // The simplified drawCircleSegment cannot be used as for filling the circle the pixels must be in order.
+            gfxDraw::drawCircleSegment(pCenter, pSeg.p[2], pStart, pStart, ArcFlags::Clockwise | ArcFlags::LongPath, cbDraw);
           }
           break;
 

@@ -1,6 +1,6 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxdraw.h: Library header file
+// gfxdrawCommon.h: Library header file
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx

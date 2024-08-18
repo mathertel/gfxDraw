@@ -1,6 +1,6 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxdrawCircle.h: Header file for circle drawing functions
+// gfxdrawCircle.h: Header file for functions to calculate all points of a circle, circle quadrant and circle segment.
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
@@ -12,7 +12,8 @@
 // Path drawing is supporting on any given path.
 // Filled paths are supported on closed paths only.
 //
-// Changelog: See gfxdraw.h and documentation files in this library.
+// Changelog:
+// * 22.05.2024 creation 
 //
 // - - - - -
 
@@ -45,11 +46,10 @@ inline ArcFlags operator|(ArcFlags a, ArcFlags b) {
 void drawCircle(Point center, int16_t radius, fSetPixel cbDraw);
 
 
-/// @brief create all points on the specified quadrant of a circle with center 0/0.
-/// The draw function is not called in order of the pixels on the circle quadrant.
+/// @brief Calculate all points on the specified quadrant of a circle with center 0/0.
 /// @param radius radius of the circle
-/// @param q
-/// @param cbDraw SetPixel callback
+/// @param q number of quadrant (see header file)
+/// @param cbDraw will be called for all pixels in the Circle Quadrant
 void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw);
 
 
@@ -60,10 +60,7 @@ void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw);
 /// @param endPoint last point of the arc
 /// @param clockwise order of pixel drawing.
 /// @param cbDraw SetPixel callback
-
-void drawCircle(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw);
-
-// void drawCircleSegment(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
+void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw);
 
 }  // gfxDraw:: namespace
 

@@ -36,6 +36,8 @@
 
 #include "gfxDrawCommon.h"
 #include "gfxDrawColors.h"
+#include "gfxDrawLine.h"
+#include "gfxDrawBezier.h"
 
 #ifdef ARDUINO
 #define GFXD_TRACE(fmt, ...) Serial.printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
@@ -101,23 +103,11 @@ public:
 
 /// ===== Basic draw functions with callback =====
 
-/// @brief Draw a line using the most efficient algorithm
-/// @param x0 Starting Point X coordinate.
-/// @param y0 Starting Point Y coordinate.
-/// @param x1 Ending Point X coordinate.
-/// @param y1 Ending Point Y coordinate.
-/// @param cbDraw Callback with coordinates of line pixels.
-/// @param w Width of line.
-void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
-
 /// @brief Draw the border line of a rectangle and optionally fill pixels.
 void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
 
 /// @brief Draw the border of a rounded rectangle and optionally fill pixels.
 void drawRoundedRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t r, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
-
-/// @brief Draw a bezier curve.
-void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw);
 
 // arc
 // void drawArc(..., fSetPixel cbDraw);

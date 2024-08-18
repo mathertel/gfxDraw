@@ -1,11 +1,11 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxdrawCircle.cpp: Library implementation file for circle drawing functions
+// gfxdrawCircle.cpp: Library implementation file for functions to calculate all points of a circle, circle quadrant and circle segment.
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
 //
-// Changelog: See gfxdraw.h and documentation files in this library.
+// Changelog: See gfxdrawCircle.h and documentation files in this library.
 //
 // - - - - -
 
@@ -26,13 +26,13 @@ namespace gfxDraw {
 
 /// @brief Draw the circle quadrant with the pixels in the given order.
 /// @param radius radius of the circle
-/// @param q
-/// @param cbDraw will be called for all pixels in the Circle Quadrant where (x > 0) and (y >= 0).
+/// @param q number of quadrant (see header file)
+/// @param cbDraw will be called for all pixels in the Circle Quadrant
 void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
   TRACE("drawCircleQuadrant(r=%d)\n", radius);
 
-  int x = -radius, y = 0;
-  int err = 2 - 2 * radius; /* II. Quadrant */
+  int16_t x = -radius, y = 0;
+  int16_t err = 2 - 2 * radius; /* II. Quadrant */
 
   do {
     if (q == 0) {
@@ -45,15 +45,15 @@ void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
       cbDraw(y, x);
     }
     radius = err;
-    if (radius <= y) err += ++y * 2 + 1;           /* e_xy+e_y < 0 */
-    if (radius > x || err > y) err += ++x * 2 + 1; /* e_xy+e_x > 0 or no 2nd y-step */
+    if (radius <= y) err += ++y * 2 + 1;           // y step and error adjustment
+    if (radius > x || err > y) err += ++x * 2 + 1; // x step and error adjustment
   } while (x < 0);
 }  // drawCircleQuadrant()
 
 
 /// @brief draw a circle segment
-void drawCircle(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw) {
-  TRACE("drawCircle(%d/%d r=%d)  (%d/%d) -> (%d/%d)\n",
+void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw) {
+  TRACE("drawCircleSegment(%d/%d r=%d)  (%d/%d) -> (%d/%d)\n",
         center.x, center.y, radius startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 
   int16_t xm = center.x;
@@ -71,7 +71,7 @@ void drawCircle(Point center, int16_t radius, Point startPoint, Point endPoint, 
   if (!(flags & ArcFlags::Clockwise)) {
     // flip vertically and adjust angles to use clockwise processing.
     int16_t ym2 = 2 * center.y;
-    drawCircle(
+    drawCircleSegment(
       center, radius,
       Point(startPoint.x, ym2 - startPoint.y),
       Point(endPoint.x, ym2 - endPoint.y),
@@ -134,7 +134,7 @@ void drawCircle(Point center, int16_t radius, Point startPoint, Point endPoint, 
   }  // for()
   // } while (q <= eQ);
 
-};  // drawCircle()
+};  // drawCircleSegment()
 
 
 // Draw a whole circle. The draw function is not called in order of the pixels on the circle.
@@ -149,39 +149,6 @@ void drawCircle(Point center, int16_t radius, fSetPixel cbDraw) {
     cbDraw(xm + y, ym - x);
   });
 }  // drawCircle()
-
-#if 0
-  int16_t f = 1 - r;
-  int16_t ddF_x = 1;
-  int16_t ddF_y = -2 * r;
-  int16_t x = r;
-  int16_t y = 0;
-
-  cbDraw(x0, y0 + r);
-  cbDraw(x0, y0 - r);
-  cbDraw(x0 + r, y0);
-  cbDraw(x0 - r, y0);
-
-  while (y <= x) {
-    cbDraw(x0 + x, y0 + y);
-    if (f >= 0) {
-      x--;
-      ddF_y += 2;
-      f += ddF_y;
-    }
-    y++;
-    ddF_x += 2;
-    f += ddF_x;
-    cbDraw(x0 + x, y0 + y);
-    cbDraw(x0 - x, y0 + y);
-    cbDraw(x0 + x, y0 - y);
-    cbDraw(x0 - x, y0 - y);
-    cbDraw(x0 + y, y0 + x);
-    cbDraw(x0 - y, y0 + x);
-    cbDraw(x0 + y, y0 - x);
-    cbDraw(x0 - y, y0 - x);
-  }
-#endif
 
 }  // gfxDraw:: namespace
 

@@ -1,6 +1,6 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxDrawBezier.h: Header file for bezier curve drawing functions
+// gfxDrawBezier.h: Header file for functions to calculate all points of a cubic bezier curve.
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
@@ -12,7 +12,8 @@
 // Path drawing is supporting on any given path.
 // Filled paths are supported on closed paths only.
 //
-// Changelog: See gfxdraw.h and documentation files in this library.
+// Changelog:
+// * 29.05.2024 creation
 //
 // - - - - -
 
