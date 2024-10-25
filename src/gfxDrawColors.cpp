@@ -49,6 +49,22 @@ uint16_t ARGB::toColor16() {
   return ((((Red) & 0xF8) << 8) | (((Green) & 0xFC) << 3) | ((Blue) >> 3));
 }
 
+// c lang-format off
+ARGB const ARGB_BLACK (    0,    0,    0);
+ARGB const ARGB_SILVER( 0xDD, 0xDD, 0xDD);
+ARGB const ARGB_GRAY  ( 0xCC, 0xCC, 0xCC);
+ARGB const ARGB_RED   ( 0xFF,    0,    0);
+ARGB const ARGB_ORANGE( 0xE9, 0x76,    0);
+ARGB const ARGB_YELLOW( 0xF6, 0xC7,    0);
+ARGB const ARGB_GREEN (    0, 0x80,    0);
+ARGB const ARGB_LIME  ( 0x32, 0xCD, 0x32);
+ARGB const ARGB_BLUE  (    0,    0, 0xFF);
+ARGB const ARGB_CYAN  (    0, 0xFF, 0xFF);
+ARGB const ARGB_PURPLE( 0x99, 0x46, 0x80);
+ARGB const ARGB_WHITE ( 0xFF, 0xFF, 0xFF);
+
+ARGB const ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
+// c lang-format on
 
 // ===== gfxDraw helper functions =====
 

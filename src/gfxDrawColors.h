@@ -60,22 +60,20 @@ public:
 
 // Some useful constants for simple colors
 
-// clang-format off
-const ARGB ARGB_BLACK (    0,    0,    0);
-const ARGB ARGB_SILVER( 0xDD, 0xDD, 0xDD);
-const ARGB ARGB_GRAY  ( 0xCC, 0xCC, 0xCC);
-const ARGB ARGB_RED   ( 0xFF,    0,    0);
-const ARGB ARGB_ORANGE( 0xE9, 0x76,    0);
-const ARGB ARGB_YELLOW( 0xF6, 0xC7,    0);
-const ARGB ARGB_GREEN (    0, 0x80,    0);
-const ARGB ARGB_LIME  ( 0x32, 0xCD, 0x32);
-const ARGB ARGB_BLUE  (    0,    0, 0xFF);
-const ARGB ARGB_CYAN  (    0, 0xFF, 0xFF);
-const ARGB ARGB_PURPLE( 0x99, 0x46, 0x80);
-const ARGB ARGB_WHITE ( 0xFF, 0xFF, 0xFF);
+extern ARGB const ARGB_BLACK;
+extern ARGB const ARGB_SILVER;
+extern ARGB const ARGB_GRAY;
+extern ARGB const ARGB_RED;
+extern ARGB const ARGB_ORANGE;
+extern ARGB const ARGB_YELLOW;
+extern ARGB const ARGB_GREEN;
+extern ARGB const ARGB_LIME;
+extern ARGB const ARGB_BLUE;
+extern ARGB const ARGB_CYAN;
+extern ARGB const ARGB_PURPLE;
+extern ARGB const ARGB_WHITE;
 
-const ARGB ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
-// c lang-format on
+extern ARGB const ARGB_TRANSPARENT;
 
 void dumpColorTable();
 
