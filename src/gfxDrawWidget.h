@@ -69,6 +69,9 @@ public:
   /// @brief Create segments from a textual path definition.
   void setPath(const char *path);
 
+  /// @brief add a segment to the path.
+  void addSegment(Segment s);
+
   /// @brief Create segments that form a with rectangle.
   /// @param width width of the rectangle.
   /// @param height height of the rectangle.

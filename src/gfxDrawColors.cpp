@@ -70,7 +70,6 @@ ARGB const ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
 
 void dumpColor(const char *name, ARGB col) {
   TRACE(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
-  int_fast16_t t1 = INT16_MIN;
 }
 
 void dumpColorTable() {

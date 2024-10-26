@@ -51,7 +51,6 @@ void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw) {
 
     if (lastPoints[1].y != POINT_INVALID_Y) {
       bool delFlag = false;
-      bool insFlag = false;
 
       // don't draw "corner" points
       if ((lastPoints[0].y == lastPoints[1].y) && (abs(lastPoints[0].x - lastPoints[1].x) == 1)) {

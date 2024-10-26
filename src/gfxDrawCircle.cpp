@@ -86,7 +86,6 @@ void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point end
   // Clockwise processing only from here.
 
   // Draw from startPoint to endPoint using Quadrants
-  uint16_t qTouched = 0;
   startPoint = startPoint - center;
   endPoint = endPoint - center;
 

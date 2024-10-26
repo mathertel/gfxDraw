@@ -16,26 +16,81 @@ In contrast to the rasterization implementations used in Desktop programs or Bro
 microprocessor circumstances with limited memory and cpu power and avoids arithmetic floating point calculations and
 doesn't support anti-aliased drawing.
 
+## General Library Implementation Rules
+
+This library aims to support graphics implementations that are used in microprocessors like ESP32 based boards with
+pixel oriented graphic displays.
+
+The functions are optimized for low resolution pixel displays. They do not implement antialiasing and have minimized use of float
+and arc arithmetics.  
+
+The library supports up to 16 bit (-32760 ... +32760) display resolutions.
+
+By design the drawing functionionality is independent of the color depth.
+
+The Widget Class and Bitmap Class supports drawing using a 32-bit (or less) color setup using RGB+Alpha for a specific pixel.
+
 
 ## Software Architecture
 
-![gfxdraw architecture](docs/gfxdraw-architecture.png)
+The library offers the following levels of functionality:
 
-The functions are optimized for pixel oriented displays, do not implement antialiasing and have minimized use of float
-and arc arithmetics.  This makes this library usable in microprocessor programming like ESP32 based boards with graphic
-displays.
-
-The library supports up to 16 bit display resolutions.
-
-The library offers some entry points for:
-
-* graphic primitives like lines, arcs and cubic bezier curves
+* graphic primitives like lines, arcs and cubic bezier curves,
+* graphical primitive objects like rectangles, rounded rectangles and full circles,
 * text based path definitions that combine the primitives to build a visual graphic element,
 * transformation functions on path based vector graphics
 * a drawing widget class that combines path, transformations and fill definitions.
 
-By design the drawing functionionality is independent of the color size.  The Widget Class supports drawing using
-a 32-bit (or less) color setup using RGB+Alpha.
+
+<!-- ![gfxdraw architecture](docs/gfxdraw-architecture.png) -->
+
+The library uses the Namespace `gfxDraw` to implement the types, functions and the classes to avoid conflicts with other libraries.
+
+<!-- [text](https://mermaid.js.org/syntax/flowchart.html) -->
+
+```mermaid
+flowchart
+
+subgraph gfxLibrary
+  direction TB
+  classDef Impl stroke:blue,color:blue,fill:white,stroke-width:4px;
+
+  subgraph widgets
+    Object:::Impl
+  end
+
+  subgraph path
+    direction LR
+    Object --> Segments;
+    Object --> Path;
+  end
+
+    Segments-->Fill;
+
+
+  subgraph calculate points
+    Segments-->gfxDrawLine:::Impl;
+    Segments-->gfxDrawCircle:::Impl;
+    Segments-->gfxDrawBezier:::Impl;
+  end
+
+  gfxDrawLine -->    gfxdrawCommon:::Impl;
+  gfxDrawCircle-->    gfxdrawCommon:::Impl;
+  gfxDrawBezier-->    gfxdrawCommon:::Impl;
+end
+
+subgraph Graphics-Driver
+  Fill -->setPixel
+  Object-->getPixel
+end 
+
+```
+
+**gfxdrawCommon** -- This file defines the Point data type and implements basic functions like table driven sin/cos arithmetic for low resolutions.
+
+**gfxdrawCircle** -- This file implements the functions to calculate all points of a circle, circle quadrant and circle segment.
+
+**gfxDrawBezier** -- This file implements the function to calculate all points of a bezier segment.
 
 
 ## Drawing on a display
@@ -51,7 +106,7 @@ transformations and colors by attributes.
     "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 
   // draw a background rectangle
-  drawSolidRect(8, 8, 87, 80, bmpSet(SILVER));
+  drawRect(8, 8, 87, 80, nullptr, bmpSet(SILVER));
 
   // draw a heard
   gfxDrawWidget widget;
@@ -100,6 +155,11 @@ More details about the implementation can be found in
 [Elliptical Arc Command](docs/elliptical_arc_command.md)
 [Filling Paths](docs/filling.md)
 [gfxDraw Widgtes](docs/widgets.md)
+
+
+## Contributions
+
+Contributions are welcome. Please use GitHub Issues for discussing and Pull Request. Need more -- just ask.
 
 
 ## The Examples

@@ -15,10 +15,10 @@
 #include "gfxDrawBitmap.h"
 
 /// unconditional print out this
-#define LOG_PRINT(...) // GFXD_TRACE(__VA_ARGS__)
+#define LOG_PRINT(...)  // GFXD_TRACE(__VA_ARGS__)
 
 // tracing information (left from development for future problem analysis) can be disabled
-#define LOG_TRACE(...) // GFXD_TRACE(__VA_ARGS__)
+#define LOG_TRACE(...)  // GFXD_TRACE(__VA_ARGS__)
 
 
 namespace gfxDraw {
@@ -27,6 +27,11 @@ namespace gfxDraw {
 void gfxDrawWidget::setPath(const char *path) {
   _segments = parsePath(path);
   _initMatrix(_matrix);
+}
+
+/// @brief add a segment to the path.
+void gfxDrawWidget::addSegment(Segment s) {
+  _segments.push_back(s);
 }
 
 /// @brief Create segments that form a with rectangle.

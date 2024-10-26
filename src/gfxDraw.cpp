@@ -931,7 +931,6 @@ std::vector<Segment> parsePath(const char *pathText) {
         command = *path++;
 
       memset(&Seg, 0, sizeof(Seg));
-      int parameters = -1;
       bool f1, f2;  // flags
 
       switch (command) {
