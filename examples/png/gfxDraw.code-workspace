@@ -16,6 +16,13 @@
 			"cmath": "cpp",
 			"cctype": "cpp",
 			"cstdlib": "cpp",
+			"iterator": "cpp",
+			"ios": "cpp",
+			"type_traits": "cpp",
+			"xstring": "cpp",
+			"xutility": "cpp",
+			"array": "cpp",
+			"memory": "cpp"
 		},
 		"cSpell.words": [
 			"lodepng",

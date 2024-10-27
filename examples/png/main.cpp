@@ -11,13 +11,15 @@
 #include "../../src/gfxDrawWidget.h"
 
 #include "lodepng.h"
+#include "main.h"
 
-#define TRACE(...) // GFXD_TRACE(__VA_ARGS__)
+#define TRACE(...)  // GFXD_TRACE(__VA_ARGS__)
 
 
 // https://doc.magnum.graphics/magnum/
 
 using namespace std;
+using namespace gfxDraw;
 
 // ===== image memory allocation and functions
 
@@ -261,44 +263,44 @@ void drawTest01() {
 
   TRACE("\nTest-01:\n");
   // 8*8 rectange needs 2 edges on horizontal lines
-  gfxDraw::drawSolidRect(10, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(10, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z", 10, 10);
 
   TRACE("\nTest-02:\n");
   // 7*8 rectange needs 2 more points on horizontal lines
-  gfxDraw::drawSolidRect(20, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
+  gfxDraw::drawRect(20, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h6 v7 h-6 z", 20, 10);
 
   TRACE("\nTest-03:\n");
   // closed W
-  gfxDraw::drawSolidRect(30, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(30, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h8 v7 l-4,-4 l-4 4 z", 30, 10);
 
   TRACE("\nTest-04: closed M\n");
-  gfxDraw::drawSolidRect(41, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
+  gfxDraw::drawRect(41, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l4,4 l4 -4 v7 h-8 z", 41, 10);
 
   TRACE("\nTest-05: route\n");
-  gfxDraw::drawSolidRect(52, 10, 11, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(52, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M5 1 l4,4 l-4 4 l-4 -4 z", 52, 10);
 
   TRACE("\nTest-06: |> symbol\n");
-  gfxDraw::drawSolidRect(63, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
+  gfxDraw::drawRect(63, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l7,4 l-7 4 z", 63, 10);
 
   TRACE("\nTest-07: <| symbol\n");
-  gfxDraw::drawSolidRect(73, 10, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(73, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M8 1 l-7,4 l7 4 z", 73, 10);
 
   TRACE("\nTest-10: [[]] \n");
-  gfxDraw::drawSolidRect(10, 22, 10, 10, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(10, 22, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z", 10, 22);
 
   TRACE("\nTest-11: [*] \n");
-  gfxDraw::drawSolidRect(20, 22, 10, 10, pngSetPixel(gfxDraw::ARGB_GRAY));
+  gfxDraw::drawRect(20, 22, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z", 20, 22);
 
-  gfxDraw::drawSolidRect(10, 34, 27, 24, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(10, 34, 27, 24, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText("M2 52 l60-50 v20 h20 l-30 50z", 10, 34, 30,
                       pngSetPixel(gfxDraw::ARGB_BLUE),
                       [](int16_t x, int16_t y) {
@@ -309,22 +311,22 @@ void drawTest01() {
                       });
 
 
-  gfxDraw::drawSolidRect(40, 34, 43, 26, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(40, 34, 43, 26, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText(
     "M2 42 l20-33 l20 38 l20 -38 l20 33 l0 -40 l-70 0 z",
     40, 34, 50,
     pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // radio with 2 inner paths
-  gfxDraw::drawSolidRect(91, 34, 43, 35, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(91, 34, 43, 35, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText(RadioPath, 90, 34, 50, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // smiley with bezier curves
-  gfxDraw::drawSolidRect(10, 80, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  gfxDraw::drawRect(10, 80, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
   gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // smiley with Arcs
-  gfxDraw::drawSolidRect(120, 80, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  gfxDraw::drawRect(120, 80, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
   gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // gfxDraw::drawCubicBezier(5, 10, 10, -5, 20, 25, 26, 10,
@@ -412,10 +414,10 @@ void drawTest03() {
 
   // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawSolidRect(210, 10, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  // gfxDraw::drawRect(210, 10, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
   // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawSolidRect(210, 120, 99, 99, pngSetPixel(gfxDraw::ARGB_GREEN));
+  // gfxDraw::drawRect(210, 120, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
 
   gfxDraw::pathByText(PiePath, 8, 8, 30, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
@@ -426,7 +428,8 @@ void drawTest03() {
   gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
   gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::pathByText("O 20 20 20", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::drawRoundedRect(260, 10, 120, 50, 22, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xEE, 0x88)));
+
   gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xFF, 0)));
 }
 
@@ -445,7 +448,7 @@ void drawTest04() {
   widget.setPath(heardPath);
 
   // draw a background
-  drawSolidRect(10, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  drawRect(10, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
 
   // simple drawing on the rectangle behind
   widget.move(10, 10);
@@ -457,7 +460,7 @@ void drawTest04() {
 
   // simple drawing on the rectangle behind and complete undraw.
   // and save of background colors
-  drawSolidRect(110, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  drawRect(110, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(110, 10);
   widget.draw(setImagePixel, readImagePixel);
@@ -465,7 +468,7 @@ void drawTest04() {
 
   // draw and draw after transformations
   // with removing not overdrawn pixels.
-  drawSolidRect(210, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  drawRect(210, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(210, 10);
   widget.draw(setImagePixel, readImagePixel);
@@ -482,7 +485,7 @@ void drawTest04() {
   saveImage("test04.png");
 
   // non solid version of the same
-  drawSolidRect(310, 10, 87, 80, pngSetPixel(ARGB_SILVER));
+  drawRect(310, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.setFillColor(ARGB_TRANSPARENT);
   widget.resetBackground();
   widget.resetTransformation();
@@ -501,54 +504,130 @@ void drawTest04() {
   saveImage("test04.png");
 }
 
-#if 0
-void drawClock(uint16_t _cx, uint16_t _cy, uint16_t _radius) {
 
-  float rad1 = (M_PI * 2 / 60);
-  int16_t x0, y0, x1, y1;
-
-  // uint32_t color;
-
-  // _display->setBackgroundColor(_backgroundColor);
-  // _display->setBorderColor(_borderColor);
-  // _display->drawCircle(_cx, _cy, _radius);
-
-  da->drawCircle(
-    _cx, _cy, _radius,
-    [bmp](int16_t x, int16_t y) {
-      bmp->setPixel(x, y, gfxDraw::ARGB_BLACK);
-    });
-
-
-  for (uint8_t i = 0; i < 60; i++) {
-    float deg = (rad1 * i);
-
-    x0 = sin(deg) * _radius;
-    y0 = -cos(deg) * _radius;
-
-    x1 = 0;
-    y1 = 0;
-
-    if ((i % 15) == 0) {
-      // x1 = (x0 * 9.0) / 12.0;
-      // y1 = (y0 * 9.0) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_BLUE), 5);
-
-    } else if ((i % 5) == 0) {
-      // x1 = (x0 * 10.0) / 12.0;
-      // y1 = (y0 * 10.0) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_GREEN), 3);
-
-    } else {
-      // x1 = (x0 * 11.5) / 12.0;
-      // y1 = (y0 * 11.5) / 12.0;
-      da->line(_cx + x0, _cy + y0, _cx + x1, _cy + y1, pngSetPixel(gfxDraw::ARGB_BLACK), 1);
-    }
-  }  // for
+uint16_t conv2d(const char *p) {
+  return (10 * (*p - '0')) + (*(p + 1) - '0');
 }
 
-#endif
 
+// 5 min marker : small V
+// const char *mark05Path = "M-6 -259 l6 10 l6 -10 z";
+const char *mark05Path = "M0 -252 l8 -8 l-8 -8 l-8 8 z";
+const char *mark15Path = "M-6 -259 v16 h12 v-16 z";
+// const char *hhPath = "M-8 16 v-132 h16 v132z";
+const char *hhPath = "M-8 16 v-132 a 1 1 0 0 1 16 0 v132z";
+// const char *mmPath = "M-2 32 v-220 h4 v220z";
+const char *mmPath = "M-4 32 v-180 a 15,15 0 0 1 0 -30 v-20 h8 v20 a 15,15 0 0 1 0 30  v180z";
+const char *ssPath = "M0 48 v-286";
+
+void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
+  printf("drawClock(%02d:%02d:%02d)\n", hh, mm, ss);
+
+  static int16_t hhDegLast = -1;
+  static int16_t mmDegLast = -1;
+
+  static gfxDrawWidget handSS;  // static to preserve background
+
+  // time of Day in 0... 12*60*60
+  int32_t tod = ((hh % 12) * 60 * 60) + (mm * 60) + ss;
+  int16_t hhDeg = tod * 360 / (12 * 60 * 60);
+  int16_t mmDeg = (tod % (60 * 60)) * 360 / (60 * 60);
+  int16_t ssDeg = (tod % 60) * 360 / (60);
+
+  printf("%3d %3d %3d\n", hhDeg, mmDeg, ssDeg);
+
+  uint32_t _cx = 128;
+  uint32_t _cy = 128;
+  uint32_t _radius = 120;
+
+  if (hhDeg != hhDegLast) redraw = true;
+  if (mmDeg != mmDegLast) redraw = true;
+
+  if (redraw) {
+    gfxDrawWidget mark05, mark15;
+    mark05.setPath(mark05Path);
+    mark05.setStrokeColor(ARGB_TRANSPARENT);
+    mark05.setFillColor(ARGB_BLACK);
+
+    mark15.setPath(mark15Path);
+    mark15.setStrokeColor(ARGB_TRANSPARENT);
+    mark15.setFillColor(ARGB_BLACK);
+
+    // draw a background
+    drawRect(_cx - _radius, _cy - _radius, 2 * _radius, 2 * _radius, nullptr, pngSetPixel(ARGB_SILVER));
+    setImagePixel(_cx, _cy, gfxDraw::ARGB_BLACK);
+
+    saveImage("test05.png");
+
+    // draw the face of the clock
+    for (uint16_t i = 0; i < 360; i += 6) {
+
+      if (i % 90 == 0) {
+        mark15.resetTransformation();
+        mark15.scale(_radius * 100 / 256);
+        mark15.rotate(i);
+        mark15.move(_cx, _cy);
+        mark15.draw(setImagePixel);
+
+      } else if (i % 30 == 0) {
+        mark05.resetTransformation();
+        mark05.scale(_radius * 100 / 256);
+        mark05.rotate(i);
+        mark05.move(_cx, _cy);
+        mark05.draw(setImagePixel);
+
+      } else {
+        int32_t dx = sin256(i) * _radius;
+        int32_t dy = -cos256(i) * _radius;
+        setImagePixel(_cx + SCALE256(dx), _cy + SCALE256(dy), gfxDraw::ARGB_BLACK);
+      }
+    }
+
+    saveImage("test05.png");
+  }
+
+  // Hand for hours
+  if ((redraw) || (hhDeg != hhDegLast)) {
+    gfxDrawWidget hand;
+
+    hand.setPath(hhPath);
+    hand.setStrokeColor(ARGB_BLACK);
+    hand.setFillColor(ARGB_BLACK);
+
+    // hand.resetTransformation();
+    hand.scale(_radius * 100 / 256);
+    hand.rotate(hhDeg);
+    hand.move(_cx, _cy);
+    hand.draw(setImagePixel);
+    hhDegLast = hhDeg;
+  }
+
+  // Hand for Minutes
+  if ((redraw) || (mmDeg != mmDegLast)) {
+    gfxDrawWidget hand;
+    hand.setPath(mmPath);
+    hand.setStrokeColor(ARGB_TRANSPARENT);
+    hand.setFillColor(ARGB_BLUE);
+    // hand.resetTransformation();
+    hand.scale(_radius * 100 / 256);
+    hand.rotate(mmDeg);
+    hand.move(_cx, _cy);
+    hand.draw(setImagePixel);
+    mmDegLast = mmDeg;
+  }
+
+  // Hand for Seconds
+  handSS.setPath(ssPath);
+  handSS.setStrokeColor(ARGB_RED);
+  handSS.setFillColor(ARGB_TRANSPARENT);
+  handSS.resetTransformation();
+  handSS.scale(_radius * 100 / 256);
+  handSS.rotate(ssDeg);
+  handSS.move(_cx, _cy);
+  handSS.draw(setImagePixel, readImagePixel);
+
+  saveImage("test05.png");
+}
 
 int main() {
   silentTests();
@@ -570,7 +649,7 @@ int main() {
 #endif
 
 
-#if (0)
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::ARGB_WHITE);
 
@@ -579,13 +658,27 @@ int main() {
   saveImage("test03.png");
 #endif
 
-#if (1)
+#if (0)
   newImage(400, 300);
   fillImage(gfxDraw::ARGB_WHITE);
 
   // test using test04.png
   drawTest04();
 #endif
+
+#if (0)
+  int16_t hh = conv2d(__TIME__);
+  int16_t mm = conv2d(__TIME__ + 3);
+  int16_t ss = conv2d(__TIME__ + 6);
+
+  newImage(280, 280);
+  fillImage(gfxDraw::ARGB_WHITE);
+
+  drawClock(hh, mm, ss);
+  drawClock(hh, mm, ss + 1);
+
+#endif
+
 
   // gfxDraw::rect(10, 50, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::CYAN), 2);
   // gfxDraw::rect(10, 60, 12, 8, nullptr, pngSetPixel(gfxDraw::CYAN), 2);
@@ -599,10 +692,6 @@ int main() {
 
   // gfxDraw::rect(54, 70, 10, 8, nullptr, pngSetPixel(gfxDraw::RED), 2);
   // gfxDraw::rect(54, 77, 10, -8, nullptr, pngSetPixel(gfxDraw::ARGB_BLACK), 2);
-
-
-  // drawClock(120, 205, 80);
-
 
   // drawDigits14(1, 0, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
   // drawDigits14(2, 80, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));

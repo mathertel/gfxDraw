@@ -1,6 +1,6 @@
-# moonclock example
+# moongfx example
 
-<!-- This example demonstrates how to use gfxDraw with the
+This example demonstrates how to use gfxDraw with the
 [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX) that has some excellent support for devices
 based on the ESP32 chips and graphics displays.
 
@@ -52,4 +52,4 @@ Arduino_DataBus *bus = new Arduino_ESP32LCD8(
     0 /* DC */, GFX_NOT_DEFINED /* CS */, 47 /* WR */, GFX_NOT_DEFINED /* RD */,
     9 /* D0 */, 46 /* D1 */, 3 /* D2 */, 8 /* D3 */, 18 /* D4 */, 17 /* D5 */, 16 /* D6 */, 15 /* D7 */);
 Arduino_GFX *gfx = new Arduino_ST7796(bus, 4 /* RST */, 0 /* rotation */, true /* IPS*/);
- -->
+

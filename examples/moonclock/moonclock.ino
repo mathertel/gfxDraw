@@ -158,9 +158,8 @@ void loop(void) {
 
       for (int n = 0; n < 220; n += 8) {
 
-        gfxDraw::drawRect(10 - 8 + n, 10 - 8 + n, 87, 80,
-                          nullptr,
-                          gfxSetPixel(RGB565_LIGHTGREY));
+        gfxDraw::drawRect(10 - 8 + n, 10 - 8 + n, 87, 80, nullptr,
+                               gfxSetPixel(RGB565_LIGHTGREY));
 
         gfxDraw::pathByText(heardPath, 10 + n, 10 + n, 100,
                             gfxSetPixel(RGB565_BLUE),

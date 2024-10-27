@@ -16,8 +16,6 @@
 
 namespace gfxDraw {
 
-// This implementation of cubic bezier curve with a start and an end point given and by using 2 control points.
-
 /// @brief Draw a line using the most efficient algorithm
 /// @param x0 Starting Point X coordinate.
 /// @param y0 Starting Point Y coordinate.
@@ -27,27 +25,27 @@ namespace gfxDraw {
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
   TRACE("Draw Line (%d/%d)--(%d/%d)\n", x0, y0, x1, y1);
 
-  int16_t dx = abs(x1 - x0);
-  int16_t dy = abs(y1 - y0);
-  int16_t sx = (x0 < x1) ? 1 : -1;
-  int16_t sy = (y0 < y1) ? 1 : -1;
+  int16_t delta_x = abs(x1 - x0);
+  int16_t delta_y = abs(y1 - y0);
+  int16_t step_x = (x0 < x1) ? 1 : -1;
+  int16_t step_y = (y0 < y1) ? 1 : -1;
 
   if (x0 == x1) {
     // fast draw vertical lines
-    int16_t endY = y1 + sy;
-    for (int16_t y = y0; y != endY; y += sy) {
+    int16_t endY = y1 + step_y;
+    for (int16_t y = y0; y != endY; y += step_y) {
       cbDraw(x0, y);
     }
 
   } else if (y0 == y1) {
     // fast draw horizontal lines
-    int16_t endX = x1 + sx;
-    for (int16_t x = x0; x != endX; x += sx) {
+    int16_t endX = x1 + step_x;
+    for (int16_t x = x0; x != endX; x += step_x) {
       cbDraw(x, y0);
     }
 
   } else {
-    int16_t err = dx - dy;
+    int16_t err = delta_x - delta_y;
 
     while (true) {
       cbDraw(x0, y0);
@@ -55,13 +53,13 @@ void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) 
 
       int16_t err2 = err << 1;
 
-      if (err2 > -dy) {
-        err -= dy;
-        x0 += sx;
+      if (err2 > -delta_y) {
+        err -= delta_y;
+        x0 += step_x;
       }
-      if (err2 < dx) {
-        err += dx;
-        y0 += sy;
+      if (err2 < delta_x) {
+        err += delta_x;
+        y0 += step_y;
       }
     }
   }

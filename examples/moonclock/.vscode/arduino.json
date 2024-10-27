@@ -1,0 +1,7 @@
+{
+    "board": "esp32:esp32:esp32s3",
+    "configuration": "JTAGAdapter=default,PSRAM=enabled,FlashMode=qio,FlashSize=16M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=fatflash,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
+    "sketch": "moongfx.ino",
+    "output": "./build",
+    "port": "COM7"
+}

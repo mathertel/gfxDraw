@@ -1,0 +1,28 @@
+{
+	// https://learn.sparkfun.com/tutorials/efficient-arduino-programming-with-arduino-cli-and-visual-studio-code/all#SnippetTab
+	// https://github.com/APJoshi-Projects/Integrating_Arduino-cli_with_VSCode
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build with arduino.cpp",
+			"type": "process",
+			"command": "arduino-cli compile moongfx.ino --fqbn esp32:esp32:esp32s3",
+			"args": [
+				"--build-property JTAGAdapter=default,PSRAM=enabled,FlashMode=qio,FlashSize=16M,LoopCore=1,EventsCore=1,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PartitionScheme=fatflash,CPUFreq=240,UploadSpeed=921600,DebugLevel=none,EraseFlash=none",
+        "--build-cache-path ${workspaceFolder}/cache",
+				"--build-path ${workspaceFolder}/build",
+				"--warnings none --dump-profile",
+				"--log --no-color --log-level fatal"			
+			],
+
+
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}
