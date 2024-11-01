@@ -45,16 +45,15 @@ void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
       cbDraw(y, x);
     }
     radius = err;
-    if (radius <= y) err += ++y * 2 + 1;           // y step and error adjustment
-    if (radius > x || err > y) err += ++x * 2 + 1; // x step and error adjustment
-  } while (x < 0);
+    if (radius <= y) err += ++y * 2 + 1;            // y step and error adjustment
+    if (radius > x || err > y) err += ++x * 2 + 1;  // x step and error adjustment
+  } while (x <= 0);
 }  // drawCircleQuadrant()
 
 
 /// @brief draw a circle segment
 void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw) {
-  TRACE("drawCircleSegment(%d/%d r=%d)  (%d/%d) -> (%d/%d)\n",
-        center.x, center.y, radius startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+  TRACE("drawCircleSegment(%d/%d r=%d)  (%d/%d) -> (%d/%d)\n", center.x, center.y, radius, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 
   int16_t xm = center.x;
   int16_t ym = center.y;
@@ -137,15 +136,31 @@ void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point end
 
 
 // Draw a whole circle. The draw function is not called in order of the pixels on the circle.
-void drawCircle(Point center, int16_t radius, fSetPixel cbDraw) {
+void drawCircle(Point center, int16_t radius, fSetPixel cbStroke, fSetPixel cbFill) {
   int16_t xm = center.x;
   int16_t ym = center.y;
+  int16_t line = -radius;
 
-  drawCircleQuadrant(radius, 0, [&](int16_t x, int16_t y) {
-    cbDraw(xm + x, ym + y);
-    cbDraw(xm - y, ym + x);
-    cbDraw(xm - x, ym - y);
-    cbDraw(xm + y, ym - x);
+  drawCircleQuadrant(radius, 3, [&](int16_t x, int16_t y) {
+    // TRACE(" x=%d y=%d\n", x, y);
+    cbStroke(xm - x, ym + y);
+    if ((cbFill) && (y != line)) {
+      for (int16_t l = xm - x + 1; l < xm + x; l++) {
+        cbFill(l, ym + y);
+      }
+    }
+    cbStroke(xm + x, ym + y);
+
+    if (y < 0) {
+      cbStroke(xm - x, ym - y);
+      if ((cbFill) && (y != line)) {
+        for (int16_t l = xm - x + 1; l < xm + x; l++) {
+          cbFill(l, ym - y);
+        }
+      }
+      cbStroke(xm + x, ym - y);
+    }
+    line = y;
   });
 }  // drawCircle()
 

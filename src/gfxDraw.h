@@ -37,6 +37,8 @@
 #include "gfxDrawCommon.h"
 #include "gfxDrawColors.h"
 #include "gfxDrawLine.h"
+#include "gfxDrawCircle.h"
+// #include "gfxDrawRect.h"
 #include "gfxDrawBezier.h"
 
 #ifdef ARDUINO
