@@ -348,12 +348,12 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
   if (rx == ry) {
     // draw a circle segment faster. ellipsis rotation can be ignored.
     gfxDraw::drawCircleSegment(gfxDraw::Point(SCALE256(cx256), SCALE256(cy256)), rx,
-                        gfxDraw::Point(x1, y1),
-                        gfxDraw::Point(x2, y2),
-                        (gfxDraw::ArcFlags)(flags & gfxDraw::ArcFlags::Clockwise),
-                        [&](int16_t x, int16_t y) {
-                          proposePixel(x, y, cbDraw);
-                        });
+                               gfxDraw::Point(x1, y1),
+                               gfxDraw::Point(x2, y2),
+                               (gfxDraw::ArcFlags)(flags & gfxDraw::ArcFlags::Clockwise),
+                               [&](int16_t x, int16_t y) {
+                                 proposePixel(x, y, cbDraw);
+                               });
   } else {
     int startAngle = vectorAngle(256 * x1 - cx256, 256 * y1 - cy256);
     int endAngle = vectorAngle(256 * x2 - cx256, 256 * y2 - cy256);
@@ -880,7 +880,6 @@ void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fS
   } else {
     drawSegments(vSeg, cbBorder);
   }
-  int a;
 }
 
 

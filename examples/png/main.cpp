@@ -505,6 +505,18 @@ void drawTest04() {
 }
 
 
+// draw a heard by using the gfxDrawWidget functionality
+// demonstrate on how to undraw
+void drawTest05() {
+
+  gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12, 
+  pngSetPixel(gfxDraw::ARGB_GREEN),
+  pngSetPixel(gfxDraw::ARGB_YELLOW));
+
+  saveImage("test05.png");
+}
+
+
 uint16_t conv2d(const char *p) {
   return (10 * (*p - '0')) + (*(p + 1) - '0');
 }
@@ -649,7 +661,7 @@ int main() {
 #endif
 
 
-#if (1)
+#if (0)
   newImage(400, 300);
   fillImage(gfxDraw::ARGB_WHITE);
 
@@ -664,6 +676,14 @@ int main() {
 
   // test using test04.png
   drawTest04();
+#endif
+
+#if (1)
+  newImage(400, 300);
+  fillImage(gfxDraw::ARGB_WHITE);
+
+  // test using test04.png
+  drawTest05();
 #endif
 
 #if (0)

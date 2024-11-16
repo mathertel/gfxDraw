@@ -65,7 +65,6 @@ typedef std::function<void(int16_t x, int16_t y, ARGB color)> fDrawPixel;
 typedef std::function<ARGB(int16_t x, int16_t y)> fReadPixel;
 
 
-
 /// @brief The Segment struct holds all information about a segment of a path.
 class Segment {
 public:

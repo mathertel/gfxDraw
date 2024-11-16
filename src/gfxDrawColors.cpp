@@ -19,6 +19,7 @@ namespace gfxDraw {
 
 // ===== ARGB class members =====
 
+ARGB::ARGB() : raw(0) {};
 
 // RGB+A Color
 ARGB::ARGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
