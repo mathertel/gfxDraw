@@ -5,7 +5,7 @@
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
 //
-// Changelog: See gfxDraw.h and documentation files in this library.
+// Changelog: See gfxDrawColors.h and documentation files in this library.
 //
 // - - - - -
 
@@ -70,7 +70,7 @@ ARGB const ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
 // ===== gfxDraw helper functions =====
 
 void dumpColor(const char *name, ARGB col) {
-  TRACE(" %-12s: %02x.%02x.%02x.%02x %08lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
+  TRACE(" %-12s: %02x.%02x.%02x.%02x #%06lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
 }
 
 void dumpColorTable() {

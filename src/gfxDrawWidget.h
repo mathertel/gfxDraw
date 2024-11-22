@@ -11,7 +11,7 @@
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
 //
-// Changelog: See gfxDraw.h and documentation files in this library.
+// Changelog: See gfxDrawWidget.h and documentation files in this library.
 
 // https://svg-path-visualizer.netlify.app/#M2%2C2%20Q8%2C2%208%2C8
 

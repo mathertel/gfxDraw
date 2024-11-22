@@ -38,7 +38,7 @@
 #include "gfxDrawColors.h"
 #include "gfxDrawLine.h"
 #include "gfxDrawCircle.h"
-// #include "gfxDrawRect.h"
+#include "gfxDrawRect.h"
 #include "gfxDrawBezier.h"
 
 #ifdef ARDUINO
@@ -99,16 +99,21 @@ public:
       int16_t yEnd;
     };
   };
+
+  static Segment createMove(int16_t x, int16_t y);
+  static Segment createMove(Point p);
+  
+  static Segment createLine(int16_t x, int16_t y);
+  static Segment createLine(Point p);
+
+  static Segment createClose();
+  static Segment createArc(int16_t radius, bool f1, bool f2, int16_t xEnd, int16_t yEnd);
+
 };
 
 
+
 /// ===== Basic draw functions with callback =====
-
-/// @brief Draw the border line of a rectangle and optionally fill pixels.
-void drawRect(int16_t x0, int16_t y0, int16_t w, int16_t h, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
-
-/// @brief Draw the border of a rounded rectangle and optionally fill pixels.
-void drawRoundedRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t r, fSetPixel cbBorder = nullptr, fSetPixel cbFill = nullptr);
 
 // arc
 // void drawArc(..., fSetPixel cbDraw);

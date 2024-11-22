@@ -5,7 +5,7 @@
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
 //
-// Changelog: See gfxDraw.h and documentation files in this library.
+// Changelog: See gfxDrawCommon.h and documentation files in this library.
 //
 // - - - - -
 
