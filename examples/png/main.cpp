@@ -9,6 +9,7 @@
 #include "../../src/gfxDraw.h"
 #include "../../src/gfxDrawCircle.h"
 #include "../../src/gfxDrawWidget.h"
+#include "../../src/gfxDrawGaugeWidget.h"
 
 #include "lodepng.h"
 #include "main.h"
@@ -509,11 +510,44 @@ void drawTest04() {
 // demonstrate on how to undraw
 void drawTest05() {
 
-  gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12, 
-  pngSetPixel(gfxDraw::ARGB_GREEN),
-  pngSetPixel(gfxDraw::ARGB_YELLOW));
+  newImage(400, 300);
+  fillImage(gfxDraw::ARGB_WHITE);
+
+  // test using test04.png
+
+  gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12,
+                      pngSetPixel(gfxDraw::ARGB_GREEN),
+                      pngSetPixel(gfxDraw::ARGB_YELLOW));
+
+
+  gfxDrawGaugeWidget::GFXDrawGaugeConfig conf = {
+    .x = 50,
+    .y = 8,
+    .w = 200 ,
+
+    .minValue = 0,
+    .maxValue = 100,
+    .minAngle = 30,
+    .maxAngle = 360 - 30
+
+  };
+
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+
+  gfxDraw::gfxDrawGaugeWidget *g = new gfxDraw::gfxDrawGaugeWidget();
+  g->setConfig(&conf);
+  g->setValue(24);
+  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK),
+          pngSetPixel(gfxDraw::ARGB_GRAY));
 
   saveImage("test05.png");
+
+  g->setValue(28);
+  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK),
+          pngSetPixel(gfxDraw::ARGB_GRAY));
+
+  saveImage("test05.png");
+
 }
 
 
@@ -679,10 +713,6 @@ int main() {
 #endif
 
 #if (1)
-  newImage(400, 300);
-  fillImage(gfxDraw::ARGB_WHITE);
-
-  // test using test04.png
   drawTest05();
 #endif
 
