@@ -1,4 +1,5 @@
 // Pre-defined drawing Colors
+// use color picker: <https://www.w3schools.com/colors/colors_picker.asp?colorhex=4060a0>
 
 #pragma once
 
@@ -46,6 +47,17 @@ public:
   constexpr bool
   operator==(const ARGB &col2);
   constexpr bool operator!=(const ARGB &col2);
+
+  // conversions to uint32_t can be implicit
+
+  operator uint32_t() const {
+    return (raw);
+  };
+
+  ARGB &operator=(uint32_t v) {
+    raw = v;
+    return *this;
+  };
 
   /// @brief Convert into a 3*8 bit value using #rrggbb.
   /// @return color value.

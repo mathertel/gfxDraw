@@ -26,6 +26,9 @@ float map(float value, float in_min, float in_max, float out_min, float out_max)
   return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+int16_t map(float value, float in_min, float in_max, int16_t out_min, int16_t out_max) {
+  return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 // ===== private functions
 
@@ -35,38 +38,39 @@ Point gfxDrawGaugeWidget::_piePoint(int16_t alpha, uint16_t radius) {
     cos256(alpha) * radius / 256));
 }
 
-void gfxDrawGaugeWidget::_drawSegment(gfxDraw::fSetPixel cbFill) {
+void gfxDrawGaugeWidget::_drawSegment(int16_t minAngle, int16_t maxAngle, gfxDraw::fSetPixel cbFill) {
+  std::vector<gfxDraw::Segment> segments;
+
   int16_t _innerRadius = (_radius * 8) / 10;
-  bool largeFlag = (conf.maxAngle - conf.minAngle) > 180;
+  bool largeFlag = (maxAngle - minAngle) > 180;
 
-  Point startOut = center + _piePoint(conf.minAngle, _radius);
-  Point startIn = center + _piePoint(conf.minAngle, _innerRadius);
-  Point endOut = center + _piePoint(conf.maxAngle, _radius);
-  Point endIn = center + _piePoint(conf.maxAngle, _innerRadius);
+  Point startOut = center + _piePoint(minAngle, _radius);
+  Point startIn = center + _piePoint(minAngle, _innerRadius);
+  Point endOut = center + _piePoint(maxAngle, _radius);
+  Point endIn = center + _piePoint(maxAngle, _innerRadius);
 
-  _segments.clear();
-  _segments.reserve(5);
-  _segments.push_back(Segment::createMove(startOut));
-  _segments.push_back(Segment::createArc(_radius, largeFlag, true, endOut.x, endOut.y));
-  _segments.push_back(Segment::createLine(endIn));
-  _segments.push_back(Segment::createArc(_innerRadius, largeFlag, false, startIn.x, startIn.y));
-  _segments.push_back(Segment::createClose());
+  segments.reserve(5);
+  segments.push_back(Segment::createMove(startOut));
+  segments.push_back(Segment::createArc(_radius, largeFlag, true, endOut.x, endOut.y));
+  segments.push_back(Segment::createLine(endIn));
+  segments.push_back(Segment::createArc(_innerRadius, largeFlag, false, startIn.x, startIn.y));
+  segments.push_back(Segment::createClose());
 
-  fillSegments(_segments, nullptr, cbFill);
+  fillSegments(segments, nullptr, cbFill);
 }
 
 void gfxDrawGaugeWidget::_drawNeedle(gfxDraw::fSetPixel cbStroke) {
+  std::vector<gfxDraw::Segment> segments;
   Point vPoint = center + _piePoint(_valueAngle, _radius - 2);
   Point lPoint = center + _piePoint(_valueAngle + 120, 5);
   Point rPoint = center + _piePoint(_valueAngle - 120, 5);
 
-  _segments.clear();
-  _segments.reserve(5);
-  _segments.push_back(Segment::createMove(lPoint));
-  _segments.push_back(Segment::createLine(vPoint));
-  _segments.push_back(Segment::createLine(rPoint));
-  _segments.push_back(Segment::createClose());
-  fillSegments(_segments, nullptr, cbStroke);
+  segments.reserve(4);
+  segments.push_back(Segment::createMove(lPoint));
+  segments.push_back(Segment::createLine(vPoint));
+  segments.push_back(Segment::createLine(rPoint));
+  segments.push_back(Segment::createClose());
+  fillSegments(segments, nullptr, cbStroke);
 
   // gfxDraw::drawLine(center.x, center.y, vPoint.x, vPoint.y, cbStroke);
 }
@@ -83,6 +87,18 @@ void gfxDrawGaugeWidget::setConfig(GFXDrawGaugeConfig *c) {
 }
 
 
+void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, uint32_t color) {
+  _GFXDrawGaugeSegment s;
+
+  minValue = constrain(minValue, conf.minValue, conf.maxValue);
+  s.minAngle = (int16_t)map(minValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
+
+  maxValue = constrain(maxValue, conf.minValue, conf.maxValue);
+  s.maxAngle = (int16_t)map(maxValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle),
+  s.color = color;
+  _gaugeSegments.push_back(s);
+}
+
 void gfxDrawGaugeWidget::setValue(float value) {
   value = constrain(value, conf.minValue, conf.maxValue);
   _valueAngle = (int16_t)map(value, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
@@ -90,9 +106,42 @@ void gfxDrawGaugeWidget::setValue(float value) {
 
 
 void gfxDrawGaugeWidget::draw(gfxDraw::fSetPixel cbStroke, gfxDraw::fSetPixel cbFill) {
-  _drawSegment(cbFill);
+  _drawSegment(conf.minAngle, conf.maxAngle, cbFill);
   _drawNeedle(cbStroke);
 }  // draw()
+
+
+void gfxDrawGaugeWidget::draw(gfxDraw::fDrawPixel cbDraw) {
+  ARGB drawColor;
+  auto drawHelper = [&](int16_t x, int16_t y) {
+    cbDraw(x, y, drawColor);
+  };
+
+  // _GFXDrawGaugeSegment *seg = _gaugeSegments[0];
+  int16_t a = conf.minAngle;
+
+  // draw all gaugeSegments using the defined color
+  for (_GFXDrawGaugeSegment &pSeg : _gaugeSegments) {
+    if (a < pSeg.minAngle) {
+      // draw a range without special colors
+      drawColor = this->_segmentColor;
+      _drawSegment(a, pSeg.minAngle, drawHelper);
+      a = pSeg.minAngle;
+    }
+    // draw the gaugeSegment
+    drawColor = pSeg.color;
+    _drawSegment(pSeg.minAngle, pSeg.maxAngle, drawHelper);
+    a = pSeg.maxAngle;
+  }
+  // draw remaining range if any
+  if (a < conf.maxAngle) {
+    drawColor = this->_segmentColor;
+    _drawSegment(a, conf.maxAngle, drawHelper);
+  }
+
+  drawColor = this->_needleColor;
+  _drawNeedle(drawHelper);
+}
 
 
 

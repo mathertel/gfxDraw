@@ -43,6 +43,14 @@ typedef int32_t Matrix1000[3][3];
 // float maxValue, Values are limited to this maximum showing the gauge at the highest angle.
 // float minAngle, lowest angle used for the lowest value.
 // float maxAngle, highest angle used for the lowest value.
+//
+// The variant of the draw function that takes a stroke and fill callback
+// will use the fill color for drawing the segment and the stroke color for drawing the needle.
+//
+// Advanced coloring and multiple segments is available by using the addSegment function
+// to specify the value range and the color of the segments.
+
+// is a For coloring it is req
 // color fill: Filling Color of the gauge.
 //
 // segments: [
@@ -65,44 +73,66 @@ public:
     float minValue;
     float maxValue;
 
-    float minAngle;
-    float maxAngle;
+    int16_t minAngle;
+    int16_t maxAngle;
   };
 
-  gfxDrawGaugeWidget() {
-
-  };
+  gfxDrawGaugeWidget() = default;
 
   void setConfig(GFXDrawGaugeConfig *c);
+
+  void setColors(ARGB needleColor, ARGB segmentColor) {
+    _needleColor = needleColor;
+    _segmentColor = segmentColor;
+  };
+
+  void addSegment(float minValue, float maxValue, uint32_t color);
+
   void setValue(float value);
+
 
   // ===== drawing functions =====
 
   /// @brief transform and draw the widget
-  /// @param cbDraw Pixel drawing callback function
-  /// @param cbRead optional Pixel reading current color from the image
-  /// when `cbRead` is present the background of the drawing is collected and saved to an internal background image.
+  /// @param cbStroke Pixel drawing callback function for the needle.
+  /// @param cbFill Pixel drawing callback function for the segment.
+  /// the setColors and addSegment information is ignored when using this function.
   void draw(gfxDraw::fSetPixel cbStroke, gfxDraw::fSetPixel cbFill);
 
+  /// @brief transform and draw the widget
+  /// @param cbDraw Pixel drawing callback function
+  /// The setColors and addSegment information is usedfor drawing the segments and needle.
+  void draw(gfxDraw::fDrawPixel cbDraw);
 
   // /// @brief undo drawing by restoring all background pixels.
   // /// @param cbDraw Pixel drawing callback function
   // void undraw(gfxDraw::fDrawPixel cbDraw);
 
 private:
+  struct _GFXDrawGaugeSegment {
+    int16_t minAngle;
+    int16_t maxAngle;
+    ARGB color;
+  };
+
+
   Point center;
   int16_t _radius;
 
   int16_t _valueAngle;
 
+  // default color difinitions
+  ARGB _needleColor = ARGB_BLACK;
+  ARGB _segmentColor = 0xFF4060A0;
+
   Point _piePoint(int16_t alpha, uint16_t radius);
 
-  void _drawSegment(gfxDraw::fSetPixel cbFill);
+  void _drawSegment(int16_t minAngle, int16_t maxAngle, gfxDraw::fSetPixel cbFill);
 
   void _drawNeedle(gfxDraw::fSetPixel cbStroke);
 
   GFXDrawGaugeConfig conf;
-  std::vector<gfxDraw::Segment> _segments;
+  std::vector<_GFXDrawGaugeSegment> _gaugeSegments;
 };
 
 }  // namespace gfxDraw

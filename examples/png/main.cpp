@@ -439,7 +439,7 @@ using namespace gfxDraw;
 
 // draw a heard by using the gfxDrawWidget functionality
 // demonstrate on how to undraw
-void drawTest04() {
+void drawTest04_Widget() {
   // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // setup the widget for drawing a heard
@@ -505,49 +505,69 @@ void drawTest04() {
   saveImage("test04.png");
 }
 
+// gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12,
+//                     pngSetPixel(gfxDraw::ARGB_GREEN),
+//                     pngSetPixel(gfxDraw::ARGB_YELLOW));
 
 // draw a heard by using the gfxDrawWidget functionality
 // demonstrate on how to undraw
-void drawTest05() {
+void drawTest05_Gauge() {
 
-  newImage(400, 300);
+  newImage(400, 220);
   fillImage(gfxDraw::ARGB_WHITE);
 
-  // test using test04.png
+  gfxDrawGaugeWidget::GFXDrawGaugeConfig conf;
+  gfxDraw::gfxDrawGaugeWidget *g;
 
-  gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12,
-                      pngSetPixel(gfxDraw::ARGB_GREEN),
-                      pngSetPixel(gfxDraw::ARGB_YELLOW));
-
-
-  gfxDrawGaugeWidget::GFXDrawGaugeConfig conf = {
-    .x = 50,
-    .y = 8,
-    .w = 200 ,
+  conf = {
+    .x = 10,
+    .y = 10,
+    .w = 180,
 
     .minValue = 0,
     .maxValue = 100,
     .minAngle = 30,
     .maxAngle = 360 - 30
-
   };
 
+  // draw a background to check drawing area
   drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
 
-  gfxDraw::gfxDrawGaugeWidget *g = new gfxDraw::gfxDrawGaugeWidget();
+  g = new gfxDraw::gfxDrawGaugeWidget();
   g->setConfig(&conf);
-  g->setValue(24);
-  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK),
-          pngSetPixel(gfxDraw::ARGB_GRAY));
+  g->setValue(70);
+
+  // drawing using stroke and fill
+  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_GRAY));
+
+
+  conf = {
+    .x = 200,
+    .y = 10,
+    .w = 200,
+
+    .minValue = 0,
+    .maxValue = 100,
+    .minAngle = 30,
+    .maxAngle = 360 - 30
+  };
+
+  // draw a background to check drawing area
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+
+  g = new gfxDraw::gfxDrawGaugeWidget();
+  g->setConfig(&conf);
+  g->setColors(ARGB_BLUE, ARGB_YELLOW);
+  g->addSegment(0, 16, 0xff8080ff);
+  g->addSegment(16, 24, 0xff60ff60);
+  g->addSegment(45, 75, 0xffff8080);
+  g->addSegment(75, 100, 0xffff0000);
+  g->setValue(32);
+
+  // drawing using colorful drawing
+  g->draw(setImagePixel);
 
   saveImage("test05.png");
-
-  g->setValue(28);
-  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK),
-          pngSetPixel(gfxDraw::ARGB_GRAY));
-
-  saveImage("test05.png");
-
 }
 
 
@@ -709,11 +729,11 @@ int main() {
   fillImage(gfxDraw::ARGB_WHITE);
 
   // test using test04.png
-  drawTest04();
+  drawTest04_Widget();
 #endif
 
 #if (1)
-  drawTest05();
+  drawTest05_Gauge();
 #endif
 
 #if (0)
