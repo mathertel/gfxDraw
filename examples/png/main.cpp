@@ -1,18 +1,15 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
+﻿// test and develop shell for using gfxDraw functions on windows producing PNG files for testing.
+
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <complex>
+#include <vector>
 
-#include "../../src/gfxDraw.h"
-#include "../../src/gfxDrawCircle.h"
-#include "../../src/gfxDrawWidget.h"
-#include "../../src/gfxDrawGaugeWidget.h"
+#include "gfxDraw.h"
+#include "gfxDrawWidget.h"
+#include "gfxDrawGaugeWidget.h"
 
 #include "lodepng.h"
-#include "main.h"
 
 #define TRACE(...)  // GFXD_TRACE(__VA_ARGS__)
 
@@ -43,7 +40,9 @@ void saveImage(const char *fileName) {
   if (!error) lodepng::save_file(png, fileName);
 
   // if there's an error, display it
-  if (error) std::cout << "encoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+  if (error) {
+    printf("encoder error %d: %s\n", error, lodepng_error_text(error));
+  }
 }
 
 
@@ -202,11 +201,11 @@ void silentTests() {
   TRACE("\nSilent Tests:\n");
 
   if (sizeof(gfxDraw::ARGB) != 4) {
-    cout << "error: size(ARGB) is not 4!" << endl;
+    printf("error: size(ARGB) is not 4!\n");
   }
 
   if (sizeof(gfxDraw::Segment) != 14) {
-    cout << "error: size(Segment) is not 14!" << endl;
+    printf("error: size(Segment) is not 14!\n");
   }
 
   count = 0;

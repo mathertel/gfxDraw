@@ -130,6 +130,7 @@ void drawPath(const char *pathText, fSetPixel cbDraw);
 /// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
 std::vector<Segment> parsePath(const char *pathText);
 
+
 /// @brief Draw an arc using the most efficient algorithm
 void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, fSetPixel cbDraw);
 

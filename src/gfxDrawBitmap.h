@@ -30,7 +30,7 @@ class Background {
 public:
   // initialize without data.
   Background() {
-    _w = 0;
+    _x = _y = _w =_h = 0;
   };
 
   void set(int16_t x, int16_t y, ARGB color) {

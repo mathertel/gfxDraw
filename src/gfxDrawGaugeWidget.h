@@ -110,8 +110,8 @@ public:
 
 private:
   struct _GFXDrawGaugeSegment {
-    int16_t minAngle;
-    int16_t maxAngle;
+    int16_t minAngle=0;
+    int16_t maxAngle=0;
     ARGB color;
   };
 
@@ -121,7 +121,7 @@ private:
 
   int16_t _valueAngle;
 
-  // default color difinitions
+  // default color definitions
   ARGB _needleColor = ARGB_BLACK;
   ARGB _segmentColor = 0xFF4060A0;
 

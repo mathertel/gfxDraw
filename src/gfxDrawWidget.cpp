@@ -97,8 +97,8 @@ void gfxDrawWidget::rotate(int16_t angle, int16_t cx, int16_t cy) {
 
     double radians = (angle * M_PI) / 180;
 
-    int32_t sinFactor1000 = floor(sin(radians) * 1000);
-    int32_t cosFactor1000 = floor(cos(radians) * 1000);
+    int32_t sinFactor1000 = std::lround(sin(radians) * 1000);
+    int32_t cosFactor1000 = std::lround(cos(radians) * 1000);
 
     _initMatrix(m);
     m[0][0] = m[1][1] = cosFactor1000;
@@ -274,12 +274,12 @@ void gfxDrawWidget::setFillGradient(gfxDraw::ARGB fill1, int16_t x1, int16_t y1,
     LOG_PRINT(" b1000=%d\n", b1000);
 
     // distance of the 2 gradient points.
-    d1000 = sqrt(dx * dx + dy * dy) * 1000;
+    d1000 = std::lround(sqrt(dx * dx + dy * dy) * 1000);
 
     // Distance formula: `d = (mx - y + b) / sqrt(m*m + 1)`
     // divisor for the distance formula
-    int16_t nen1000 = sqrt(m1000 * m1000 + 1000000);
-    LOG_PRINT(" nen1000=%d\n", nen1000);
+    int32_t nen1000 = std::lround(sqrt(m1000 * m1000 + 1000000));
+    LOG_PRINT(" nen1000=%ld\n", nen1000);
 
     // `y = (m1000 * x + b1000) / 1000`
 

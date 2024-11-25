@@ -176,7 +176,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   // adjust x & y radius when too small
   if (rx == 0 || ry == 0) {
     double dist = sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
-    rx = ry = dist / 2;
+    rx = ry = (int16_t)(dist / 2);
     TRACE("rx=ry= %d\n", rx);
 
   } else {
@@ -184,8 +184,8 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 
     if (dist2 > 1) {
       double dist = sqrt(dist2);
-      rx = std::round(rx * dist);
-      ry = std::round(ry * dist);
+      rx = static_cast<int16_t>(std::lround(rx * dist));
+      ry = static_cast<int16_t>(std::lround(ry * dist));
     }
     TRACE("rx=%d ry=%d \n", rx, ry);
   }
@@ -207,8 +207,8 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   double centerX = (cosphi * cX) - (sinphi * cY) + (x1 + x2) / 2;
   double centerY = (sinphi * cX) + (cosphi * cY) + (y1 + y2) / 2;
 
-  cx256 = (256 * centerX);
-  cy256 = (256 * centerY);
+  cx256 = std::lround(256 * centerX);
+  cy256 = std::lround(256 * centerY);
 }  // arcCenter()
 
 
@@ -216,7 +216,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 int16_t vectorAngle(int16_t dx, int16_t dy) {
   // TRACE("vectorAngle(%d, %d)\n", dx, dy);
   double rad = atan2(dy, dx);
-  int16_t angle = std::round(rad * 180 / M_PI);
+  int16_t angle = static_cast<int16_t>(std::lround(rad * 180 / M_PI));
   if (angle < 0) angle = 360 + angle;
   return (angle % 360);
 }  // vectorAngle()
@@ -309,8 +309,8 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
 
     double radians = (angle * M_PI) / 180;
 
-    int32_t sinFactor1000 = floor(sin(radians) * 1000);
-    int32_t cosFactor1000 = floor(cos(radians) * 1000);
+    int32_t sinFactor1000 = std::lround(sin(radians) * 1000);
+    int32_t cosFactor1000 = std::lround(cos(radians) * 1000);
 
     transformSegments(segments, [&](int16_t &x, int16_t &y) {
       int32_t tx = cosFactor1000 * x - sinFactor1000 * y;
@@ -327,7 +327,7 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
 void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
   int16_t p0_x, p0_y, p1_x, p1_y;
   int16_t angle;
-  int16_t scale1000;
+  int32_t scale1000;
   bool scaleKnown = false;
 
   for (Segment &pSeg : segments) {
@@ -369,15 +369,15 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
 
           } else {
             double p1_length = sqrt((p1_x * p1_x) + (p1_y * p1_y));
-            scale1000 = round(p1_length);
+            scale1000 = std::lround(p1_length);
             angle = vectorAngle(p1_x, p1_y);
           }
           scaleKnown = true;
         }
 
         // scale x & y radius
-        pSeg.p[0] = (pSeg.p[0] * scale1000 + 500) / 1000;
-        pSeg.p[1] = (pSeg.p[1] * scale1000 + 500) / 1000;
+        pSeg.p[0] = static_cast<int16_t>((pSeg.p[0] * scale1000 + 500) / 1000);
+        pSeg.p[1] = static_cast<int16_t>((pSeg.p[1] * scale1000 + 500) / 1000);
 
         // rotate ellipsis rotation
         pSeg.p[2] += angle;
@@ -808,7 +808,7 @@ std::vector<Segment> parsePath(const char *pathText) {
   /// A lambda function to parse a numeric parameter from the inputText.
   auto getNumParam = [&]() {
     while (isspace(*path) || (*path == ',')) { path++; }
-    int16_t p = strtol(path, &path, 10);
+    int16_t p = static_cast<int16_t>(strtol(path, &path, 10));
     return (p);
   };
 

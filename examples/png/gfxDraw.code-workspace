@@ -9,10 +9,8 @@
 	],
 	"settings": {
 		"files.associations": {
-			"iostream": "cpp",
 			"functional": "cpp",
 			"vector": "cpp",
-			"algorithm": "cpp",
 			"cmath": "cpp",
 			"cctype": "cpp",
 			"cstdlib": "cpp",
@@ -22,7 +20,11 @@
 			"xstring": "cpp",
 			"xutility": "cpp",
 			"array": "cpp",
-			"memory": "cpp"
+			"memory": "cpp",
+			"optional": "cpp",
+			"system_error": "cpp",
+			"xlocmon": "cpp",
+			"xtr1common": "cpp"
 		},
 		"cSpell.words": [
 			"lodepng",
