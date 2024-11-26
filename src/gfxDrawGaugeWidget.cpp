@@ -15,7 +15,7 @@
 namespace gfxDraw {
 
 // See https://reference.arduino.cc/reference/en/language/functions/math/constrain/
-float constrain(float value, float in_min, float in_max) {
+float constrain_float(float value, float in_min, float in_max) {
   if (value < in_min) value = in_min;
   if (value > in_max) value = in_max;
   return (value);
@@ -34,6 +34,8 @@ int16_t map(float value, float in_min, float in_max, int16_t out_min, int16_t ou
 // ===== private functions
 
 Point gfxDrawGaugeWidget::_piePoint(int16_t alpha, uint16_t radius) {
+  GFXD_TRACE("piePoint %d, r=%d", alpha, radius);
+
   return (Point(
     sin256(alpha + 180) * radius / 256,
     cos256(alpha) * radius / 256));
@@ -58,7 +60,7 @@ void gfxDrawGaugeWidget::_drawSegment(int16_t minAngle, int16_t maxAngle, gfxDra
   segments.push_back(Segment::createClose());
 
   fillSegments(segments, nullptr, cbFill);
-}
+} // _drawSegment()
 
 void gfxDrawGaugeWidget::_drawNeedle(gfxDraw::fSetPixel cbStroke) {
   std::vector<gfxDraw::Segment> segments;
@@ -91,17 +93,17 @@ void gfxDrawGaugeWidget::setConfig(GFXDrawGaugeConfig *c) {
 void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, uint32_t color) {
   _GFXDrawGaugeSegment s;
 
-  minValue = constrain(minValue, conf.minValue, conf.maxValue);
+  minValue = constrain_float(minValue, conf.minValue, conf.maxValue);
   s.minAngle = (int16_t)map(minValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
 
-  maxValue = constrain(maxValue, conf.minValue, conf.maxValue);
+  maxValue = constrain_float(maxValue, conf.minValue, conf.maxValue);
   s.maxAngle = (int16_t)map(maxValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle),
   s.color = color;
   _gaugeSegments.push_back(s);
 }
 
 void gfxDrawGaugeWidget::setValue(float value) {
-  value = constrain(value, conf.minValue, conf.maxValue);
+  value = constrain_float(value, conf.minValue, conf.maxValue);
   _valueAngle = (int16_t)map(value, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
 }  // setValue()
 

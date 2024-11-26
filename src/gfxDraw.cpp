@@ -84,19 +84,19 @@ Segment::Segment(Type _type, int16_t p1, int16_t p2) {
 }
 
 Segment Segment::createMove(int16_t x, int16_t y) {
-  return (Segment (Type::Move, x, y));
+  return (Segment(Type::Move, x, y));
 }
 
 Segment Segment::createMove(Point p) {
-  return (Segment (Type::Move, p.x, p.y));
+  return (Segment(Type::Move, p.x, p.y));
 }
 
 Segment Segment::createLine(int16_t x, int16_t y) {
-  return (Segment (Type::Line, x, y));
+  return (Segment(Type::Line, x, y));
 }
 
 Segment Segment::createLine(Point p) {
-  return (Segment (Type::Line, p.x, p.y));
+  return (Segment(Type::Line, p.x, p.y));
 }
 
 Segment Segment::createClose() {
@@ -140,8 +140,9 @@ void dumpPoints(std::vector<Point> &points) {
 
 
 void dumpEdges(std::vector<_Edge> &edges) {
-  TRACE("\nEdges:\n");
   size_t size = edges.size();
+  TRACE("\nEdges: %zu\n", size);
+#if 0
   for (size_t i = 0; i < size; i++) {
     if (i % 10 == 0) {
       if (i > 0) { TRACE("\n"); }
@@ -150,7 +151,23 @@ void dumpEdges(std::vector<_Edge> &edges) {
     TRACE(" (%3d/%3d)-%2d", edges[i].x, edges[i].y, edges[i].len);
   }
   TRACE("\n");
+#endif
 }
+
+void dumpSegments(std::vector<Segment> &vSeg) {
+  TRACE("\nSegments: %zu\n", vSeg.size());
+
+  for (Segment &seg : vSeg) {
+    char *s = "";
+    if (seg.type == Segment::Type::Move) s = "M";
+    if (seg.type == Segment::Type::Line) s = "L";
+    if (seg.type == Segment::Type::Arc) s = "A";
+    if (seg.type == Segment::Type::Close) s = "Z";
+    if (seg.type == Segment::Type::Curve) s = "C";
+    TRACE("  %s(0x%04x) - %d/%d\n", s, seg.type, seg.p[0], seg.p[1]);
+  }
+}
+
 
 // ===== Basic drawing algorithm implementations =====
 
@@ -561,6 +578,8 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
   size_t n;
   fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
 
+  // dumpSegments(segments);
+
   // create the path and collect edges
   drawSegments(segments,
                [&](int16_t x, int16_t y) {
@@ -573,7 +592,7 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
                    lastEdge = &edges.back();
                  }
                });
-  dumpEdges(edges);
+  // dumpEdges(edges);
 
   // sub-paths are separated by (0/POINT_BREAK_Y) points;
   size_t eSize = edges.size();
@@ -608,11 +627,12 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
       eSize = edges.size();
     }
   }
-  dumpEdges(edges);
-  TRACE("\n");
+  // dumpEdges(edges);
+  TRACE(" ... sort\n");
 
   // sort edges by ascending lines (y)
   std::sort(edges.begin(), edges.end(), _Edge::compare);
+  TRACE(" ...a\n");
 
   int16_t y = INT16_MAX;
   int16_t x = INT16_MAX;
@@ -655,111 +675,6 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
     x = p.x + p.len;
   }
 }
-
-
-// /// @brief Draw a path with filling.
-// void XfillSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy, fSetPixel cbBorder, fSetPixel cbFill) {
-//   TRACE("fillSegments()\n");
-//   std::vector<_Edge> edges;
-//   _Edge *lastEdge = nullptr;
-
-//   size_t n;
-//   fSetPixel cbStroke = cbBorder ? cbBorder : cbFill;  // use cbFill when no cbBorder is given.
-
-//   // create the path and collect edges
-//   drawSegments(segments,  // dx, dy,
-//                [&](int16_t x, int16_t y) {
-//                  //  TRACE("    P(%d/%d)\n", x, y);
-//                  if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
-//                    // fine
-//                  } else {
-//                    // first in sequence on on new line.
-//                    edges.push_back(_Edge(x, y));
-//                    lastEdge = &edges.back();
-//                  }
-//                });
-//   dumpEdges(edges);
-
-//   // sub-paths are separated by (0/POINT_BREAK_Y) points;
-//   size_t eSize = edges.size();
-
-//   size_t eStart = 0;
-//   n = eStart;
-//   while (n < eSize) {
-//     if (edges[n].y != POINT_BREAK_Y) {
-//       n++;
-//     } else {
-//       if (eStart < n - 1) {
-
-//         // Normalize (*2) sub-path for fill algorithm.
-//         // TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
-
-//         if (edges[eStart].expand(edges[n - 1])) {
-//           // last point is in first edge
-//           edges.erase(edges.begin() + n - 1);
-//           TRACE("  del %d\n", n - 1);
-//           n--;
-//         }
-//         // dumpEdges(edges);
-
-//         n = slopeEdges(edges, eStart, n - 1) + 1;
-//         // dumpEdges(edges);
-
-//         TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
-
-//       }  // if
-
-//       n = eStart = n + 1;
-//       eSize = edges.size();
-//     }
-//   }
-//   dumpEdges(edges);
-//   TRACE("\n");
-
-//   // sort edges by ascending lines (y)
-//   std::sort(edges.begin(), edges.end(), _Edge::compare);
-
-//   int16_t y = INT16_MAX;
-//   int16_t x = INT16_MAX;
-
-//   bool isInside = false;
-
-//   // Draw borderpoints and lines on inner segments
-//   for (_Edge &p : edges) {
-
-//     // if (p.y == 38) {
-//     //   TRACE("  P %d/%d-%d\n", p.x, p.y, p.len);
-//     // };
-
-//     if (p.y != y) {
-//       // start a new line
-//       isInside = false;
-//       y = p.y;
-//     }
-
-//     if (y == POINT_BREAK_Y) continue;
-
-//     if (p.len == 0) {
-//       // don't draw, it is just an marker for a extreme sequence.
-
-//     } else {
-//       // draw the border
-//       for (uint16_t l = 0; l < p.len; l++) {
-//         cbStroke(p.x + l, y);
-//       }
-//     }
-
-//     // draw the fill
-//     if (isInside) {
-//       while (x < p.x) {
-//         cbFill(x++, y);
-//       }
-//     }
-//     isInside = (!isInside);
-//     // if (p.x + p.len > x)
-//     x = p.x + p.len;
-//   }
-// };  // fillSegments()
 
 
 /// @brief draw a path using a border and optional fill drawing function.
