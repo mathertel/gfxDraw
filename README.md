@@ -10,13 +10,39 @@ graphics can be drawn like lines, rectangles, circles and some more.  The featur
 be drawn without rotation and complex figure drawings are not available at all.
 
 The gfxDraw library overcomes these limitations by offering more advanced drawing capabilities with vectorized drawing
-input and by using an existing GFX library for sending the output to the displays.
+input and a set of high-level classes to draw typical widgets.
 
-In contrast to the rasterization implementations used in Desktop programs or Browsers this library is dedicated to
+The library can be used with almost any GFX library implementation available with examples provided for Adafruit GFX and
+the GFX Library for Arduino as the GFX libraries are only used for sending changes to the displays.
+
+In contrast to the rasterization implementations used in Desktop programs or browsers this library is dedicated to
 microprocessor circumstances with limited memory and cpu power and avoids arithmetic floating point calculations and
 doesn't support anti-aliased drawing.
 
-## General Library Implementation Rules
+
+## Software Architecture
+
+This is a short high level overview on the way how the gfxDraw library is used by sketches or examples, how it works
+internally and how the GFX libraries are linked for low level drawing.
+
+The library uses the Namespace `gfxDraw` to implement the types, functions and the classes to avoid conflicts with other libraries.
+
+![architecture](docs/architecture.drawio.svg)
+
+**Primitives** -- The simple drawing functionality available is covering **lines**, **rectangles**, **arcs**, **circles**, **bezier
+curves** and some direct usable combinations like rounded rectangles.  These function "only" calculate the points that
+make up the primitive and use callback function to hand them over to further processing or drawing.
+
+**Filling** -- One of the further processing function available is the filling algorithm that can find out what pixels are inside a
+closed area and also pass them for further processing or drawing.
+
+**Path** -- For drawings with a more complex border paths with the syntax from svg can be used for defining the border lines. 
+Paths can be transformed, resized and rotated. See further details below.
+
+**Widgets** --  The Widget classes offers defining parameters for drawing of complex functionality like **gauges**.
+
+
+### General Library Implementation Rules
 
 This library aims to support graphics implementations that are used in microprocessors like ESP32 based boards with
 pixel oriented graphic displays.
@@ -28,102 +54,83 @@ The library supports up to 16 bit (-32760 ... +32760) display resolutions.
 
 By design the drawing functionionality is independent of the color depth.
 
-The Widget Class and Bitmap Class supports drawing using a 32-bit (or less) color setup using RGB+Alpha for a specific pixel.
+The Widget Classes and the internal Bitmap Class supports drawing using a 32-bit (or less) color setup using RGB+Alpha
+for a specific pixel.
 
-
-## Software Architecture
-
-The library offers the following levels of functionality:
-
-* graphic primitives like lines, arcs and cubic bezier curves,
-* graphical primitive objects like rectangles, rounded rectangles and full circles,
-* text based path definitions that combine the primitives to build a visual graphic element,
-* transformation functions on path based vector graphics
-* a drawing widget class that combines path, transformations and fill definitions.
-
-
-<!-- ![gfxdraw architecture](docs/gfxdraw-architecture.png) -->
-
-The library uses the Namespace `gfxDraw` to implement the types, functions and the classes to avoid conflicts with other libraries.
-
-<!-- [text](https://mermaid.js.org/syntax/flowchart.html) -->
-
-```mermaid
-flowchart
-
-subgraph gfxLibrary
-  direction TB
-  classDef Impl stroke:blue,color:blue,fill:white,stroke-width:4px;
-
-  subgraph widgets
-    Object:::Impl
-  end
-
-  subgraph path
-    direction LR
-    Object --> Segments;
-    Object --> Path;
-  end
-
-    Segments-->Fill;
-
-
-  subgraph calculate points
-    Segments-->gfxDrawLine:::Impl;
-    Segments-->gfxDrawCircle:::Impl;
-    Segments-->gfxDrawBezier:::Impl;
-  end
-
-  gfxDrawLine -->    gfxdrawCommon:::Impl;
-  gfxDrawCircle-->    gfxdrawCommon:::Impl;
-  gfxDrawBezier-->    gfxdrawCommon:::Impl;
-end
-
-subgraph Graphics-Driver
-  Fill -->setPixel
-  Object-->getPixel
-end 
-
-```
-
-**gfxdrawCommon** -- This file defines the Point data type and implements basic functions like table driven sin/cos arithmetic for low resolutions.
-
-**gfxdrawCircle** -- This file implements the functions to calculate all points of a circle, circle quadrant and circle segment.
-
-**gfxDrawBezier** -- This file implements the function to calculate all points of a bezier segment.
+The drawing output can be "plugged" not ony to the GFX library for drawing but some "filters" are available also to
+support functionality like saving the output in memory or filling a widget with a gradient.
 
 
 ## Drawing on a display
 
-The easiest way to draw path based widgets is to use the provided Widget class (gfxDrawWidget) and specify all the
-transformations and colors by attributes.
+The easiest way to draw one of the provided primitives.  A helper function for drawing a color at a position is used for
+binding the gfxDraw functionality to the display driver:
 
 ```cpp
-  using namespace gfxDraw; // use gfxDraw library namespace
+using namespace gfxDraw; // use gfxDraw library namespace
 
-  // A SVG path defining the shape of a heard
-  const char *heardPath = 
-    "M48 20a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
-
-  // draw a background rectangle
-  drawRect(8, 8, 87, 80, nullptr, bmpSet(SILVER));
-
-  // draw a heard
-  gfxDrawWidget widget;
-  widget.setStrokeColor(YELLOW);
-  widget.setFillColor(RED);
-  widget.setPath(heardPath);
-  widget.move(8, 8);
-  widget.draw(bmpDraw());
+setFillColor(int16_t x, int16_t y) {
+  gfx->setPixel(x, y, SILVER);
+})
 ```
 
-The gfxDrawWidget class offers further functions for moving, scaling and rotating the given path.
-See [Widgets Class](docs/widgets.md).
+A rectagle with no border and a SILVER fill color can be drawn with:
+
+```cpp
+// draw a background rectangle
+drawRect(8, 8, 60, 40, nullptr, setFillColor);
+```
+
+A path can be drawn using
+
+```cpp
+// A SVG path defining the shape of a heard
+const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
+
+pathByText(heardPath, 8, 8, 100, nullptr, setFillColor);
+```
+
+## Widget classes
+
+The Widget classes offers further functionionality and espacially can handle a fixed color for stroke and fill.
+
+By creating a instance on a class the basic configuration can be passed to the constructor and parameters can be
+changed by using methods.
+
+```cpp
+using namespace gfxDraw; // use gfxDraw library namespace
+
+// A SVG path defining the shape of a heard
+const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
+
+// use red fill and yellow border color
+gfxDraw::gfxDrawPathConfig conf = {
+  .strokeColor = gfxDraw::ARGB_YELLOW,
+  .fillColor = gfxDraw::ARGB_RED
+};
+
+drawCallback(int16_t x, int16_t y, uint32_t color) {
+  gfx->setPixel(x, y, color);
+})
+
+gfxDraw::gfxDrawPathWidget *heardWidget = new gfxDraw::gfxDrawPathWidget();
+heardWidget->setConfig(&conf);
+heardWidget->setPath(heardPath);
+heardWidget->rotate(45);
+heardWidget->move(8, 8);
+heardWidget->draw(drawCallback);
+```
+
+See [Path Widgets Class](docs/path-widget.md).
 
 
 ## SVG Path Syntax
 
-To create a vector (array) of segments that build the borders of the vector graphics object the `path` syntax from the SVG standard is used.  
+Drawing using paths is used by some of the widgets to customize e.g. the pointers
+for a clock.
+
+To create a vector (array) of segments that build the borders of the vector graphics object the `path` syntax from the
+SVG standard is used.  
 
 There are helpful web applications to create or edit such paths definitions:
 
@@ -154,7 +161,11 @@ More details about the implementation can be found in
 [Bezier Arc Command](docs/bezier_command.md)
 [Elliptical Arc Command](docs/elliptical_arc_command.md)
 [Filling Paths](docs/filling.md)
-[gfxDraw Widgtes](docs/widgets.md)
+
+Implemented Widgets
+
+[Path Widget](docs/path-widget.md)
+[Gauge Widget](docs/gauge-widget.md)
 
 
 ## Contributions
