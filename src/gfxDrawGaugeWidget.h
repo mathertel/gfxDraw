@@ -63,12 +63,15 @@ typedef int32_t Matrix1000[3][3];
 // A good start and end pair of angles is 45 to 360-45 or 90 to 270
 
 
-class GFXDrawGaugeConfig {
+struct GFXDrawGaugeConfig {
 public:
-  GFXDrawGaugeConfig() = default;
   uint16_t x;
   uint16_t y;
-  uint16_t w;  //  = h = 2*outerRadius,
+  uint16_t w;
+  uint16_t h;
+
+  ARGB strokeColor;
+  ARGB fillColor;
 
   float minValue;
   float maxValue;

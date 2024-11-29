@@ -49,10 +49,10 @@ typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
 class Point {
 public:
   Point()
-    : x(0), y(POINT_INVALID_Y){};
+    : x(0), y(POINT_INVALID_Y) {};
 
   Point(int16_t _x, int16_t _y)
-    : x(_x), y(_y){};
+    : x(_x), y(_y) {};
 
   /// @brief X coordinate of the Point
   int16_t x;
@@ -153,6 +153,10 @@ public:
 /// * fill missing 1-pixel
 /// * draw streight line when more pixels are missing.
 void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw);
+
+/// @brief Print a vector of Points on the output.
+/// @param points vector of Points.
+void dumpPoints(std::vector<Point> &points);
 
 // ===== Fast but non-precise sin / cos functions
 

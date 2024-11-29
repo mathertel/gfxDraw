@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "gfxDraw.h"
-#include "gfxDrawWidget.h"
+#include "gfxDrawPathWidget.h"
 #include "gfxDrawGaugeWidget.h"
 
 #include "lodepng.h"
@@ -360,14 +360,25 @@ void drawTest02() {
   gfxDraw::moveSegments(segs, 40, 40);                                                             // move right down
   gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_LIME));  // hard-coded fill color here.
 
-  gfxDraw::gfxDrawWidget *rect = new gfxDraw::gfxDrawWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_YELLOW);
-  rect->setRect(32, 16);
+  gfxDraw::gfxDrawPathConfig c = {
+    .strokeColor = gfxDraw::ARGB_YELLOW,
+    .fillColor = gfxDraw::ARGB_BLUE
+  };
+  gfxDraw::gfxDrawPathWidget *rect = new gfxDraw::gfxDrawPathWidget();
+  rect->setConfig(&c);
+  // rect->setRect(32, 16);
 
   // rotate around center
-  rect->move(-16, -8);
-  rect->rotate(30);
-  rect->move(16, 8);
+  rect->setPath("M0,0 L0,15 L31,15 L 31,0 Z");
 
+  // same as:
+  // rect->addSegment(Segment::createMove(0, 0));
+  // rect->addSegment(Segment::createLine(0, 15));
+  // rect->addSegment(Segment::createLine(31, 15));
+  // rect->addSegment(Segment::createLine(31, 0));
+  // rect->addSegment(Segment::createClose());
+
+  rect->rotate(30, 16, 8);
   rect->scale(200);
   rect->move(20, 20);
 
@@ -380,11 +391,11 @@ void drawTest02() {
   // gfxDraw::rect(4, 200, 47, 31, nullptr, pngSetPixel(gfxDraw::SILVER));
   // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-  // gfxDrawWidget *rect1 = new gfxDrawWidget(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
+  // gfxDrawPathWidget *rect1 = new gfxDrawPathWidget(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
   // rect1->setRect(46, 30);
   // rect1->draw(4, 200, setImagePixel);
 
-  // gfxDrawWidget *draw1 = new gfxDrawWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_ORANGE);
+  // gfxDrawPathWidget *draw1 = new gfxDrawPathWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_ORANGE);
   // draw1->setPath("M0 12 l24-12 l20 20 h-16 v8 h-12 z");
   // draw1->draw(5, 201, setImagePixel);
 
@@ -436,13 +447,13 @@ void drawTest03() {
 
 using namespace gfxDraw;
 
-// draw a heard by using the gfxDrawWidget functionality
+// draw a heard by using the gfxDrawPathWidget functionality
 // demonstrate on how to undraw
 void drawTest04_Widget() {
   // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
 
   // setup the widget for drawing a heard
-  gfxDrawWidget widget;
+  gfxDrawPathWidget widget;
   widget.setStrokeColor(ARGB_BLACK);
   widget.setFillColor(ARGB_RED);
   widget.setPath(heardPath);
@@ -463,44 +474,43 @@ void drawTest04_Widget() {
   drawRect(110, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(110, 10);
-  widget.draw(setImagePixel, readImagePixel);
-  widget.undraw(setImagePixel);
+  widget.draw(setImagePixel);
+  // widget.undraw(setImagePixel);
 
   // draw and draw after transformations
   // with removing not overdrawn pixels.
   drawRect(210, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(210, 10);
-  widget.draw(setImagePixel, readImagePixel);
+  // widget.draw(setImagePixel);
 
   saveImage("test04.png");
 
   // rotate heard on top
   widget.rotate(45, 44 + 210, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel, readImagePixel);
+  widget.draw(setImagePixel);
   saveImage("test04.png");
 
   widget.rotate(-45, 44 + 210, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel, readImagePixel);
+  widget.draw(setImagePixel);
   saveImage("test04.png");
 
   // non solid version of the same
   drawRect(310, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
   widget.setFillColor(ARGB_TRANSPARENT);
-  widget.resetBackground();
   widget.resetTransformation();
   widget.move(310, 10);
-  widget.draw(setImagePixel, readImagePixel);
+  widget.draw(setImagePixel);
 
   saveImage("test04.png");
 
   // rotate heard on top
   widget.rotate(45, 44 + 310, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel, readImagePixel);
+  widget.draw(setImagePixel);
   saveImage("test04.png");
 
   widget.rotate(-45, 44 + 310, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel, readImagePixel);
+  widget.draw(setImagePixel);
   saveImage("test04.png");
 }
 
@@ -508,43 +518,40 @@ void drawTest04_Widget() {
 //                     pngSetPixel(gfxDraw::ARGB_GREEN),
 //                     pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-// draw a heard by using the gfxDrawWidget functionality
+// draw a heard by using the gfxDrawPathWidget functionality
 // demonstrate on how to undraw
 void drawTest05_Gauge() {
 
   newImage(400, 220);
   fillImage(gfxDraw::ARGB_WHITE);
 
-  gfxDrawGaugeWidget::GFXDrawGaugeConfig conf;
   gfxDraw::gfxDrawGaugeWidget *g;
-
-  conf = {
+  GFXDrawGaugeConfig conf1 = {
     .x = 10,
     .y = 10,
     .w = 180,
-
     .minValue = 0,
     .maxValue = 100,
     .minAngle = 30,
     .maxAngle = 360 - 30
   };
 
+
+
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf1.x, conf1.y, conf1.w, conf1.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget();
-  g->setConfig(&conf);
+  g->setConfig(&conf1);
   g->setValue(70);
 
   // drawing using stroke and fill
   g->draw(pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_GRAY));
 
-
-  conf = {
+  GFXDrawGaugeConfig conf2 = {
     .x = 200,
     .y = 10,
     .w = 200,
-
     .minValue = 0,
     .maxValue = 100,
     .minAngle = 30,
@@ -552,10 +559,10 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf2.x, conf2.y, conf2.w, conf2.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget();
-  g->setConfig(&conf);
+  g->setConfig(&conf2);
   g->setColors(ARGB_BLUE, ARGB_YELLOW);
   g->addSegment(0, 16, 0xff8080ff);
   g->addSegment(16, 24, 0xff60ff60);
@@ -591,7 +598,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
   static int16_t hhDegLast = -1;
   static int16_t mmDegLast = -1;
 
-  static gfxDrawWidget handSS;  // static to preserve background
+  static gfxDrawPathWidget handSS;  // static to preserve background
 
   // time of Day in 0... 12*60*60
   int32_t tod = ((hh % 12) * 60 * 60) + (mm * 60) + ss;
@@ -609,7 +616,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
   if (mmDeg != mmDegLast) redraw = true;
 
   if (redraw) {
-    gfxDrawWidget mark05, mark15;
+    gfxDrawPathWidget mark05, mark15;
     mark05.setPath(mark05Path);
     mark05.setStrokeColor(ARGB_TRANSPARENT);
     mark05.setFillColor(ARGB_BLACK);
@@ -653,7 +660,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
 
   // Hand for hours
   if ((redraw) || (hhDeg != hhDegLast)) {
-    gfxDrawWidget hand;
+    gfxDrawPathWidget hand;
 
     hand.setPath(hhPath);
     hand.setStrokeColor(ARGB_BLACK);
@@ -669,7 +676,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
 
   // Hand for Minutes
   if ((redraw) || (mmDeg != mmDegLast)) {
-    gfxDrawWidget hand;
+    gfxDrawPathWidget hand;
     hand.setPath(mmPath);
     hand.setStrokeColor(ARGB_TRANSPARENT);
     hand.setFillColor(ARGB_BLUE);
@@ -689,7 +696,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
   handSS.scale(_radius * 100 / 256);
   handSS.rotate(ssDeg);
   handSS.move(_cx, _cy);
-  handSS.draw(setImagePixel, readImagePixel);
+  handSS.draw(setImagePixel);
 
   saveImage("test05.png");
 }
@@ -704,7 +711,7 @@ int main() {
   saveImage("test01.png");
 #endif
 
-#if (0)
+#if (1)
   newImage(400, 300);
   fillImage(gfxDraw::ARGB_WHITE);
 

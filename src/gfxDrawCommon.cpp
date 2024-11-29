@@ -114,22 +114,37 @@ const int32_t tab_sin256[] = {
 /// @param degree Degree in ruan 0...360
 /// @return non-precise sin value as integer in range 0...256
 int32_t sin256(int32_t degree) {
-   degree = ((degree % 360) + 360) % 360;  // Math. Modulo Operator
-   if (degree <= 90) {
-     return (tab_sin256[degree]);
-   } else if (degree <= 180) {
-     return (tab_sin256[90 - (degree - 90)]);
-   } else if (degree <= 270) {
-     return (-tab_sin256[degree - 180]);
-   } else {
-     return (-tab_sin256[90 - (degree - 270)]);
-   }
- }
+  degree = ((degree % 360) + 360) % 360;  // Math. Modulo Operator
+  if (degree <= 90) {
+    return (tab_sin256[degree]);
+  } else if (degree <= 180) {
+    return (tab_sin256[90 - (degree - 90)]);
+  } else if (degree <= 270) {
+    return (-tab_sin256[degree - 180]);
+  } else {
+    return (-tab_sin256[90 - (degree - 270)]);
+  }
+}
 
- int32_t cos256(int32_t degree) {
-   return (sin256(degree + 90));
- }
+int32_t cos256(int32_t degree) {
+  return (sin256(degree + 90));
+}
 
- }  // gfxDraw:: namespace
+// ===== Debug helping functions... =====
 
- // End.
+void dumpPoints(std::vector<Point> &points) {
+  TRACE("\nPoints:\n");
+  size_t size = points.size();
+  for (size_t i = 0; i < size; i++) {
+    if (i % 10 == 0) {
+      if (i > 0) { TRACE("\n"); }
+      TRACE("  p%02d:", i);
+    }
+    TRACE(" (%2d/%2d)", points[i].x, points[i].y);
+  }
+  TRACE("\n");
+}
+
+}  // gfxDraw:: namespace
+
+// End.

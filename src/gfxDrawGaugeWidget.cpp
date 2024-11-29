@@ -34,7 +34,7 @@ int16_t map(float value, float in_min, float in_max, int16_t out_min, int16_t ou
 // ===== private functions
 
 Point gfxDrawGaugeWidget::_piePoint(int16_t alpha, uint16_t radius) {
-  GFXD_TRACE("piePoint %d, r=%d", alpha, radius);
+  // GFXD_TRACE("piePoint %d, r=%d", alpha, radius);
 
   return (Point(
     sin256(alpha + 180) * radius / 256,
@@ -83,11 +83,9 @@ void gfxDrawGaugeWidget::_drawNeedle(gfxDraw::fSetPixel cbStroke) {
 void gfxDrawGaugeWidget::setConfig(GFXDrawGaugeConfig *c) {
   conf = *c;
   if (conf.w % 2 == 0) { conf.w--; }  // width must be odd number
-
   _radius = (conf.w - 1) / 2;
-
   center = Point(conf.x + _radius, conf.y + _radius + 1);  // why +1 ???
-}
+} // setConfig()
 
 
 void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, uint32_t color) {
@@ -104,7 +102,7 @@ void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, uint32_t col
 
 void gfxDrawGaugeWidget::setValue(float value) {
   value = constrain_float(value, conf.minValue, conf.maxValue);
-  _valueAngle = (int16_t)map(value, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
+  _valueAngle = map(value, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
 }  // setValue()
 
 
