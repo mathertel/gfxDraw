@@ -45,7 +45,7 @@ typedef int32_t Matrix1000[3][3];
 // float maxAngle, highest angle used for the lowest value.
 //
 // The variant of the draw function that takes a stroke and fill callback
-// will use the fill color for drawing the segment and the stroke color for drawing the needle.
+// will use the fill color for drawing the segment and the stroke color for drawing the pointer.
 //
 // Advanced coloring and multiple segments is available by using the addSegment function
 // to specify the value range and the color of the segments.
@@ -65,19 +65,35 @@ typedef int32_t Matrix1000[3][3];
 
 struct GFXDrawGaugeConfig {
 public:
+
+  /// @brief x position of the bounding box for the gauge
   uint16_t x;
+  /// @brief y position of the bounding box for the gauge
   uint16_t y;
+  /// @brief width of the bounding box for the gauge
   uint16_t w;
+  /// @brief height of the bounding box for the gauge
   uint16_t h;
 
+  /// @brief Color for drawing the pointer
   ARGB strokeColor;
+  /// @brief Color for drawing the default gauge segment.
   ARGB fillColor;
 
+  /// @brief minimal value that the gauge can show.
   float minValue;
+  /// @brief maximal value that the gauge can show.
   float maxValue;
 
+  /// @brief minimal overall anagle for the gauge segments.
   int16_t minAngle;
+  /// @brief maximal overall anagle for the gauge segments.
   int16_t maxAngle;
+
+  /// @brief outer radius of the segments in percentage of the available radius.
+  uint16_t segmentRadius = 100;
+  /// @brief width of the segments in percentage of the available radius.
+  uint16_t segmentWidth = 35;
 };
 
 
@@ -85,29 +101,25 @@ class gfxDrawGaugeWidget {
 public:
   gfxDrawGaugeWidget() = default;
 
-  void setConfig(GFXDrawGaugeConfig *c);
+  /// @brief initialize with the configuration of the gauge display.
+  /// @param conf configuration structure. 
+  void setConfig(GFXDrawGaugeConfig *conf);
 
-  void setColors(ARGB needleColor, ARGB segmentColor) {
-    _needleColor = needleColor;
-    _segmentColor = segmentColor;
-  };
+  /// @brief add a segment with a defined color.
+  /// @param minValue minimal value for the segment.
+  /// @param maxValue maximal value for the segment.
+  /// @param color The color for the segment.
+  void addSegment(float minValue, float maxValue, ARGB color);
 
-  void addSegment(float minValue, float maxValue, uint32_t color);
-
+  /// @brief set the current value to be displayed.
+  /// @param value The value.
   void setValue(float value);
 
 
   // ===== drawing functions =====
 
   /// @brief transform and draw the widget
-  /// @param cbStroke Pixel drawing callback function for the needle.
-  /// @param cbFill Pixel drawing callback function for the segment.
-  /// the setColors and addSegment information is ignored when using this function.
-  void draw(gfxDraw::fSetPixel cbStroke, gfxDraw::fSetPixel cbFill);
-
-  /// @brief transform and draw the widget
   /// @param cbDraw Pixel drawing callback function
-  /// The setColors and addSegment information is usedfor drawing the segments and needle.
   void draw(gfxDraw::fDrawPixel cbDraw);
 
   // /// @brief undo drawing by restoring all background pixels.
@@ -115,27 +127,40 @@ public:
   // void undraw(gfxDraw::fDrawPixel cbDraw);
 
 private:
+  /// @brief Internal structure for a segment definition.
   struct _GFXDrawGaugeSegment {
     int16_t minAngle = 0;
     int16_t maxAngle = 0;
     ARGB color;
   };
 
-
-  Point center;
+  /// @brief Center Point of the gauge display.
+  Point _centerPoint;
+  /// @brief Maximal radius of the gauge
   int16_t _radius;
 
+  /// @brief THe angle of the current value.
   int16_t _valueAngle;
 
   // default color definitions
-  ARGB _needleColor = ARGB_BLACK;
+  ARGB _pointerColor = ARGB_BLACK;
   ARGB _segmentColor = 0xFF4060A0;
 
+  /// @brief calculate the Point at angle and radius.
+  /// @param alpha The Angle in degree
+  /// @param radius The Radius in pixels
+  /// @return Point for drawing segments and scales.
   Point _piePoint(int16_t alpha, uint16_t radius);
 
+  /// @brief Draw a single segment.
+  /// @param minAngle 
+  /// @param maxAngle 
+  /// @param cbFill 
   void _drawSegment(int16_t minAngle, int16_t maxAngle, gfxDraw::fSetPixel cbFill);
 
-  void _drawNeedle(gfxDraw::fSetPixel cbStroke);
+  /// @brief Draw the pointer
+  /// @param cbStroke 
+  void _drawPointer(gfxDraw::fSetPixel cbStroke);
 
   GFXDrawGaugeConfig conf;
   std::vector<_GFXDrawGaugeSegment> _gaugeSegments;
