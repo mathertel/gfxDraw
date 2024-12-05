@@ -16,6 +16,11 @@
 
 namespace gfxDraw {
 
+void drawLine(Point &p1, Point &p2, fSetPixel cbDraw) {
+  drawLine(p1.x, p1.y, p2.x, p2.y, cbDraw);
+}
+
+
 /// @brief Draw a line using the most efficient algorithm
 /// @param x0 Starting Point X coordinate.
 /// @param y0 Starting Point Y coordinate.

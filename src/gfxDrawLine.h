@@ -29,6 +29,13 @@ namespace gfxDraw {
 /// @param w Width of line.
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw);
 
+
+/// @brief Draw a line using the most efficient algorithm
+/// @param p1 Starting Point
+/// @param p2 Ending Point
+/// @param cbDraw Callback with coordinates of line pixels.
+void drawLine(Point &p1, Point &p2, fSetPixel cbDraw);
+
 }  // gfxDraw:: namespace
 
 

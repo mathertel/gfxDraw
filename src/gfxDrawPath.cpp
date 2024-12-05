@@ -19,7 +19,6 @@
 #define SLOPE_RAISING 2
 #define SLOPE_HORIZONTAL 3
 
-
 namespace gfxDraw {
 // ===== internal class definitions =====
 
@@ -79,6 +78,141 @@ void dumpSegments(std::vector<Segment> &vSeg) {
     TRACE("  %s(0x%04x) - %d/%d\n", s, seg.type, seg.p[0], seg.p[1]);
   }
 }
+
+// ===== Segment transformation functions =====
+
+/// @brief Scale the points of a path by factor
+/// @param segments
+/// @param f100
+void scaleSegments(std::vector<Segment> &segments, int16_t factor, int16_t base) {
+  if (factor != base) {
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      x = ((x * factor) + (base / 2)) / base;
+      y = ((y * factor) + (base / 2)) / base;
+    });
+  }
+}  // scaleSegments()
+
+
+/// @brief move all points by the given offset in x and y.
+/// @param segments Segment vector to be changed
+/// @param dx X-Offset
+/// @param dy Y-Offset
+void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy) {
+  if ((dx != 0) || (dy != 0)) {
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      x += dx;
+      y += dy;
+    });
+  }
+}  // moveSegments()
+
+
+/// @brief move all points by the given offset in x and y.
+/// @param segments Segment vector to be changed
+/// @param moveVector X- and Y- Offset as Point-Vector.
+void moveSegments(std::vector<Segment> &segments, Point moveVector) {
+  moveSegments(segments, moveVector.x, moveVector.y);
+};
+
+
+void rotateSegments(std::vector<Segment> &segments, int16_t angle) {
+  if (angle != 0) {
+
+    double radians = (angle * M_PI) / 180;
+
+    int32_t sinFactor1000 = std::lround(sin(radians) * 1000);
+    int32_t cosFactor1000 = std::lround(cos(radians) * 1000);
+
+    transformSegments(segments, [&](int16_t &x, int16_t &y) {
+      int32_t tx = cosFactor1000 * x - sinFactor1000 * y;
+      int32_t ty = sinFactor1000 * x + cosFactor1000 * y;
+      x = (tx / 1000);
+      y = (ty / 1000);
+    });
+  }
+}  // rotateSegments()
+
+
+/// @brief transform all points in the segment list.
+/// @param segments Segment vector to be changed
+void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
+  int16_t p0_x, p0_y, p1_x, p1_y;
+  int16_t angle;
+  int32_t scale1000;
+  bool scaleKnown = false;
+
+  for (Segment &pSeg : segments) {
+
+    switch (pSeg.type) {
+      case Segment::Type::Move:
+      case Segment::Type::Line:
+        cbTransform(pSeg.p[0], pSeg.p[1]);
+        break;
+
+      case Segment::Type::Curve:
+        cbTransform(pSeg.p[0], pSeg.p[1]);
+        cbTransform(pSeg.p[2], pSeg.p[3]);
+        cbTransform(pSeg.p[4], pSeg.p[5]);
+        break;
+
+      case Segment::Type::Arc:
+        if (!scaleKnown) {
+          // extract scale and rotation from transforming (0,0)-(1000,0) once for the whole sement vector.
+          p0_x = p0_y = p1_y = 0;
+          p1_x = 1000;  // length = 1000
+
+          cbTransform(p0_x, p0_y);
+          cbTransform(p1_x, p1_y);
+
+          // ignore any translation
+          p1_x -= p0_x;
+          p1_y -= p0_y;
+
+          if (p1_y == 0) {
+            // simplify for non rotated or 180° rotated transformations
+            if (p1_x > 0) {
+              scale1000 = p1_x;
+              angle = 0;
+            } else {
+              scale1000 = -p1_x;
+              angle = 180;
+            }
+
+          } else {
+            double p1_length = sqrt((p1_x * p1_x) + (p1_y * p1_y));
+            scale1000 = std::lround(p1_length);
+            angle = vectorAngle(p1_x, p1_y);
+          }
+          scaleKnown = true;
+        }
+
+        // scale x & y radius
+        pSeg.p[0] = static_cast<int16_t>((pSeg.p[0] * scale1000 + 500) / 1000);
+        pSeg.p[1] = static_cast<int16_t>((pSeg.p[1] * scale1000 + 500) / 1000);
+
+        // rotate ellipsis rotation
+        pSeg.p[2] += angle;
+
+        // transform endpoint
+        cbTransform(pSeg.p[4], pSeg.p[5]);  // endpoint
+        break;
+
+      case Segment::Type::Circle:
+        // TODO:
+        TRACE("Transform circle is missing.\n");
+        break;
+
+      case Segment::Type::Close:
+        break;
+
+      default:
+        TRACE("unknown segment-%04x\n", pSeg.type);
+        break;
+    }
+  }  // for
+};
+
 
 // ===== Edge functionality =====
 

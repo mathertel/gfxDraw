@@ -74,11 +74,11 @@ void gfxDrawPathWidget::move(int16_t dx, int16_t dy) {
 
 
 // apply the scaling factors to the transformation matrix;
-void gfxDrawPathWidget::scale(int16_t scale100) {
-  if (scale100 != 100) {
+void gfxDrawPathWidget::scale(int16_t factor, int16_t base) {
+  if (factor != base) {
     Matrix1000 scaleMatrix;
     _initMatrix(scaleMatrix);
-    scaleMatrix[0][0] = scaleMatrix[1][1] = scale100 * 10;
+    scaleMatrix[0][0] = scaleMatrix[1][1] = ((factor * 1000) + (base / 2)) / base;
     _multiplyMatrix(_matrix, scaleMatrix);
   }
 };

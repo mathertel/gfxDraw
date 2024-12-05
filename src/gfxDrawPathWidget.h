@@ -74,7 +74,7 @@ public:
 
   /// @brief apply a scaling factor to the transformation matrix.
   /// @param scale100 scaling in percent.
-  void scale(int16_t scale100);
+  void scale(int16_t factor, int16_t base = 100);
 
   /// @brief apply a rotation to the transformation matrix.
   /// @param angle Angle of rotation clockwise in degree.

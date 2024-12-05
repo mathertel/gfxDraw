@@ -21,15 +21,104 @@ float constrain_float(float value, float in_min, float in_max) {
   return (value);
 };
 
-// see https://reference.arduino.cc/reference/en/language/functions/math/map/
-float map(float value, float in_min, float in_max, float out_min, float out_max) {
-  return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
 
+// See https://reference.arduino.cc/reference/en/language/functions/math/map/
 int16_t map(float value, float in_min, float in_max, int16_t out_min, int16_t out_max) {
   float result = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
   return (static_cast<int16_t>(std::lround(result)));
 }
+
+
+gfxDrawGaugeWidget::gfxDrawGaugeWidget(gfxDrawGaugeConfig *c) {
+  _conf = *c; // copy
+  _radius = (_conf.w - 1) / 2;
+  _centerPoint = Point(_conf.x + _radius, _conf.y + _radius + 1);  // why +1 ???
+
+  if ((_conf.scaleSteps > 0) && (_conf.minValue + _conf.scaleSteps < _conf.maxValue)) {
+    _scaleAngleStep = (int16_t)map(_conf.minValue + _conf.scaleSteps, _conf.minValue, _conf.maxValue, _conf.minAngle, _conf.maxAngle)
+                      - _conf.minAngle;
+  };
+
+  if (!_conf.pointerPath) {
+    _conf.pointerPath = "M-60,-60L0,999L60-60Z";
+  }
+  _pointerSegments = parsePath(_conf.pointerPath);
+  _conf.pointerPath = nullptr;
+}  // gfxDrawGaugeWidget()
+
+
+void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, ARGB color) {
+  _GFXDrawGaugeSegment s;
+
+  minValue = constrain_float(minValue, _conf.minValue, _conf.maxValue);
+  s.minAngle = map(minValue, _conf.minValue, _conf.maxValue, _conf.minAngle, _conf.maxAngle);
+
+  maxValue = constrain_float(maxValue, _conf.minValue, _conf.maxValue);
+  s.maxAngle = map(maxValue, _conf.minValue, _conf.maxValue, _conf.minAngle, _conf.maxAngle),
+  s.color = color;
+  _segments.push_back(s);
+}
+
+void gfxDrawGaugeWidget::setValue(float value) {
+  value = constrain_float(value, _conf.minValue, _conf.maxValue);
+  _valueAngle = map(value, _conf.minValue, _conf.maxValue, _conf.minAngle, _conf.maxAngle);
+}  // setValue()
+
+
+void gfxDrawGaugeWidget::draw(gfxDraw::fDrawPixel cbDraw) {
+  ARGB drawColor;
+  auto drawHelper = [&](int16_t x, int16_t y) {
+    cbDraw(x, y, drawColor);
+  };
+
+  // draw segments
+  int16_t a = _conf.minAngle;
+
+  // draw all gaugeSegments using the defined color
+  for (_GFXDrawGaugeSegment &pSeg : _segments) {
+    if (a < pSeg.minAngle) {
+      // draw a range without special colors
+      drawColor = _conf.segmentColor;
+      _drawSegment(a, pSeg.minAngle, drawHelper);
+      a = pSeg.minAngle;
+    }
+    // draw the gaugeSegment
+    drawColor = pSeg.color;
+    _drawSegment(pSeg.minAngle, pSeg.maxAngle, drawHelper);
+    a = pSeg.maxAngle;
+  }
+  // draw remaining range if any
+  if (a < _conf.maxAngle) {
+    drawColor = _conf.segmentColor;
+    _drawSegment(a, _conf.maxAngle, drawHelper);
+  }
+
+  // draw scale
+  if (_scaleAngleStep > 0) {
+    int16_t _outerRadius = (_radius * _conf.scaleRadius) / 100;
+    int16_t _innerRadius = (_radius * (_conf.scaleRadius - _conf.scaleWidth)) / 100;
+
+    drawColor = _conf.pointerColor;
+    a = _conf.minAngle;
+
+    while (a <= _conf.maxAngle) {
+      Point pOut = _centerPoint + _piePoint(a, _outerRadius);
+      Point pIn = _centerPoint + _piePoint(a, _innerRadius);
+      drawLine(pOut, pIn, drawHelper);
+      a += _scaleAngleStep;
+    }
+  }
+
+  // draw pointer
+  drawColor = _conf.pointerColor;
+  std::vector<gfxDraw::Segment> segments = _pointerSegments;
+
+  rotateSegments(segments, _valueAngle);
+  scaleSegments(segments, _radius, 1000);
+  moveSegments(segments, _centerPoint);
+  fillSegments(segments, nullptr, drawHelper);
+} // draw()
+
 
 // ===== private functions
 
@@ -44,8 +133,8 @@ Point gfxDrawGaugeWidget::_piePoint(int16_t alpha, uint16_t radius) {
 void gfxDrawGaugeWidget::_drawSegment(int16_t minAngle, int16_t maxAngle, gfxDraw::fSetPixel cbFill) {
   std::vector<gfxDraw::Segment> segments;
 
-  int16_t _outerRadius = (_radius * conf.segmentRadius) / 100;
-  int16_t _innerRadius = (_radius * (conf.segmentRadius - conf.segmentWidth)) / 100;
+  int16_t _outerRadius = (_radius * _conf.segmentRadius) / 100;
+  int16_t _innerRadius = (_radius * (_conf.segmentRadius - _conf.segmentWidth)) / 100;
   bool largeFlag = (maxAngle - minAngle) > 180;
 
   Point startOut = _centerPoint + _piePoint(minAngle, _outerRadius);
@@ -62,84 +151,6 @@ void gfxDrawGaugeWidget::_drawSegment(int16_t minAngle, int16_t maxAngle, gfxDra
 
   fillSegments(segments, nullptr, cbFill);
 }  // _drawSegment()
-
-void gfxDrawGaugeWidget::_drawPointer(gfxDraw::fSetPixel cbStroke) {
-  std::vector<gfxDraw::Segment> segments;
-  Point vPoint = _centerPoint + _piePoint(_valueAngle, _radius - 2);
-  Point lPoint = _centerPoint + _piePoint(_valueAngle + 120, 5);
-  Point rPoint = _centerPoint + _piePoint(_valueAngle - 120, 5);
-
-  segments.reserve(4);
-  segments.push_back(Segment::createMove(lPoint));
-  segments.push_back(Segment::createLine(vPoint));
-  segments.push_back(Segment::createLine(rPoint));
-  segments.push_back(Segment::createClose());
-  fillSegments(segments, nullptr, cbStroke);
-
-  // gfxDraw::drawLine(center.x, center.y, vPoint.x, vPoint.y, cbStroke);
-}
-
-
-
-void gfxDrawGaugeWidget::setConfig(GFXDrawGaugeConfig *c) {
-  conf = *c;
-  if (conf.w % 2 == 0) { conf.w--; }  // width must be odd number
-  _radius = (conf.w - 1) / 2;
-  _centerPoint = Point(conf.x + _radius, conf.y + _radius + 1);  // why +1 ???
-}  // setConfig()
-
-
-void gfxDrawGaugeWidget::addSegment(float minValue, float maxValue, ARGB color) {
-  _GFXDrawGaugeSegment s;
-
-  minValue = constrain_float(minValue, conf.minValue, conf.maxValue);
-  s.minAngle = (int16_t)map(minValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
-
-  maxValue = constrain_float(maxValue, conf.minValue, conf.maxValue);
-  s.maxAngle = (int16_t)map(maxValue, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle),
-  s.color = color;
-  _gaugeSegments.push_back(s);
-}
-
-void gfxDrawGaugeWidget::setValue(float value) {
-  value = constrain_float(value, conf.minValue, conf.maxValue);
-  _valueAngle = map(value, conf.minValue, conf.maxValue, conf.minAngle, conf.maxAngle);
-}  // setValue()
-
-
-void gfxDrawGaugeWidget::draw(gfxDraw::fDrawPixel cbDraw) {
-  ARGB drawColor;
-  auto drawHelper = [&](int16_t x, int16_t y) {
-    cbDraw(x, y, drawColor);
-  };
-
-  // _GFXDrawGaugeSegment *seg = _gaugeSegments[0];
-  int16_t a = conf.minAngle;
-
-  // draw all gaugeSegments using the defined color
-  for (_GFXDrawGaugeSegment &pSeg : _gaugeSegments) {
-    if (a < pSeg.minAngle) {
-      // draw a range without special colors
-      drawColor = this->_segmentColor;
-      _drawSegment(a, pSeg.minAngle, drawHelper);
-      a = pSeg.minAngle;
-    }
-    // draw the gaugeSegment
-    drawColor = pSeg.color;
-    _drawSegment(pSeg.minAngle, pSeg.maxAngle, drawHelper);
-    a = pSeg.maxAngle;
-  }
-  // draw remaining range if any
-  if (a < conf.maxAngle) {
-    drawColor = this->_segmentColor;
-    _drawSegment(a, conf.maxAngle, drawHelper);
-  }
-
-  drawColor = this->_pointerColor;
-  _drawPointer(drawHelper);
-}
-
-
 
 }  // namespace gfxDraw
 

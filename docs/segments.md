@@ -50,8 +50,8 @@ The `drawSegments` function requires one callback function for the border drawin
 
 Vectors of Segments can be transformed in place by algorithms provided by the library:
 
-**`gfxDraw::scaleSegments`** -- This function scales all points and radius values by the given factor.  The factor is
-given in percentages.  So using `100` will not scale the Segments.
+**`gfxDraw::scaleSegments`** -- This function scales all points and radius values by the given factor / base.  The factor and a
+base (default = 100) is given as parameters.  So using factor == base will not scale the Segments.
 
 **`gfxDraw::moveSegments`** -- This function adds a vector (dx, dy) to all absolute points in the segments.  The offset
 factor is given in pixels.

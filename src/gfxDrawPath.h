@@ -79,7 +79,6 @@ public:
 
   static Segment createClose();
   static Segment createArc(int16_t radius, bool f1, bool f2, int16_t xEnd, int16_t yEnd);
-
 };
 
 // ===== create and manipulate segments
@@ -94,10 +93,11 @@ std::vector<Segment> parsePath(const char *pathText);
 /// @brief Draw the border line of a path.
 // void kath(const char *pathText, fSetPixel cbDraw);
 
-/// @brief scale all points by the factor f100 / 100.
+/// @brief scale all points by factor / base.
 /// @param segments Segment vector to be changed
-/// @param f100 scaling factor
-void scaleSegments(std::vector<Segment> &segments, int16_t f100);
+/// @param factor scaling factor
+/// @param base scaling base, defaults to 100.
+void scaleSegments(std::vector<Segment> &segments, int16_t factor, int16_t base = 100);
 
 /// @brief rotate all points by the given angle.
 /// @param segments Segment vector to be changed
@@ -109,6 +109,11 @@ void rotateSegments(std::vector<Segment> &segments, int16_t angle);
 /// @param dx X-Offset
 /// @param dy Y-Offset
 void moveSegments(std::vector<Segment> &segments, int16_t dx, int16_t dy);
+
+/// @brief move all points by the given offset in x and y.
+/// @param segments Segment vector to be changed
+/// @param moveVector X- and Y- Offset as Point-Vector.
+void moveSegments(std::vector<Segment> &segments, Point moveVector);
 
 
 /// @brief Transform all points in the segments
