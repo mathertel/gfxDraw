@@ -9,7 +9,6 @@
 //
 // - - - - -
 
-#include "gfxDraw.h"
 #include "gfxDrawLine.h"
 
 #define TRACE(...)  // printf(__VA_ARGS__)

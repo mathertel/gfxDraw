@@ -36,7 +36,7 @@ make up the primitive and use callback function to hand them over to further pro
 **Filling** -- One of the further processing function available is the filling algorithm that can find out what pixels are inside a
 closed area and also pass them for further processing or drawing.
 
-**Path** -- For drawings with a more complex border paths with the syntax from svg can be used for defining the border lines. 
+**Path** -- For drawings with a more complex border paths with the syntax from svg can be used for defining the border lines.
 Paths can be transformed, resized and rotated. See further details below.
 
 **Widgets** --  The Widget classes offers defining parameters for drawing of complex functionality like **gauges**.
@@ -214,6 +214,49 @@ To draw the paths the primitive functions for drawing lines, arc and curves are 
 After parsing the path syntax a list (vector) of segments is created than can be used for transformations and drawing.
 
 This example shows how to draw using these functions. They are also used by the gfxDrawWidget implementation. -->
+
+## Fonts and Text output
+
+The fonts provided with this library can be loaded from program memory.
+<!-- or as files from a filesystem. -->
+
+The drawing functionality for fonts was re-implemented to ensure that all characters of the same font have the same
+baseline and total height.  Positioning of the text is done by providing the upper left pixel as a starting point.
+
+Drawing text is not supporting a background color.
+
+
+## Copyright for Adafruit_GFX
+
+This library uses the font defintions from the Adafruit_GFX library that can be found at <https://github.com/adafruit/Adafruit-GFX-Library>.
+Therefore the compatible fonts can be used.
+
+This was publised by also using the BSD license:
+
+> Software License Agreement (BSD License)
+>
+> Copyright (c) 2012 Adafruit Industries.  All rights reserved.
+>
+> Redistribution and use in source and binary forms, with or without
+> modification, are permitted provided that the following conditions are met:
+>
+> * Redistributions of source code must retain the above copyright notice,
+>   this list of conditions and the following disclaimer.
+> * Redistributions in binary form must reproduce the above copyright notice,
+>   this list of conditions and the following disclaimer in the documentation
+>   and/or other materials provided with the distribution.
+>
+> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+> AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+> IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+> ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+> LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+> CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+> SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+> INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+> CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+> ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+> POSSIBILITY OF SUCH DAMAGE.
 
 
 ## See also

@@ -43,14 +43,14 @@ public:
   ARGB segmentColor = 0xFF6699FF;
 
   /// @brief minimal value that the gauge can show.
-  float minValue;
+  float minValue = 0;
   /// @brief maximal value that the gauge can show.
-  float maxValue;
+  float maxValue = 100;
 
   /// @brief minimal overall anagle for the gauge segments.
-  int16_t minAngle;
+  int16_t minAngle = 40;
   /// @brief maximal overall anagle for the gauge segments.
-  int16_t maxAngle;
+  int16_t maxAngle = 320;
 
   /// @brief outer radius of the segments in percentage of the available radius.
   uint16_t segmentRadius = 100;
@@ -104,7 +104,7 @@ private:
 
   uint16_t _scaleAngleStep = 0;
 
-  /// @brief Vector of Segments for drawing the pointer 
+  /// @brief Vector of Segments for drawing the pointer
   std::vector<gfxDraw::Segment> _pointerSegments;
 
   /// @brief calculate the Point at angle and radius.

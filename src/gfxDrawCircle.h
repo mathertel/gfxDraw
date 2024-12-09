@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "gfxDrawCommon.h"
+#include "gfxDraw.h"
 
 namespace gfxDraw {
 

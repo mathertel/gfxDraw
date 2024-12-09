@@ -10,7 +10,6 @@
 // - - - - -
 
 #include "gfxDraw.h"
-#include "gfxDrawBezier.h"
 
 #define TRACE(...)  // printf(__VA_ARGS__)
 
