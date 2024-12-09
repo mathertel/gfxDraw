@@ -8,6 +8,7 @@
 #include "gfxDraw.h"
 #include "gfxDrawPathWidget.h"
 #include "gfxDrawGaugeWidget.h"
+#include "gfxDrawText.h"
 
 #include "lodepng.h"
 
@@ -415,6 +416,8 @@ void drawTest02() {
 
 
 void drawTest03() {
+  newImage(400, 300);
+  fillImage(gfxDraw::ARGB_WHITE);
 
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
@@ -442,7 +445,9 @@ void drawTest03() {
   gfxDraw::drawRoundedRect(260, 10, 120, 50, 22, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xEE, 0x88)));
 
   gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xFF, 0)));
-}
+
+  saveImage("test03.png");
+}  // drawTest03()
 
 
 using namespace gfxDraw;
@@ -514,56 +519,49 @@ void drawTest04_Widget() {
   saveImage("test04.png");
 }
 
-// gfxDraw::drawCircle(gfxDraw::Point(20, 20), 12,
-//                     pngSetPixel(gfxDraw::ARGB_GREEN),
-//                     pngSetPixel(gfxDraw::ARGB_YELLOW));
 
-// draw a heard by using the gfxDrawPathWidget functionality
-// demonstrate on how to undraw
+/// draw 4 gauges by using the gfxDrawGaugeWidget in variations.
 void drawTest05_Gauge() {
 
-  newImage(400, 220);
+  newImage(520, 350);  // 3 * 2 areas
   fillImage(gfxDraw::ARGB_WHITE);
 
   gfxDraw::gfxDrawGaugeWidget *g;
-  GFXDrawGaugeConfig conf1 = {
+
+  // Gauge with default segment, no scale, standard pointer
+  gfxDrawGaugeConfig conf = {
     .x = 10,
     .y = 10,
-    .w = 180,
-    .minValue = 0,
-    .maxValue = 100,
-    .minAngle = 30,
-    .maxAngle = 360 - 30
+    .w = 160
   };
 
-
-
   // draw a background to check drawing area
-  drawRect(conf1.x, conf1.y, conf1.w, conf1.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
 
-  g = new gfxDraw::gfxDrawGaugeWidget();
-  g->setConfig(&conf1);
+  g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->setValue(70);
 
-  // drawing using stroke and fill
-  g->draw(pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_GRAY));
+  // drawing using standard unconfigured gauge.
+  g->draw(setImagePixel);
 
-  GFXDrawGaugeConfig conf2 = {
-    .x = 200,
+
+  // Gauge with multiple segments, no scale, standard pointer
+  conf = {
+    .x = 180,
     .y = 10,
-    .w = 200,
+    .w = 160,
+    .pointerColor = ARGB_GREEN,
+    .segmentColor = ARGB_GRAY,
     .minValue = 0,
     .maxValue = 100,
     .minAngle = 30,
-    .maxAngle = 360 - 30
+    .maxAngle = 360 - 30,
   };
 
   // draw a background to check drawing area
-  drawRect(conf2.x, conf2.y, conf2.w, conf2.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
 
-  g = new gfxDraw::gfxDrawGaugeWidget();
-  g->setConfig(&conf2);
-  g->setColors(ARGB_BLUE, ARGB_YELLOW);
+  g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->addSegment(0, 16, 0xff8080ff);
   g->addSegment(16, 24, 0xff60ff60);
   g->addSegment(45, 75, 0xffff8080);
@@ -573,9 +571,112 @@ void drawTest05_Gauge() {
   // drawing using colorful drawing
   g->draw(setImagePixel);
 
-  saveImage("test05.png");
-}
 
+  // Gauge with multiple segments and scale, custom pointer
+  conf = {
+    .x = 350,
+    .y = 10,
+    .w = 160,
+    .pointerColor = ARGB_GREEN,
+    .segmentColor = ARGB_GRAY,
+    .minValue = 0,
+    .maxValue = 100,
+    .minAngle = 30,
+    .maxAngle = 360 - 30,
+    .scaleRadius = 95,
+    .scaleSteps = 10,
+    .pointerPath = "M-50,-100 L-50,800 L0,850 L50,800 L50,-100 L0,0 Z"
+  };
+
+  // draw a background to check drawing area
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+
+  g = new gfxDraw::gfxDrawGaugeWidget(&conf);
+  g->addSegment(0, 16, 0xff8080ff);
+  g->addSegment(16, 24, 0xff60ff60);
+  g->addSegment(45, 80, 0xffff8080);
+  g->addSegment(80, 100, 0xffff2222);
+  g->setValue(32);
+
+  // drawing using colorful drawing
+  g->draw(setImagePixel);
+
+
+  // Gauge with one special segments and scale, short custom pointer
+  conf = {
+    .x = 10,
+    .y = 180,
+    .w = 160,
+    .minValue = 0,
+    .maxValue = 100,
+    .minAngle = 30,
+    .maxAngle = 360 - 30,
+    .scaleWidth = 10,
+    .scaleSteps = 10,
+    .pointerPath = "M-70,550 L0,850 L70 550 Z"
+  };
+
+  // draw a background to check drawing area
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+
+  g = new gfxDraw::gfxDrawGaugeWidget(&conf);
+  g->addSegment(30, 70, 0xFF66FF99);  // green segment only
+
+  g->setValue(45);
+  g->draw(setImagePixel);
+
+
+  // Gauge with one special segments and scale, short custom pointer
+  conf = {
+    .x = 180,
+    .y = 180,
+    .w = 160,
+    .minAngle = 0,
+    .maxAngle = 180,
+    .scaleWidth = 10,
+    .scaleSteps = 20,
+    .pointerPath = "M-70,550 L0,850 L70 550 Z"
+  };
+
+  // draw a background to check drawing area
+  drawRect(conf.x, conf.y, conf.w / 2, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+
+  g = new gfxDraw::gfxDrawGaugeWidget(&conf);
+  g->addSegment(0, 25, 0xFFFF8888);
+  g->addSegment(25, 45, 0xFFFFFF88);
+  g->addSegment(45, 75, 0xFF88FF88);
+  g->addSegment(75, 100, 0xFFFF4444);
+
+  g->setValue(55);
+  g->draw(setImagePixel);
+  saveImage("test05.png");
+}  // drawTest05_Gauge()
+
+
+/// draw 4 gauges by using the gfxDrawGaugeWidget in variations.
+void drawTest06_Text() {
+  newImage(520, 350);  // 3 * 2 areas
+  fillImage(gfxDraw::ARGB_WHITE);
+
+  setupFont();
+
+  Point dim = textBox(10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,");
+
+  drawRect(10, 10, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawText(10, 10, 10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(10, "abc");
+
+  drawRect(10, 40, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawText(10, 40, 10, "abc", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(10, ".");
+
+  drawRect(10, 70, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawText(10, 70, 10, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  saveImage("test06.png");
+}
 
 uint16_t conv2d(const char *p) {
   return (10 * (*p - '0')) + (*(p + 1) - '0');
@@ -721,13 +822,8 @@ int main() {
 #endif
 
 
-#if (0)
-  newImage(400, 300);
-  fillImage(gfxDraw::ARGB_WHITE);
-
+#if (1)
   drawTest03();
-
-  saveImage("test03.png");
 #endif
 
 #if (0)
@@ -740,6 +836,10 @@ int main() {
 
 #if (1)
   drawTest05_Gauge();
+#endif
+
+#if (1)
+  drawTest06_Text();
 #endif
 
 #if (0)
