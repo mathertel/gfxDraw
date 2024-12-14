@@ -105,4 +105,3 @@ GFXDrawGaugeConfig gaugeConfig = {
 To set the current to be displayed the `setValue()` can be used.  Finally calling the `draw()` function has to called
 and a fDrawPixel callback must be provided.
 
-

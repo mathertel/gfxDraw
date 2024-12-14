@@ -1,23 +1,37 @@
 # Drawing Vector Graphics on Arduino GFX displays
 
-Arduino library for drawing vector graphics on displays with GFX support.
+GFXDraw is a powerful and easy-to-use GUI library for Arduino.  It offers simple elements, powerful path-based vector
+drawings, ready to use widgets and visual effects.  The library is made especially for displays that support pixel-based
+drawing attached to a board that has enough CPU power and memory to run complex drawing algorithms.
 
-Drawing and transforming graphics elements specified by a path of lines, arcs and curves using the svg path notation.
-The advanced drawing algorithms that can use GFX libraries as the low-level interface to various displays.
+The GFXDraw library is published as an Arduino Library using GitHub.  It can be installed via the Arduino IDE Library
+Manager.  You can download the latest version of GFXDraw from GitHub and copy it to Arduino's library folder.
 
-There are various GFX libraries available in the Arduino Community that support many differend displays with simple
-graphics can be drawn like lines, rectangles, circles and some more.  The features are limited e.g.  rectangles can only
-be drawn without rotation and complex figure drawings are not available at all.
+Note that you need to choose a board powerful enough to run GFXDraw and a GFX library supporting the specific hardware.
+The drawing algorithms can use GFX libraries as the low-level interface to various displays.  There are various GFX
+libraries available in the Arduino Community that support many differend displays.  It is recommended to use a ESP32-S3
+chip as first choice.
 
-The gfxDraw library overcomes these limitations by offering more advanced drawing capabilities with vectorized drawing
-input and a set of high-level classes to draw typical widgets.
+There are examples that demonstrate how to use the
 
-The library can be used with almost any GFX library implementation available with examples provided for Adafruit GFX and
-the GFX Library for Arduino as the GFX libraries are only used for sending changes to the displays.
+* [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
+* [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX).
+
+as the GFX libraries are only used for sending the pixel values to the displays.
+
+Beyond this the GFXDraw library is not chip specific and it will also compile and run on other hardware.  A Project to
+run on Windows creating PNG files by using the Visual Code compiler is also included and can be used for more efficient
+development and direct debugging.
+
+The most important part of this library is the capability to draw and transform vectorized based graphics specified by a
+path of lines, arcs and curves using the svg path notation and a set of high-level classes to draw typical widgets.
+This enables complex figures to be drawn and you are no longer limited by the typical built-in graphics of a GFX
+library.
 
 In contrast to the rasterization implementations used in Desktop programs or browsers this library is dedicated to
-microprocessor circumstances with limited memory and cpu power and avoids arithmetic floating point calculations and
-doesn't support anti-aliased drawing.
+microprocessor conditions with typically limited memory and cpu power. The library avoids arithmetic floating point calculations for many algorithms and doesn't support anti-aliased drawing.
+
+There is still some room for improvement in some drawing algoriothm that is left for further updates.
 
 
 ## Software Architecture
@@ -25,7 +39,8 @@ doesn't support anti-aliased drawing.
 This is a short high level overview on the way how the gfxDraw library is used by sketches or examples, how it works
 internally and how the GFX libraries are linked for low level drawing.
 
-The library uses the Namespace `gfxDraw` to implement the types, functions and the classes to avoid conflicts with other libraries.
+The library uses the Namespace `gfxDraw` to implement the types, functions and the classes to avoid conflicts with other
+libraries.
 
 ![architecture](docs/architecture.drawio.svg)
 
@@ -33,13 +48,13 @@ The library uses the Namespace `gfxDraw` to implement the types, functions and t
 curves** and some direct usable combinations like rounded rectangles.  These function "only" calculate the points that
 make up the primitive and use callback function to hand them over to further processing or drawing.
 
-**Filling** -- One of the further processing function available is the filling algorithm that can find out what pixels are inside a
-closed area and also pass them for further processing or drawing.
+**Filling** -- One of the further processing function available is the filling algorithm that can find out what pixels
+are inside a closed area and also pass them for further processing or drawing.
 
-**Path** -- For drawings with a more complex border paths with the syntax from svg can be used for defining the border lines.
-Paths can be transformed, resized and rotated. See further details below.
+**Path** -- For drawings with a more complex border paths with the syntax from svg can be used for defining the border
+lines.  Paths can be transformed, resized and rotated.  See further details below.
 
-**Widgets** --  The Widget classes offers defining parameters for drawing of complex functionality like **gauges**.
+**Widgets** -- The Widget classes offers defining parameters for drawing of complex functionality like **gauges**.
 
 
 ### General Library Implementation Rules
@@ -90,6 +105,7 @@ const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 pathByText(heardPath, 8, 8, 100, nullptr, setFillColor);
 ```
 
+
 ## Widget classes
 
 The Widget classes offers further functionionality and espacially can handle a fixed color for stroke and fill.
@@ -126,8 +142,7 @@ See [Path Widgets Class](docs/path-widget.md).
 
 ## SVG Path Syntax
 
-Drawing using paths is used by some of the widgets to customize e.g. the pointers
-for a clock.
+Drawing using paths is used by some of the widgets to customize e.g.  the pointers for a clock.
 
 To create a vector (array) of segments that build the borders of the vector graphics object the `path` syntax from the
 SVG standard is used.  
@@ -140,9 +155,11 @@ There are helpful web applications to create or edit such paths definitions:
 * The [SVG Path Editor](https://aydos.com/svgedit/) with source available in
   [Github/aydos](https://github.com/aydos/svgpath) from Fahri Aydos.
 
-Both tools let you directly change the individual segments of paths and also offer some graphical view or even edit capabilities. You can also use full SVG editors and extract the path from there.
+Both tools let you directly change the individual segments of paths and also offer some graphical view or even edit
+capabilities.  You can also use full SVG editors and extract the path from there.
 
-For using paths with pixel oriented displays is is important to use integer based coordinates and scalar values only. Better to use larger numbers as scaling the result down to a smaller size is possible.
+For using paths with pixel oriented displays is is important to use integer based coordinates and scalar values only.
+Better to use larger numbers as scaling the result down to a smaller size is possible.
 
 
 Examples for paths are:
@@ -168,9 +185,24 @@ Implemented Widgets
 [Gauge Widget](docs/gauge-widget.md)
 
 
+## Debugging and logging
+
+In case something is not going as expected it is recommended to enable the optional TRACE output of the library.  This
+can be done using one of these approaches:
+
+All source code files (*.cpp) contain a definition of a `GFXDRAWTRACE` macro that can easily be enabled to print to the
+Serial port.  To enable all Trace ouput in one place the `GFXDRAWTRACE` macro in gfxdraw.h can be enabled too.  Please
+not that this may cause massive performance impacts and I/O that may hurt your application.
+
+
+* <https://github.com/lvgl/lvgl>
+* <https://docs.lvgl.io/latest/en/html/index.html>
+* <https://docs.lvgl.io/master/details/integration/framework/arduino.html>
+
+
 ## Contributions
 
-Contributions are welcome. Please use GitHub Issues for discussing and Pull Request. Need more -- just ask.
+Contributions are welcome.  Please use GitHub Issues for discussing and Pull Request.  Need more -- just ask.
 
 
 ## The Examples
@@ -201,7 +233,8 @@ based on the ESP32 chips and graphics displays.
 In the `examples/png` folder you can find a implementation for using the library by a windows executable to produce
 several png files with test images.
 
-This example is especially helpful while engineering the library with fast turn-around cycles and debugging capabilities.
+This example is especially helpful while engineering the library with fast turn-around cycles and debugging
+capabilities.
 
 
 <!-- ### gfxprimitives Example
@@ -218,7 +251,8 @@ This example shows how to draw using these functions. They are also used by the 
 ## Fonts and Text output
 
 The fonts provided with this library can be loaded from program memory.
-<!-- or as files from a filesystem. -->
+
+<!-- or as files from a filesystem.  -->
 
 The drawing functionality for fonts was re-implemented to ensure that all characters of the same font have the same
 baseline and total height.  Positioning of the text is done by providing the upper left pixel as a starting point.
@@ -228,10 +262,10 @@ Drawing text is not supporting a background color.
 
 ## Copyright for Adafruit_GFX
 
-This library uses the font defintions from the Adafruit_GFX library that can be found at <https://github.com/adafruit/Adafruit-GFX-Library>.
-Therefore the compatible fonts can be used.
+This library uses the font defintions from the Adafruit_GFX library that can be found at
+<https://github.com/adafruit/Adafruit-GFX-Library>.  Therefore the compatible fonts can be used.
 
-This was publised by also using the BSD license:
+The Adafruit_GFX library was publised by also using the BSD license:
 
 > Software License Agreement (BSD License)
 >
