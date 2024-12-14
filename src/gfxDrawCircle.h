@@ -63,6 +63,20 @@ void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw);
 /// @param cbDraw SetPixel callback
 void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw);
 
+
+/// @brief Draw an arc using the most efficient algorithm
+void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, fSetPixel cbDraw);
+
+
+/// ====== internally used functions - maybe helpful for generating paths
+
+/// @brief Calculate the angle of a vector in degrees
+/// @param dx x value of the vector
+/// @param dy y value of the vector
+/// @return the angle n range 0...359
+int16_t vectorAngle(int16_t dx, int16_t dy);
+
+
 }  // gfxDraw:: namespace
 
 

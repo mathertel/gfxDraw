@@ -17,6 +17,17 @@
 namespace gfxDraw {
 
 /// @brief Draw a rectangle with border and fill callbacks
+/// @param pos Starting Point.
+/// @param w width of the rect in pixels
+/// @param h height of the rect in pixels
+/// @param cbBorder Callback with coordinates of rect border pixels.
+/// @param cbFill Callback with coordinates of rect fill pixels.
+void drawRect(Point pos, int16_t w, int16_t h, fSetPixel cbBorder, fSetPixel cbFill) {
+  drawRect(pos.x, pos.y, w, h, cbBorder, cbFill);
+};
+
+
+/// @brief Draw a rectangle with border and fill callbacks
 /// @param x Starting Point X coordinate.
 /// @param y Starting Point Y coordinate.
 /// @param w width of the rect in pixels

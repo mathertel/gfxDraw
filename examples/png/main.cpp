@@ -658,22 +658,83 @@ void drawTest06_Text() {
   newImage(520, 350);  // 3 * 2 areas
   fillImage(gfxDraw::ARGB_WHITE);
 
+  Point c;
+
   setupFont();
+  loadFont("C:\\Users\\Matthias\\Documents\\Arduino\\libraries\\gfxDraw\\src\\fonts\\font10.gfxfntb");
+  loadFont("C:\\Users\\Matthias\\Documents\\Arduino\\libraries\\gfxDraw\\src\\fonts\\font16.gfxfntb");
+  loadFont("C:\\Users\\Matthias\\Documents\\Arduino\\libraries\\gfxDraw\\src\\fonts\\font24.gfxfntb");
 
   Point dim = textBox(10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,");
 
   drawRect(10, 10, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  drawText(10, 10, 10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,", pngSetPixel(gfxDraw::ARGB_BLACK));
+  c = drawText(10, 10, 10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,", pngSetPixel(gfxDraw::ARGB_BLACK));
 
-  dim = textBox(10, "abc");
+  // writing using a cursor
+  c = Point(10, c.y + lineHeight());
+  dim = textBox(10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", pngSetPixel(gfxDraw::ARGB_BLACK));
 
-  drawRect(10, 40, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  drawText(10, 40, 10, "abc", pngSetPixel(gfxDraw::ARGB_BLACK));
+  c = Point(10, c.y + lineHeight());
+  dim = textBox(10, "abcdefghijklmnopqrstuvwxyz");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "abcdefghijklmnopqrstuvwxyz", pngSetPixel(gfxDraw::ARGB_BLACK));
 
   dim = textBox(10, ".");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
 
-  drawRect(10, 70, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  drawText(10, 70, 10, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
+  dim = textBox(10, "1234567890");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "1234567890", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+
+  // writing using a cursor
+  c = Point(10, 50);
+  dim = textBox(20, "abc");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, "abc", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(20, ".");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(20, "ABC");
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, "ABC", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+
+  dim = textBox(16, "abc.ABC");
+  drawRect(10, 80, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawText(10, 80, 16, "abc.ABC", pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  // mixed fonts in a row
+  c = Point(10, 100);
+  const char *txt = "abcABC ";
+  dim = textBox(7, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 7, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(8, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 8, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(10, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(14, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 14, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(16, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 16, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+
+  dim = textBox(24, txt);
+  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 24, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
 
   saveImage("test06.png");
 }
@@ -803,6 +864,8 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
 }
 
 int main() {
+  printf("png creating test...\n");
+
   silentTests();
 
 #if (0)

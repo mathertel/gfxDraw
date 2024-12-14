@@ -11,87 +11,234 @@
 
 #include "gfxDrawText.h"
 
-#include "fonts/font10.h"
+#include <vector>
+
+#include "fonts/fonts.h"
 
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#define TRACE(...)  printf(__VA_ARGS__);
 
 namespace gfxDraw {
 
+struct _gfxDrawFontDetails {
+  /// @brief font data
+  const GFXfont *font;
 
+  /// effective font height (above and below baseline used pixels)
+  uint16_t height;
 
-Point _textCursor;  // current text cursor position
+  // baseline of the font (max found pixels above)
+  int16_t baseLine;
+};
 
-// current font and its dimensions.
-const GFXfont *_font;   // current font data
-uint16_t _fontHeight;   // current font height of chars (baseline + below baseline used pixels)
-int16_t _fontBaseLine;  // baseline offset in the font.
+/// @brief current text cursor position
+Point _textCursor;
 
-uint16_t _fontSize;        // current font size (as specified by parameter)
-uint16_t _fontRealSize;    // current effective font size (equal or less than _fontSize)
-uint16_t _fontFactor = 2;  // current font factor
+/// @brief Font registry
+std::vector<_gfxDrawFontDetails> _registry;
+
+/// @brief current Font Details
+const _gfxDrawFontDetails *_currentFont;
+
+/// @brief current scaling factor
+uint16_t _currentScale = 2;  // current font factor
+
+/// @brief requested size for current font
+uint16_t _currentSize = 0;
+
 
 
 /// @brief Draw a single character at _textCursor and advance the _textCursor to the right
 /// @param c The character to be drawn.
 void drawChar(unsigned char c, fSetPixel cbDraw) {
+  const GFXfont *_font;
 
-  if ((_font) && (c >= _font->first) && (c <= _font->last)) {
-    uint8_t cOffset = c - _font->first;
+  if (_currentFont) {
+    _font = _currentFont->font;
 
-    GFXglyph *glyph = _font->glyph + cOffset;
-    uint8_t *bitmap = _font->bitmap;
+    if ((c >= _font->first) && (c <= _font->last)) {
+      uint8_t cOffset = c - _font->first;
 
-    uint16_t bo = glyph->bitmapOffset;
-    uint8_t bitCounter = 0;
-    uint8_t bits = 0;
+      GFXglyph *glyph = _font->glyph + cOffset;
+      uint8_t *bitmap = _font->bitmap;
 
-    int16_t xo = _textCursor.x + (_fontFactor * glyph->xOffset);
-    int16_t yo = _textCursor.y + _fontFactor * (_fontBaseLine + glyph->yOffset);
+      uint16_t bo = glyph->bitmapOffset;
+      uint8_t bitCounter = 0;
+      uint8_t bits = 0;
 
-    // Pointer to character specific bitmap.
-    uint8_t *characterBytes = &bitmap[glyph->bitmapOffset];
+      int16_t xo = _textCursor.x + (_currentScale * glyph->xOffset);
+      int16_t yo = _textCursor.y + _currentScale * (_currentFont->baseLine + glyph->yOffset);
 
-    for (uint8_t yy = 0; yy < glyph->height; yy++) {
-      for (uint8_t xx = 0; xx < glyph->width; xx++) {
+      // Pointer to character specific bitmap.
+      uint8_t *characterBytes = &bitmap[glyph->bitmapOffset];
 
-        if (!(bitCounter++ & 7)) {
-          // need a new byte from the bitmap
-          bits = *characterBytes++;
-        }
+      for (uint8_t yy = 0; yy < glyph->height; yy++) {
+        for (uint8_t xx = 0; xx < glyph->width; xx++) {
 
-        // set pixels
-        if (bits & 0x80) {
-          if (_fontFactor == 1) {
-            cbDraw(xo + xx, yo + yy);
+          if (!(bitCounter++ & 7)) {
+            // need a new byte from the bitmap
+            bits = *characterBytes++;
+          }
 
-          } else {
-            for (int16_t fy = 0; fy < _fontFactor; fy++) {
-              for (int16_t fx = 0; fx < _fontFactor; fx++) {
-                cbDraw(xo + (_fontFactor * xx) + fx, yo + (_fontFactor * yy) + fy);
+          // set pixels
+          if (bits & 0x80) {
+            if (_currentScale == 1) {
+              cbDraw(xo + xx, yo + yy);
+
+            } else {
+              for (int16_t fy = 0; fy < _currentScale; fy++) {
+                for (int16_t fx = 0; fx < _currentScale; fx++) {
+                  cbDraw(xo + (_currentScale * xx) + fx, yo + (_currentScale * yy) + fy);
+                }
               }
             }
           }
+          bits <<= 1;
         }
-        bits <<= 1;
+      }
+      _textCursor.x += glyph->xAdvance * _currentScale;
+    }  // if
+  }  // if
+}  // drawChar()
+
+
+void addFont(const GFXfont *newFont) {
+  TRACE("addFont()\n");
+
+  _gfxDrawFontDetails f;
+  int16_t baseline;  // baseline offset in the font.
+  uint16_t height;   // current font height of chars (baseline + below baseline used pixels)
+
+  if (newFont) {
+    f.font = newFont;
+
+    // find baseline height and total used height from Glyphs.
+    baseline = 0;
+    height = 0;
+
+    GFXglyph *glyph = newFont->glyph;
+    uint16_t chars = newFont->last - newFont->first + 1;
+
+    for (uint16_t c = 0; c < chars; c++) {
+      if (glyph[c].yOffset < baseline)
+        baseline = glyph[c].yOffset;
+
+      if (glyph[c].yOffset + glyph[c].height > height)
+        height = glyph[c].yOffset + glyph[c].height;
+    }
+    f.baseLine = -baseline;
+    f.height = f.baseLine + height;
+
+    TRACE(" height=%d\n", f.height);
+    TRACE(" baseLine=%d\n", f.baseLine);
+    TRACE(" lineHeight=%d\n", f.font->yAdvance);
+
+    // register new font Details
+    _registry.push_back(f);
+  }
+}  // addFont()
+
+
+// loading GFX fonts in the GFX Font Binary format (.gfxfntb)
+// effectively the file is the in-memory of the GFX font structures:
+// GFXfont + GFXglyph + Bitmaps  with pointers in GFXfont set to the offsets in the file.
+// use https://github.com/ScottFerg56/GFXFontEditor to export binary files.
+void loadFont(const char *fName) {
+  TRACE("loadFont(%s)\n", fName);
+  FILE *file;
+  long size;
+
+  file = fopen(fName, "rb");
+
+  if (file) {
+    fseek(file, 0L, SEEK_END);
+    size = ftell(file);
+    rewind(file);
+
+    GFXfont *mem = (GFXfont *)(malloc(size));
+
+    if (mem) {
+      size_t readsize = fread(mem, 1, size, file);
+      if (size == readsize) {
+        // re-base the pointers to the memory used for loading
+        mem->glyph = (GFXglyph *)((char *)(mem) + (size_t)(mem->glyph));
+        mem->bitmap = (uint8_t *)(mem) + (size_t)(mem->bitmap);
+        addFont((const GFXfont *)mem);
+
+      } else {
+        free(mem);
       }
     }
-    _textCursor.x += glyph->xAdvance * _fontFactor;
-  }  // if
+
+    fclose(file);
+  }
+}  // loadFont()
+
+
+/// @brief find the font from the registry that fits best for the given height.
+/// sets the global variables:
+/// _currentFont -- best found registered font.
+/// _currentScale -- scaling factor to be used.
+/// _currentSize -- the requested size,
+void _findBestFont(int16_t size) {
+  TRACE("_findBestFont(%d)\n", size);
+
+  if (size && (size != _currentSize)) {
+    // only search best font in case of a different size requested
+    const _gfxDrawFontDetails *bestFont = nullptr;
+    int16_t bestFit = 0;
+    int16_t bestScale = 0;
+
+    // search all fonts and find better fit.
+    for (const _gfxDrawFontDetails &f : _registry) {
+      // TRACE(" check f_%d...\n", f.height);
+
+      int16_t scale = (size / f.height);
+      int16_t fit = size - (scale * f.height);
+
+      if ((!bestFont)
+          || ((scale > 0) && (fit < bestFit))
+          || ((scale > 0) && (scale < bestScale) && (fit == bestFit))) {
+        // better font found.
+        bestFont = &f;
+        bestFit = fit;
+        bestScale = scale ? scale : 1;
+      }
+    }  // for
+
+    _currentFont = bestFont;
+    _currentSize = size;
+    _currentScale = bestScale;
+    TRACE(" => f_%d * %d\n", _currentFont->height, _currentScale);
+  }
 }
 
 
-// https://github.com/ScottFerg56/GFXFontEditor#readme
+// initialize at least one font.
 
 void setupFont() {
-  addFont(&Font_10);
+  addFont(&font8);
+  // addFont(&font10);
+  // addFont(&font16);
+  // addFont(&font24);
 }
 
 
-Point textBox(int16_t h, const char *text) {
+int16_t lineHeight(int16_t size) {
+  _findBestFont(size);
+  return (_currentFont->font->yAdvance);
+};
+
+
+Point textBox(int16_t size, const char *text) {
   Point dim(0, 0);
 
-  if (text) {
+  if (size) {
+    _findBestFont(size);
+  }
+
+  if ((_currentFont) && (text)) {
+    const GFXfont *_font = _currentFont->font;
 
     // calculate char by char
     while (*text) {
@@ -100,65 +247,38 @@ Point textBox(int16_t h, const char *text) {
       if ((c >= _font->first) && (c <= _font->last)) {
         uint8_t cOffset = c - _font->first;
         GFXglyph *glyph = _font->glyph + cOffset;
-        dim.x += (glyph->xAdvance * _fontFactor);
+        dim.x += (glyph->xAdvance * _currentScale);
       }
     }
-    dim.y = (_fontHeight * _fontFactor);
+    dim.y = (_currentFont->height * _currentScale);
   }
   return (dim);
 }  // textBox()
 
 
-void addFont(const GFXfont *newFont) {
-  // register new font
-  _font = newFont;
 
-  // find baseline height and total used height from Glyphs.
-  _fontBaseLine = 0;
-  _fontHeight = 0;
-
-  GFXglyph *glyph = _font->glyph;
-  uint16_t chars = _font->last - _font->first + 1;
-
-  if (_font) {
-    for (uint16_t c = 0; c < chars; c++) {
-      if (glyph[c].yOffset < _fontBaseLine)
-        _fontBaseLine = glyph[c].yOffset;
-
-      if (glyph[c].yOffset + glyph[c].height > _fontHeight)
-        _fontHeight = glyph[c].yOffset + glyph[c].height;
-    }
-  }
-  _fontBaseLine = -_fontBaseLine;
-  _fontHeight += _fontBaseLine;
-}
-
-
-void loadFont() {
-  // https://github.com/ScottFerg56/BinaryFontDemo/tree/main
-}
-
-
-void drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw) {
+Point drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw) {
   _textCursor = p;
-
-
 
   if (size) {
     // select best font
+    _findBestFont(size);
   }
 
-  // draw char by char
-  while (*text) {
-    drawChar(*text++, cbDraw);
+  if (_currentFont) {
+    // draw char by char and advance _textCursor
+    while (*text) {
+      drawChar(*text++, cbDraw);
+    }
   }
-}
+  return (_textCursor);
+}  // drawText()
 
 
-void drawText(int16_t x, int16_t y, int16_t size, const char *text, fSetPixel cbDraw) {
+Point drawText(int16_t x, int16_t y, int16_t size, const char *text, fSetPixel cbDraw) {
   Point p(x, y);
-  drawText(p, size, text, cbDraw);
-}
+  return (drawText(p, size, text, cbDraw));
+}  // drawText()
 
 }  // gfxDraw:: namespace
 

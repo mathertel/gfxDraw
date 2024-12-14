@@ -34,8 +34,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "gfxDrawCommon.h"
 #include "gfxDrawColors.h"
+#include "gfxDrawCommon.h"
 #include "gfxDrawLine.h"
 #include "gfxDrawCircle.h"
 #include "gfxDrawRect.h"
@@ -51,38 +51,8 @@
 
 namespace gfxDraw {
 
-// ===== Callback function definitions used by drawing methods and widget classes =====
-
-/// @brief Callback function definition to address a pixel on a display
-typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
-
-/// @brief Callback function to transform all points in the segments
-typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
-
-/// @brief Callback function definition to change a pixel on a display by applying the given color.
-typedef std::function<void(int16_t x, int16_t y, ARGB color)> fDrawPixel;
-
 /// @brief Callback function definition to read a pixel from a display
 typedef std::function<ARGB(int16_t x, int16_t y)> fReadPixel;
-
-/// ===== Basic draw functions with callback =====
-
-// arc
-// void drawArc(..., fSetPixel cbDraw);
-
-
-/// @brief Draw an arc using the most efficient algorithm
-void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t rx, int16_t ry, int16_t phi, int16_t flags, fSetPixel cbDraw);
-
-
-/// ====== internally used functions - maybe helpful for generating paths
-
-/// @brief Calculate the angle of a vector in degrees
-/// @param dx x value of the vector
-/// @param dy y value of the vector
-/// @return the angle n range 0...359
-int16_t vectorAngle(int16_t dx, int16_t dy);
-
 
 }  // gfxDraw:: namespace
 

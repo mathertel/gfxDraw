@@ -22,7 +22,9 @@ namespace gfxDraw {
 
 void setupFont();
 
-void addFont(const GFXfont *newFont);
+void loadFont(const char *fName);
+
+void addFont(GFXfont *newFont);
 
 /// @brief calculate the Bounding box of a text drawn at 0/0
 /// @param h font height
@@ -30,12 +32,15 @@ void addFont(const GFXfont *newFont);
 /// @return Dimension of the text with box.x and .y == 0.
 Point textBox(int16_t h, const char *text);
 
+int16_t lineHeight(int16_t size = 0);
+
 /// @brief Draw a text
 /// @param p1 Starting Point
 /// @param size Text size
 /// @param text character to print
 /// @param cbDraw Callback with coordinates of line pixels.
-void drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw);
+/// @return Text cursor position after drawing.
+Point drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw);
 
 
 /// @brief Draw a text
@@ -43,8 +48,8 @@ void drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw);
 /// @param y Starting Point Y coordinate.
 /// @param size Text size
 /// @param text character to print
-/// @param cbDraw Callback with coordinates of line pixels.
-void drawText(int16_t x, int16_t y, int16_t size, const char *text, fSetPixel cbDraw);
+/// @return Text cursor position after drawing.
+Point drawText(int16_t x, int16_t y, int16_t size, const char *text, fSetPixel cbDraw);
 
 
 }  // gfxDraw:: namespace

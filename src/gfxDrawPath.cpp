@@ -706,6 +706,31 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
 }
 
 
+
+/// @brief draw a path using a border and optional fill drawing function.
+/// @param path The path definition using SVG path syntax.
+/// @param x Starting Point X coordinate.
+/// @param y Starting Point Y coordinate.
+/// @param scale scaling factor * 100.
+/// @param cbBorder Draw function for border pixels. cbFill is used when cbBorder is null.
+/// @param cbFill Draw function for filling pixels.
+void pathByText(const char *pathText, int16_t x, int16_t y, int16_t scale100, fSetPixel cbBorder, fSetPixel cbFill) {
+  std::vector<Segment> vSeg = parsePath(pathText);
+  if (scale100 != 100)
+    gfxDraw::scaleSegments(vSeg, scale100);
+
+  if ((x != 0) || (y != 0))
+    gfxDraw::moveSegments(vSeg, x, y);
+
+  if (cbFill) {
+    fillSegments(vSeg, cbBorder, cbFill);
+  } else {
+    drawSegments(vSeg, cbBorder);
+  }
+}
+
+
+
 // /// @brief draw the a path.
 // /// @param path The path definition using SVG path syntax.
 // /// @param cbDraw Draw function for border pixels. cbFill is used when cbBorder is null.
