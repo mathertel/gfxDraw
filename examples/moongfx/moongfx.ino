@@ -7,12 +7,14 @@
 
 #include <gfxDraw.h>
 #include <gfxDrawColors.h>
-#include <gfxDrawWidget.h>
+#include <gfxDrawPathWidget.h>
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+
+#include "secrets.h"
 
 Arduino_DataBus *bus;
 Arduino_GFX *gfx;
@@ -24,7 +26,7 @@ uint16_t cy;  // Center-y of display
 
 uint16_t mode = 0;
 uint16_t step = 0;
-unsigned long nextDraw;
+unsigned long nextDraw = 0;
 
 // A SVG path defining the shape of a heard
 // Size = (87/80), center = (44/40)
@@ -41,20 +43,20 @@ const char *arrowPath = "M0 0l12-12 0 8 22 0 0 8-22 0 0 8Z";
 }
 
 // draw on gfx
-void gfxDrawColor(int16_t x, int16_t y, gfxDraw::RGBA col) {
+void gfxDrawColor(int16_t x, int16_t y, gfxDraw::ARGB col) {
   gfx->writePixel(x, y, col.toColor16());
 }
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("gfxDraw example using the GFX Library for Arduino.");
 
   // Serial.setDebugOutput(true);
   // while(!Serial);
 
-  Serial.println("gfxDraw example using the GFX Library for Arduino.");
-
+  // add your WIFI and WIFI access code in secrets.h
   WiFi.mode(WIFI_STA);
-  WiFi.begin("KHMH", "hk-2012FD2926");
+  WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
@@ -98,27 +100,29 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // This setup is working with the board ZX3D50CE02S or called "WT32-SC01 PLUS".
-  // See https://homeding.github.io/boards/esp32s3/sc01-plus.htm
+  // See
+  //  * https://homeding.github.io/boards/esp32s3/sc01-plus.htm
   //
   // To adapt other devices or screens please check Arduino_GFX_dev_device.h in the PDQgraphicstest example from the
   // GFX Library for Arduino.
 
-#define GFX_BL 45
-
-  bus = new Arduino_ESP32LCD8(
-    0 /* DC */, GFX_NOT_DEFINED /* CS */, 47 /* WR */, GFX_NOT_DEFINED /* RD */,
-    9 /* D0 */, 46 /* D1 */, 3 /* D2 */, 8 /* D3 */, 18 /* D4 */, 17 /* D5 */, 16 /* D6 */, 15 /* D7 */);
-
-  gfx = new Arduino_ST7796(bus, 4 /* RST */, 3 /* rotation */, true /* IPS */);
-
+// This setup is working with the board ESP32_2432S028R also known as
+// Cheap Yellow Display Board <https://randomnerdtutorials.com/cheap-yellow-display-esp32-2432s028r/>
+// https://cool-web.de/esp8266-esp32/esp32-2432s028-cheap-yellow-display-touchscreen-vorstellung-hardware-pinout.htm
+// https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display/
+#define GFX_BL 21
+  Arduino_DataBus *bus = new Arduino_ESP32SPI(2 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, 12 /* MISO */);
+  Arduino_GFX *gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */);
 
   // Init Display
   if (!gfx->begin()) {
-    Serial.println("gfx->begin() failed!");
+    Serial.printf("gfx->begin() failed!\n");
   }
 
   w = gfx->width();
   h = gfx->height();
+  Serial.printf("gfx width=%d height=%d\n", w, h);
+
   cx = w / 2;
   cy = h / 2;
 
@@ -127,19 +131,31 @@ void setup() {
   digitalWrite(GFX_BL, HIGH);
 #endif
 
-  gfx->fillScreen(GREEN);
+  gfx->fillScreen(RGB565_GREEN);
+  delay(2000);
+  Serial.println("starting...");
+      gfx->fillScreen(RGB565_WHITE);
+      Serial.println("2");
+
 }
 
 void loop(void) {
   unsigned long now = millis();
 
-  ArduinoOTA.handle();
+  // ArduinoOTA.handle();
 
   if (now > nextDraw) {
-    Serial.println("next...");
+    Serial.printf("next(%d)...\n", mode);
 
     if (mode == 0) {
-      gfx->fillScreen(WHITE);
+      gfx->fillScreen(RGB565_RED);
+      Serial.println("2");
+      delay(1000);
+
+      gfx->fillScreen(RGB565_RED);
+      Serial.println("2");
+      delay(1000);
+
     } else if (mode == 1) {
       gfx->fillScreen(BLUE);
 
@@ -170,14 +186,14 @@ void loop(void) {
 
     } else if (mode == 3) {
       gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawWidget widget;
-      widget.setStrokeColor(gfxDraw::RGBA_BLUE);
-      widget.setFillColor(gfxDraw::RGBA_RED);
+      gfxDraw::gfxDrawPathWidget widget;
+      widget.setStrokeColor(gfxDraw::ARGB_BLUE);
+      widget.setFillColor(gfxDraw::ARGB_RED);
       widget.setPath(heardPath);
 
       for (int n = 0; n < 200; n += 10) {
         widget.move(8, 8);
-        widget.draw([](int16_t x, int16_t y, gfxDraw::RGBA col) {
+        widget.draw([](int16_t x, int16_t y, gfxDraw::ARGB col) {
           gfx->writePixel(x, y, col.toColor16());
         });
 
@@ -186,9 +202,9 @@ void loop(void) {
 
     } else if (mode == 4) {
       gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawWidget heard;
-      heard.setStrokeColor(gfxDraw::RGBA_BLUE);
-      heard.setFillColor(gfxDraw::RGBA_RED);
+      gfxDraw::gfxDrawPathWidget heard;
+      heard.setStrokeColor(gfxDraw::ARGB_BLUE);
+      heard.setFillColor(gfxDraw::ARGB_RED);
       heard.setPath(heardPath);
 
       int16_t posX = 0;
@@ -203,15 +219,14 @@ void loop(void) {
       }
 
       delay(100);
-      gfxDraw::gfxDrawWidget arrow;
-      arrow.setFillColor(gfxDraw::RGBA_YELLOW);
+      gfxDraw::gfxDrawPathWidget arrow;
+      arrow.setFillColor(gfxDraw::ARGB_YELLOW);
       arrow.setPath(arrowPath);
       arrow.scale(200);
       arrow.rotate(-45);
       arrow.move(posX + 44, posY + 40);
       arrow.draw(gfxDrawColor);
     }
-
 
     nextDraw = now + 2000;
     mode = (mode + 1) % 6;
