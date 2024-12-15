@@ -24,7 +24,7 @@ void setupFont();
 
 void loadFont(const char *fName);
 
-void addFont(GFXfont *newFont);
+void addFont(const GFXfont *newFont);
 
 /// @brief calculate the Bounding box of a text drawn at 0/0
 /// @param h font height

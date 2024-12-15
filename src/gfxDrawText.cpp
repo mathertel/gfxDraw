@@ -16,7 +16,7 @@
 #include "fonts/fonts.h"
 
 
-#define TRACE(...)  printf(__VA_ARGS__);
+#define TRACE(...) // printf(__VA_ARGS__);
 
 namespace gfxDraw {
 

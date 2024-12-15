@@ -6,7 +6,12 @@
 #include <Arduino_GFX_Library.h>
 
 #include <gfxDraw.h>
-#include <gfxDrawColors.h>
+#include <gfxDrawText.h>
+
+#include <fonts/font10.h>
+#include <fonts/font16.h>
+#include <fonts/font24.h>
+
 #include <gfxDrawPathWidget.h>
 
 #include <WiFi.h>
@@ -19,10 +24,10 @@
 Arduino_DataBus *bus;
 Arduino_GFX *gfx;
 
-uint16_t w;   // width of display
-uint16_t h;   // height of display
-uint16_t cx;  // Center-x of display
-uint16_t cy;  // Center-y of display
+uint16_t width;   // width of display
+uint16_t height;  // height of display
+uint16_t cx;      // Center-x of display
+uint16_t cy;      // Center-y of display
 
 uint16_t mode = 0;
 uint16_t step = 0;
@@ -42,7 +47,7 @@ const char *arrowPath = "M0 0l12-12 0 8 22 0 0 8-22 0 0 8Z";
   gfx->writePixel(x, y, (col)); \
 }
 
-// draw on gfx
+/// draw callback for writing picels using the gfx library
 void gfxDrawColor(int16_t x, int16_t y, gfxDraw::ARGB col) {
   gfx->writePixel(x, y, col.toColor16());
 }
@@ -111,124 +116,151 @@ void setup() {
 // https://cool-web.de/esp8266-esp32/esp32-2432s028-cheap-yellow-display-touchscreen-vorstellung-hardware-pinout.htm
 // https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display/
 #define GFX_BL 21
-  Arduino_DataBus *bus = new Arduino_ESP32SPI(2 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, 12 /* MISO */);
-  Arduino_GFX *gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation */);
+  bus = new Arduino_ESP32SPI(2 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, 12 /* MISO */);
+  gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 3 /* rotation */);
 
   // Init Display
   if (!gfx->begin()) {
     Serial.printf("gfx->begin() failed!\n");
   }
 
-  w = gfx->width();
-  h = gfx->height();
-  Serial.printf("gfx width=%d height=%d\n", w, h);
+  width = gfx->width();
+  height = gfx->height();
+  Serial.printf("gfx width=%d height=%d\n", width, height);
 
-  cx = w / 2;
-  cy = h / 2;
+  cx = width / 2;
+  cy = height / 2;
 
 #ifdef GFX_BL
   pinMode(GFX_BL, OUTPUT);
   digitalWrite(GFX_BL, HIGH);
 #endif
 
-  gfx->fillScreen(RGB565_GREEN);
-  delay(2000);
   Serial.println("starting...");
-      gfx->fillScreen(RGB565_WHITE);
-      Serial.println("2");
 
+  // add some fonts
+  gfxDraw::addFont(&font10);
+  gfxDraw::addFont(&font16);
+  gfxDraw::addFont(&font24);
+
+  gfx->fillScreen(RGB565_GREEN);
+  nextDraw = millis() + 2000;
 }
 
 void loop(void) {
   unsigned long now = millis();
 
-  // ArduinoOTA.handle();
+  ArduinoOTA.handle();
 
   if (now > nextDraw) {
-    Serial.printf("next(%d)...\n", mode);
 
     if (mode == 0) {
-      gfx->fillScreen(RGB565_RED);
-      Serial.println("2");
-      delay(1000);
+      gfx->fillScreen(RGB565_GREEN);
 
-      gfx->fillScreen(RGB565_RED);
-      Serial.println("2");
-      delay(1000);
+      Point p(10, 10);
+      gfx->startWrite();
+
+      gfxDraw::drawText(p, 8, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
+      p.y += gfxDraw::lineHeight();
+
+      gfxDraw::drawText(p, 10, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
+      p.y += gfxDraw::lineHeight();
+
+      gfxDraw::drawText(p, 16, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
+      p.y += gfxDraw::lineHeight();
+
+      gfxDraw::drawText(p, 20, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
+      p.y += gfxDraw::lineHeight();
+
+      gfxDraw::drawText(p, 24, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
+      p.y += gfxDraw::lineHeight();
+
+      gfx->endWrite();
+
 
     } else if (mode == 1) {
-      gfx->fillScreen(BLUE);
+      // Lines
+      gfx->fillScreen(RGB565_WHITE);
 
+      gfx->startWrite();
+      for (int16_t x = 10; x <= width - 10; x += 4) {
+        gfxDraw::drawLine(x, 10, x, height - 10, gfxSetPixel(RGB565_BLACK));
+      }
 
-      // gfxDraw::pathByText(heardPath, 8, 8, 100, bmpSet(gfxDraw::BLUE), bmpSet(gfxDraw::YELLOW));
-
-      gfxDraw::drawRect(8, 8, 87, 80, nullptr, [](int16_t x, int16_t y) {
-        gfx->writePixel(x, y, RGB565_LIGHTGREY);
-      });
-
-      // (int16_t x, int16_t y, uint16_t color));
-      gfxDraw::pathByText(heardPath, 8, 8, 100, gfxSetPixel(RGB565_BLUE), gfxSetPixel(RGB565_YELLOW));
+      for (int16_t y = 10; y <= height - 10; y += 4) {
+        gfxDraw::drawLine(10, y, width - 10, y, gfxSetPixel(RGB565_BLACK));
+      }
+      gfx->endWrite();
 
     } else if (mode == 2) {
-      gfx->fillScreen(RGB565_LIGHTGREY);
+      gfx->fillScreen(RGB565_WHITE);
 
-      for (int n = 0; n < 220; n += 8) {
-
-        gfxDraw::drawRect(10 - 8 + n, 10 - 8 + n, 87, 80,
-                          nullptr,
-                          gfxSetPixel(RGB565_LIGHTGREY));
-
-        gfxDraw::pathByText(heardPath, 10 + n, 10 + n, 100,
-                            gfxSetPixel(RGB565_BLUE),
-                            gfxSetPixel(RGB565_YELLOW));
-        delay(20);
+      gfx->startWrite();
+      for (int16_t n = 0; n < 10; n++) {
+        gfxDraw::pathByText(heardPath, 10 + 10 * n, 10 + 8 * n, 30 + (n * 8), gfxSetPixel(RGB565_BLUE), gfxSetPixel(RGB565_YELLOW));
       }
+      gfx->endWrite();
 
     } else if (mode == 3) {
-      gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawPathWidget widget;
-      widget.setStrokeColor(gfxDraw::ARGB_BLUE);
-      widget.setFillColor(gfxDraw::ARGB_RED);
-      widget.setPath(heardPath);
+      gfx->fillScreen(RGB565_LIGHTGREY);
 
-      for (int n = 0; n < 200; n += 10) {
-        widget.move(8, 8);
-        widget.draw([](int16_t x, int16_t y, gfxDraw::ARGB col) {
-          gfx->writePixel(x, y, col.toColor16());
-        });
-
-        delay(20);
-      }
+      gfx->startWrite();
+      gfxDraw::drawRect(8, 8, 88, 80, nullptr, [](int16_t x, int16_t y) {
+        gfx->writePixel(x, y, RGB565_BLUE);
+      });
+      gfxDraw::drawRect(48, 48, 88, 80, nullptr, [](int16_t x, int16_t y) {
+        gfx->writePixel(x, y, RGB565_RED);
+      });
+      gfx->endWrite();
 
     } else if (mode == 4) {
-      gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawPathWidget heard;
-      heard.setStrokeColor(gfxDraw::ARGB_BLUE);
-      heard.setFillColor(gfxDraw::ARGB_RED);
-      heard.setPath(heardPath);
+      gfx->fillScreen(RGB565_BLACK);
 
-      int16_t posX = 0;
-      int16_t posY = 0;
-      for (int n = 0; n < 72; n++) {
-        heard.move(1, 1);
-        posX += 1;
-        posY += 1;
-        heard.rotate(5, posX + 44, posY + 40);
-        heard.draw(gfxDrawColor);
-        delay(1);
+      gfxDraw::gfxDrawPathWidget widget;
+      widget.setPath(heardPath);
+      widget.setFillColor(gfxDraw::ARGB_RED);
+      widget.setStrokeColor(gfxDraw::ARGB_ORANGE);
+
+      for (int16_t n = 0; n < 360; n += 6) {
+        widget.resetTransformation();
+        widget.rotate(n, 44, 40);
+        widget.move(100, 60);
+
+        gfx->startWrite();
+        widget.draw(gfxDrawColor);
+        gfx->endWrite();
+        delay(10);
       }
 
-      delay(100);
       gfxDraw::gfxDrawPathWidget arrow;
       arrow.setFillColor(gfxDraw::ARGB_YELLOW);
       arrow.setPath(arrowPath);
       arrow.scale(200);
       arrow.rotate(-45);
-      arrow.move(posX + 44, posY + 40);
+      arrow.move(100 + 44, 60 + 40);
+      gfx->startWrite();
       arrow.draw(gfxDrawColor);
+      gfx->endWrite();
+
+    } else {
+      gfx->fillScreen(RGB565_BLACK);
     }
 
-    nextDraw = now + 2000;
-    mode = (mode + 1) % 6;
+    nextDraw = millis() + 2000;
+    mode = (mode + 1) % 5;
   }
+
+
+  //     delay(100);
+  //     gfxDraw::gfxDrawPathWidget arrow;
+  //     arrow.setFillColor(gfxDraw::ARGB_YELLOW);
+  //     arrow.setPath(arrowPath);
+  //     arrow.scale(200);
+  //     arrow.rotate(-45);
+  //     arrow.move(posX + 44, posY + 40);
+  //     arrow.draw(gfxDrawColor);
+  //   }
+
+  //   nextDraw = now + 2000;
+  // }
 }  // loop
