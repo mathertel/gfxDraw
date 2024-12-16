@@ -33,7 +33,7 @@ jobs:
           verbose: false
 
   compile-esp32-v3:
-    name: use ESP32
+    name: use ESP32-S3
     runs-on: ubuntu-latest
     
     steps:
@@ -49,6 +49,7 @@ jobs:
               version: 3.0.7
           fqbn: esp32:esp32:esp32s3
           libraries: |
+            - source-path: ./
             - name: GFX Library for Arduino
           sketch-paths: |
             - 'examples/moongfx'
