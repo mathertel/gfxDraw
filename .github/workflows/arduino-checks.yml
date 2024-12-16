@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions for Arduino library projects
 
-name: Arduino Library Checks
+name: Arduino Actions
 
 # Controls when the action will run.
 on:
@@ -33,7 +33,7 @@ jobs:
           verbose: false
 
   compile-esp32-v3:
-    name: use ESP32 3.x
+    name: use ESP32
     runs-on: ubuntu-latest
     
     steps:
@@ -47,6 +47,8 @@ jobs:
             - name: "esp32:esp32"
               source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
               version: 3.0.7
-          fqbn: esp32:esp32:esp32
+          fqbn: esp32:esp32:esp32s3
+          libraries: |
+            - name: GFX Library for Arduino
           sketch-paths: |
             - 'examples/moongfx'
