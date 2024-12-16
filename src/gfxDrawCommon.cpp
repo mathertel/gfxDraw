@@ -12,7 +12,10 @@
 #include "gfxDraw.h"
 #include "gfxDrawCommon.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 
 namespace gfxDraw {
 
@@ -21,15 +24,15 @@ namespace gfxDraw {
 void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw) {
   static Point lastPoints[3];
 
-  TRACE("proposePixel(%d, %d)\n", x, y);
+  GFX_TRACE("proposePixel(%d, %d)", x, y);
 
   if ((x == lastPoints[0].x) && (y == lastPoints[0].y)) {
     // don't collect duplicates
-    TRACE("  duplicate!\n");
+    GFX_TRACE("  duplicate!");
 
   } else if (y == POINT_BREAK_Y) {
     // draw all remaining points and invalidate lastPoints
-    TRACE("  flush!\n");
+    GFX_TRACE("  flush!");
     for (int n = 2; n >= 0; n--) {
       if (lastPoints[n].y != POINT_INVALID_Y)
         cbDraw(lastPoints[n].x, lastPoints[n].y);
@@ -66,14 +69,14 @@ void proposePixel(int16_t x, int16_t y, fSetPixel cbDraw) {
 
         } else if ((abs(lastPoints[0].x - lastPoints[1].x) <= 2) && (abs(lastPoints[0].y - lastPoints[1].y) <= 2)) {
           // simple interpolate new lastPoints[1]
-          // TRACE("  gap!\n");
+          // GFX_TRACE("  gap!");
           if (lastPoints[2].y != POINT_INVALID_Y)
             cbDraw(lastPoints[2].x, lastPoints[2].y);
           lastPoints[2] = lastPoints[1];
           lastPoints[1].x = (lastPoints[0].x + lastPoints[1].x) / 2;
           lastPoints[1].y = (lastPoints[0].y + lastPoints[1].y) / 2;
         } else if ((abs(lastPoints[0].x - lastPoints[1].x) > 2) || (abs(lastPoints[0].y - lastPoints[1].y) > 2)) {
-          // TRACE("  big gap!\n");
+          // GFX_TRACE("  big gap!");
 
           // draw a streight line from lastPoints[1] to lastPoints[0]
           if (lastPoints[2].y != POINT_INVALID_Y)
@@ -133,16 +136,16 @@ int32_t cos256(int32_t degree) {
 // ===== Debug helping functions... =====
 
 void dumpPoints(std::vector<Point> &points) {
-  TRACE("\nPoints:\n");
+  GFX_TRACE("\nPoints:");
   size_t size = points.size();
   for (size_t i = 0; i < size; i++) {
     if (i % 10 == 0) {
-      if (i > 0) { TRACE("\n"); }
-      TRACE("  p%02d:", i);
+      if (i > 0) { GFX_TRACE(""); }
+      GFX_TRACE("  p%02d:", i);
     }
-    TRACE(" (%2d/%2d)", points[i].x, points[i].y);
+    GFX_TRACE(" (%2d/%2d)", points[i].x, points[i].y);
   }
-  TRACE("\n");
+  GFX_TRACE("");
 }
 
 }  // gfxDraw:: namespace

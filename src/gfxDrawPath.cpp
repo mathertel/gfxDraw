@@ -12,7 +12,10 @@
 #include "gfxDraw.h"
 #include "gfxDrawPath.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 
 #define SLOPE_UNKNOWN 0
 #define SLOPE_FALLING 1
@@ -66,7 +69,7 @@ Segment Segment::createArc(int16_t radius, bool f1, bool f2, int16_t xEnd, int16
 
 
 void dumpSegments(std::vector<Segment> &vSeg) {
-  TRACE("\nSegments: %zu\n", vSeg.size());
+  GFX_TRACE("\nSegments: %zu", vSeg.size());
 
   for (Segment &seg : vSeg) {
     const char *s = "";
@@ -75,7 +78,7 @@ void dumpSegments(std::vector<Segment> &vSeg) {
     if (seg.type == Segment::Type::Arc) s = "A";
     if (seg.type == Segment::Type::Close) s = "Z";
     if (seg.type == Segment::Type::Curve) s = "C";
-    TRACE("  %s(0x%04x) - %d/%d\n", s, seg.type, seg.p[0], seg.p[1]);
+    GFX_TRACE("  %s(0x%04x) - %d/%d", s, seg.type, seg.p[0], seg.p[1]);
   }
 }
 
@@ -200,14 +203,14 @@ void transformSegments(std::vector<Segment> &segments, fTransform cbTransform) {
 
       case Segment::Type::Circle:
         // TODO:
-        TRACE("Transform circle is missing.\n");
+        GFX_TRACE("Transform circle is missing.");
         break;
 
       case Segment::Type::Close:
         break;
 
       default:
-        TRACE("unknown segment-%04x\n", pSeg.type);
+        GFX_TRACE("unknown segment-%04x", pSeg.type);
         break;
     }
   }  // for
@@ -282,7 +285,7 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
     if (thisY > prevY) {
       if (prevSlope == SLOPE_FALLING) {
         // maximum extreme ends here: duplicate previous point
-        TRACE("  ins %d\n", n);
+        GFX_TRACE("  ins %d", n);
         edges.insert(edges.begin() + n, *prevEdge);
         edges[n].len = 0;
         n++;
@@ -293,7 +296,7 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
     } else if (thisY < prevY) {
       if (prevSlope == SLOPE_RAISING) {
         // minimum extreme ends here: duplicate previous point
-        TRACE("  ins %d\n", n);
+        GFX_TRACE("  ins %d", n);
         edges.insert(edges.begin() + n, *prevEdge);
         edges[n].len = 0;
         n++;
@@ -311,7 +314,7 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
   if (edges[start].y > prevY) {
     if (prevSlope == SLOPE_FALLING) {
       // maximum extreme ends here: duplicate previous point
-      TRACE("  ins+ %d\n", n);
+      GFX_TRACE("  ins+ %d", n);
       edges.insert(edges.begin() + n, *prevEdge);
       edges[n].len = 0;
       end++;
@@ -320,7 +323,7 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
   } else if (edges[start].y < prevY) {
     if (prevSlope == SLOPE_RAISING) {
       // minimum extreme ends here: duplicate previous point
-      TRACE("  ins+ %d\n", n);
+      GFX_TRACE("  ins+ %d", n);
       edges.insert(edges.begin() + n, *prevEdge);
       edges[n].len = 0;
       end++;
@@ -332,16 +335,16 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
 
 void dumpEdges(std::vector<_Edge> &edges) {
   size_t size = edges.size();
-  TRACE("\nEdges: %zu\n", size);
+  GFX_TRACE("\nEdges: %zu", size);
 #if 0
   for (size_t i = 0; i < size; i++) {
     if (i % 10 == 0) {
-      if (i > 0) { TRACE("\n"); }
-      TRACE("  e%02d:", i);
+      if (i > 0) { GFX_TRACE(""); }
+      GFX_TRACE("  e%02d:", i);
     }
-    TRACE(" (%3d/%3d)-%2d", edges[i].x, edges[i].y, edges[i].len);
+    GFX_TRACE(" (%3d/%3d)-%2d", edges[i].x, edges[i].y, edges[i].len);
   }
-  TRACE("\n");
+  GFX_TRACE("");
 #endif
 }
 
@@ -352,7 +355,7 @@ void dumpEdges(std::vector<_Edge> &edges) {
 /// @return Vector with Segments.
 /// @example pathText="M4 8l12-6l10 10h-8v4h-6z"
 std::vector<Segment> parsePath(const char *pathText) {
-  TRACE("parsePath: '%s'\n", pathText);
+  GFX_TRACE("parsePath: '%s'", pathText);
   char command = '-';
 
   char *path = (char *)pathText;
@@ -506,13 +509,13 @@ std::vector<Segment> parsePath(const char *pathText) {
           break;
       }
       vSeg.push_back(Seg);
-      // } else { TRACE("unknown segment '%c'\n", *path);
+      // } else { GFX_TRACE("unknown segment '%c'", *path);
     }
   }
 
-  // TRACE("  scanned: %d segments\n", vSeg.size());
+  // GFX_TRACE("  scanned: %d segments", vSeg.size());
   // for (Segment &seg : vSeg) {
-  //   TRACE("  %04x - %d %d\n", seg.type, seg.p[0], seg.p[1]);
+  //   GFX_TRACE("  %04x - %d %d", seg.type, seg.p[0], seg.p[1]);
   // }
 
   return (vSeg);
@@ -522,7 +525,7 @@ std::vector<Segment> parsePath(const char *pathText) {
 
 // Draw a path (no fill).
 void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
-  TRACE("drawSegments()\n");
+  GFX_TRACE("drawSegments()");
   int16_t startPosX = 0;
   int16_t startPosY = 0;
   int16_t posX = 0;
@@ -586,7 +589,7 @@ void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
           break;
 
         default:
-          TRACE("unknown segment-%04x\n", pSeg.type);
+          GFX_TRACE("unknown segment-%04x", pSeg.type);
           break;
       }
 
@@ -600,7 +603,7 @@ void drawSegments(std::vector<Segment> &segments, fSetPixel cbDraw) {
 
 /// @brief Draw a path with filling.
 void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel cbFill) {
-  TRACE("fillSegments()\n");
+  GFX_TRACE("fillSegments()");
   std::vector<_Edge> edges;
   _Edge *lastEdge = nullptr;
 
@@ -612,7 +615,7 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
   // create the path and collect edges
   drawSegments(segments,
                [&](int16_t x, int16_t y) {
-                 //  TRACE("    P(%d/%d)\n", x, y);
+                 //  GFX_TRACE("    P(%d/%d)", x, y);
                  if ((lastEdge) && (lastEdge->expand(_Edge(x, y)))) {
                    // fine
                  } else {
@@ -635,12 +638,12 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
       if (eStart < n - 1) {
 
         // Normalize (*2) sub-path for fill algorithm.
-        // TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
+        // GFX_TRACE("  sub-paths %d ... %d", eStart, n - 1);
 
         if (edges[eStart].expand(edges[n - 1])) {
           // last point is in first edge
           edges.erase(edges.begin() + n - 1);
-          TRACE("  del %d\n", n - 1);
+          GFX_TRACE("  del %d", n - 1);
           n--;
         }
         // dumpEdges(edges);
@@ -648,7 +651,7 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
         n = slopeEdges(edges, eStart, n - 1) + 1;
         // dumpEdges(edges);
 
-        TRACE("  sub-paths %d ... %d\n", eStart, n - 1);
+        GFX_TRACE("  sub-paths %d ... %d", eStart, n - 1);
 
       }  // if
 
@@ -657,11 +660,11 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
     }
   }
   // dumpEdges(edges);
-  TRACE(" ... sort\n");
+  GFX_TRACE(" ... sort");
 
   // sort edges by ascending lines (y)
   std::sort(edges.begin(), edges.end(), _Edge::compare);
-  TRACE(" ...a\n");
+  GFX_TRACE(" ...a");
 
   int16_t y = INT16_MAX;
   int16_t x = INT16_MAX;
@@ -672,7 +675,7 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
   for (_Edge &p : edges) {
 
     // if (p.y == 38) {
-    //   TRACE("  P %d/%d-%d\n", p.x, p.y, p.len);
+    //   GFX_TRACE("  P %d/%d-%d", p.x, p.y, p.len);
     // };
 
     if (p.y != y) {

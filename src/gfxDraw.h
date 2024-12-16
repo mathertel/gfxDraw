@@ -34,29 +34,38 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+// Alpha+RGB Color implementation
 #include "gfxDrawColors.h"
+
+// Points, Trigonometric functions
 #include "gfxDrawCommon.h"
+
+// Lines
 #include "gfxDrawLine.h"
-#include "gfxDrawCircle.h"
+
+// Rectanges
 #include "gfxDrawRect.h"
+
+// Circles and arcs
+#include "gfxDrawCircle.h"
+
+// Bezier curves
 #include "gfxDrawBezier.h"
+
+// Paths combining all of the above, filling algorithm
 #include "gfxDrawPath.h"
 
+// Text
+#include "gfxDrawText.h"
+
 #ifdef ARDUINO
-#define GFXD_TRACE(fmt, ...) Serial.printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
+#define GFXDRAWTRACE(fmt, ...) Serial.printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
 #else
-#define GFXD_TRACE(fmt, ...) printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
+#define GFXDRAWTRACE(fmt, ...) printf(fmt "\n" __VA_OPT__(, ) __VA_ARGS__)
 #endif
 
+// un-comment GFX_TRACE globally here to enable all tracing
 
-namespace gfxDraw {
-
-/// @brief Callback function definition to read a pixel from a display
-typedef std::function<ARGB(int16_t x, int16_t y)> fReadPixel;
-
-}  // gfxDraw:: namespace
-
-
-
+#define GFX_TRACE(...) // GFXDRAWTRACE(__VA_ARGS__)
 
 // End.

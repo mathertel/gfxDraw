@@ -157,7 +157,7 @@ void loop(void) {
     if (mode == 0) {
       gfx->fillScreen(RGB565_GREEN);
 
-      Point p(10, 10);
+      gfxDraw::Point p(10, 10);
       gfx->startWrite();
 
       gfxDraw::drawText(p, 8, "Hello gfxDraw!", gfxSetPixel(RGB565_BLACK));
@@ -221,7 +221,7 @@ void loop(void) {
       widget.setFillColor(gfxDraw::ARGB_RED);
       widget.setStrokeColor(gfxDraw::ARGB_ORANGE);
 
-      for (int16_t n = 0; n < 360; n += 6) {
+      for (int16_t n = 0; n <= 360; n += 9) {
         widget.resetTransformation();
         widget.rotate(n, 44, 40);
         widget.move(100, 60);
@@ -246,7 +246,7 @@ void loop(void) {
       gfx->fillScreen(RGB565_BLACK);
     }
 
-    nextDraw = millis() + 2000;
+    nextDraw = millis() + 4000;
     mode = (mode + 1) % 5;
   }
 

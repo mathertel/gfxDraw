@@ -11,7 +11,10 @@
 
 #include "gfxDraw.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 
 #define SCALEFACTOR 1024
 #define SCALESHIFT 10
@@ -24,7 +27,7 @@ namespace gfxDraw {
 // C x1 y1, x2 y2, x y
 
 void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, fSetPixel cbDraw) {
-  // TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d\n", x0, y0, x1, y1, x2, y2, x3, y3);
+  // GFX_TRACE("cubicBezier: %d/%d %d/%d %d/%d %d/%d", x0, y0, x1, y1, x2, y2, x3, y3);
 
   // Line 1 is x0/y0 to x1/y1, dx1/dy1 is the relative vector from x0/y0 to x1/y1
   int16_t dx1 = (x1 - x0);
@@ -36,7 +39,7 @@ void drawCubicBezier(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2,
 
   // heuristic: calc the number of steps we need
   uint16_t steps = (abs(dx1) + abs(dy1) + abs(dx2) + abs(dy2) + abs(dx3) + abs(dy3));  // p0 - 1 - 2 - 3 - 4 - p3
-                                                                                       // TRACE("steps:%d\n", steps);
+                                                                                       // GFX_TRACE("steps:%d", steps);
   proposePixel(x0, y0, cbDraw);
 
   for (uint16_t n = 1; n <= steps; n++) {

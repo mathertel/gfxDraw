@@ -12,8 +12,10 @@
 
 #include "gfxDrawColors.h"
 
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
 
-#define TRACE(...)  // printf(__VA_ARGS__)
 
 namespace gfxDraw {
 
@@ -70,11 +72,11 @@ ARGB const ARGB_TRANSPARENT( 0x00, 0x00, 0x00, 0x00);
 // ===== gfxDraw helper functions =====
 
 void dumpColor(const char *name, ARGB col) {
-  TRACE(" %-12s: %02x.%02x.%02x.%02x #%06lx\n", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
+  GFX_TRACE(" %-12s: %02x.%02x.%02x.%02x #%06lx", name, col.Alpha, col.Red, col.Green, col.Blue, col.toColor24());
 }
 
 void dumpColorTable() {
-  TRACE("        Color: A  R  G  B  #col24\n");
+  GFX_TRACE("        Color: A  R  G  B  #col24");
   dumpColor("Red", gfxDraw::ARGB_RED);
   dumpColor("Green", gfxDraw::ARGB_GREEN);
   dumpColor("Blue", gfxDraw::ARGB_BLUE);

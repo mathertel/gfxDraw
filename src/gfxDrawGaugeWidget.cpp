@@ -12,6 +12,10 @@
 #include "gfxDraw.h"
 #include "gfxDrawGaugeWidget.h"
 
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 namespace gfxDraw {
 
 // See https://reference.arduino.cc/reference/en/language/functions/math/constrain/
@@ -123,7 +127,7 @@ void gfxDrawGaugeWidget::draw(gfxDraw::fDrawPixel cbDraw) {
 // ===== private functions
 
 Point gfxDrawGaugeWidget::_piePoint(int16_t alpha, uint16_t radius) {
-  // GFXD_TRACE("piePoint %d, r=%d", alpha, radius);
+  // GFXDRAWTRACE("piePoint %d, r=%d", alpha, radius);
 
   return (Point(
     sin256(alpha + 180) * radius / 256,

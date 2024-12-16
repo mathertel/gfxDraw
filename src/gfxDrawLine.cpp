@@ -11,7 +11,10 @@
 
 #include "gfxDrawLine.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 
 namespace gfxDraw {
 
@@ -27,7 +30,7 @@ void drawLine(Point &p1, Point &p2, fSetPixel cbDraw) {
 /// @param y1 Ending Point Y coordinate.
 /// @param cbDraw Callback with coordinates of line pixels.
 void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, fSetPixel cbDraw) {
-  TRACE("Draw Line (%d/%d)--(%d/%d)\n", x0, y0, x1, y1);
+  GFX_TRACE("Draw Line (%d/%d)--(%d/%d)", x0, y0, x1, y1);
 
   int16_t delta_x = abs(x1 - x0);
   int16_t delta_y = abs(y1 - y0);

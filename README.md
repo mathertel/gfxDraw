@@ -4,6 +4,9 @@ GFXDraw is a powerful and easy-to-use GUI library for Arduino.  It offers simple
 drawings, ready to use widgets and visual effects.  The library is made especially for displays that support pixel-based
 drawing attached to a board that has enough CPU power and memory to run complex drawing algorithms.
 
+**Note: This is an early version of a new Arduino library.**  
+**Publishing was required to link other work to this library at this time.**  
+
 The GFXDraw library is published as an Arduino Library using GitHub.  It can be installed via the Arduino IDE Library
 Manager.  You can download the latest version of GFXDraw from GitHub and copy it to Arduino's library folder.
 

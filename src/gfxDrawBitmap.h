@@ -15,7 +15,7 @@
 #include "gfxDraw.h"
 #include "gfxDrawColors.h"
 
-#define BMP_TRACE(...) //  GFXD_TRACE(__VA_ARGS__)
+#define BMP_TRACE(...) //  GFXDRAWTRACE(__VA_ARGS__)
 
 #define GFXD_ALPHA_UNUSED 0x00
 #define GFXD_ALPHA_BACKGROUND 0xFF

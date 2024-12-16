@@ -9,14 +9,14 @@
 //
 // - - - - -
 
-#include "gfxDrawText.h"
-
-#include <vector>
+#include "gfxDraw.h"
 
 #include "fonts/fonts.h"
 
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
 
-#define TRACE(...) // printf(__VA_ARGS__);
 
 namespace gfxDraw {
 
@@ -103,7 +103,7 @@ void drawChar(unsigned char c, fSetPixel cbDraw) {
 
 
 void addFont(const GFXfont *newFont) {
-  TRACE("addFont()\n");
+  GFX_TRACE("addFont()");
 
   _gfxDrawFontDetails f;
   int16_t baseline;  // baseline offset in the font.
@@ -129,9 +129,9 @@ void addFont(const GFXfont *newFont) {
     f.baseLine = -baseline;
     f.height = f.baseLine + height;
 
-    TRACE(" height=%d\n", f.height);
-    TRACE(" baseLine=%d\n", f.baseLine);
-    TRACE(" lineHeight=%d\n", f.font->yAdvance);
+    GFX_TRACE(" height=%d", f.height);
+    GFX_TRACE(" baseLine=%d", f.baseLine);
+    GFX_TRACE(" lineHeight=%d", f.font->yAdvance);
 
     // register new font Details
     _registry.push_back(f);
@@ -144,7 +144,7 @@ void addFont(const GFXfont *newFont) {
 // GFXfont + GFXglyph + Bitmaps  with pointers in GFXfont set to the offsets in the file.
 // use https://github.com/ScottFerg56/GFXFontEditor to export binary files.
 void loadFont(const char *fName) {
-  TRACE("loadFont(%s)\n", fName);
+  GFX_TRACE("loadFont(%s)", fName);
   FILE *file;
   long size;
 
@@ -181,7 +181,7 @@ void loadFont(const char *fName) {
 /// _currentScale -- scaling factor to be used.
 /// _currentSize -- the requested size,
 void _findBestFont(int16_t size) {
-  TRACE("_findBestFont(%d)\n", size);
+  GFX_TRACE("_findBestFont(%d)", size);
 
   if (size && (size != _currentSize)) {
     // only search best font in case of a different size requested
@@ -191,7 +191,7 @@ void _findBestFont(int16_t size) {
 
     // search all fonts and find better fit.
     for (const _gfxDrawFontDetails &f : _registry) {
-      // TRACE(" check f_%d...\n", f.height);
+      // GFX_TRACE(" check f_%d...", f.height);
 
       int16_t scale = (size / f.height);
       int16_t fit = size - (scale * f.height);
@@ -209,7 +209,7 @@ void _findBestFont(int16_t size) {
     _currentFont = bestFont;
     _currentSize = size;
     _currentScale = bestScale;
-    TRACE(" => f_%d * %d\n", _currentFont->height, _currentScale);
+    GFX_TRACE(" => f_%d * %d", _currentFont->height, _currentScale);
   }
 }
 

@@ -11,7 +11,9 @@
 
 #include "gfxDraw.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
 
 namespace gfxDraw {
 
@@ -28,7 +30,7 @@ namespace gfxDraw {
 /// @param q number of quadrant (see header file)
 /// @param cbDraw will be called for all pixels in the Circle Quadrant
 void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
-  TRACE("drawCircleQuadrant(r=%d)\n", radius);
+  GFX_TRACE("drawCircleQuadrant(r=%d)", radius);
 
   int16_t x = -radius, y = 0;
   int16_t err = 2 - 2 * radius; /* II. Quadrant */
@@ -52,7 +54,7 @@ void drawCircleQuadrant(int16_t radius, int16_t q, fSetPixel cbDraw) {
 
 /// @brief draw a circle segment
 void drawCircleSegment(Point center, int16_t radius, Point startPoint, Point endPoint, ArcFlags flags, fSetPixel cbDraw) {
-  TRACE("drawCircleSegment(%d/%d r=%d)  (%d/%d) -> (%d/%d)\n", center.x, center.y, radius, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+  GFX_TRACE("drawCircleSegment(%d/%d r=%d)  (%d/%d) -> (%d/%d)", center.x, center.y, radius, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
 
   int16_t xm = center.x;
   int16_t ym = center.y;
@@ -141,7 +143,7 @@ void drawCircle(Point center, int16_t radius, fSetPixel cbStroke, fSetPixel cbFi
   int16_t line = -radius;
 
   drawCircleQuadrant(radius, 3, [&](int16_t x, int16_t y) {
-    // TRACE(" x=%d y=%d\n", x, y);
+    // GFX_TRACE(" x=%d y=%d", x, y);
     cbStroke(xm - x, ym + y);
     if ((cbFill) && (y != line)) {
       for (int16_t l = xm - x + 1; l < xm + x; l++) {
@@ -185,7 +187,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
   if (rx == 0 || ry == 0) {
     double dist = sqrt(((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
     rx = ry = (int16_t)(dist / 2);
-    TRACE("rx=ry= %d\n", rx);
+    GFX_TRACE("rx=ry= %d", rx);
 
   } else {
     double dist2 = (xTemp * xTemp) / (rx * rx) + (yTemp * yTemp) / (ry * ry);
@@ -195,7 +197,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
       rx = static_cast<int16_t>(std::lround(rx * dist));
       ry = static_cast<int16_t>(std::lround(ry * dist));
     }
-    TRACE("rx=%d ry=%d \n", rx, ry);
+    GFX_TRACE("rx=%d ry=%d ", rx, ry);
   }
 
   // center calculation
@@ -222,7 +224,7 @@ void arcCenter(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t &rx, int1
 
 /// Calculate the angle of a vector in degrees.
 int16_t vectorAngle(int16_t dx, int16_t dy) {
-  // TRACE("vectorAngle(%d, %d)\n", dx, dy);
+  // GFX_TRACE("vectorAngle(%d, %d)", dx, dy);
   double rad = atan2(dy, dx);
   int16_t angle = static_cast<int16_t>(std::lround(rad * 180 / M_PI));
   if (angle < 0) angle = 360 + angle;
@@ -244,15 +246,15 @@ void drawArc(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
              int16_t rx, int16_t ry,
              int16_t phi, int16_t flags,
              fSetPixel cbDraw) {
-  TRACE("drawArc(%d/%d)-(%d/%d)\n", x1, y1, x2, y2);
+  GFX_TRACE("drawArc(%d/%d)-(%d/%d)", x1, y1, x2, y2);
 
   int32_t cx256, cy256;
 
   arcCenter(x1, y1, x2, y2, rx, ry, phi, flags, cx256, cy256);
 
-  TRACE("  flags   = 0x%02x\n", flags);
-  TRACE("  center = %d/%d\n", SCALE256(cx256), SCALE256(cy256));
-  TRACE("  radius = %d/%d\n", rx, ry);
+  GFX_TRACE("  flags   = 0x%02x", flags);
+  GFX_TRACE("  center = %d/%d", SCALE256(cx256), SCALE256(cy256));
+  GFX_TRACE("  radius = %d/%d", rx, ry);
 
   proposePixel(x1, y1, cbDraw);
   if (rx == ry) {

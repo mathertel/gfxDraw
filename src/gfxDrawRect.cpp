@@ -12,7 +12,10 @@
 #include "gfxDraw.h"
 #include "gfxDrawCircle.h"
 
-#define TRACE(...)  // printf(__VA_ARGS__)
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
+
 
 namespace gfxDraw {
 

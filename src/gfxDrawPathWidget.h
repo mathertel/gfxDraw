@@ -18,7 +18,6 @@
 #pragma once
 
 #include "gfxDraw.h"
-#include "gfxDrawColors.h"
 
 namespace gfxDraw {
 

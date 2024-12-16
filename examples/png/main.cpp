@@ -12,8 +12,9 @@
 
 #include "lodepng.h"
 
-#define TRACE(...)  // GFXD_TRACE(__VA_ARGS__)
-
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
 
 // https://doc.magnum.graphics/magnum/
 
@@ -23,7 +24,7 @@ using namespace gfxDraw;
 // ===== image memory allocation and functions
 
 // The image memory is "just" an 2-dimensional array of bytes (4 * width * height)
-// each pixel is using 4 bytes for (ARGB)
+// each pixel is using 4 bytes for color (RGBA)
 
 std::vector<unsigned char> image;
 uint16_t imageWidth;
@@ -47,8 +48,13 @@ void saveImage(const char *fileName) {
 }
 
 
-// Draw a pixel using a color.
-void setImagePixel(int16_t x, int16_t y, gfxDraw::ARGB color) {
+// These 2 functions are required to set and read pixel colors in the png buffer.
+
+/// @brief Set a pixel in the png buffer.
+/// @param x x offset of the pixel.
+/// @param y y offset of the pixel.
+/// @param color The color to be used.
+void pngDrawPixel(int16_t x, int16_t y, gfxDraw::ARGB color) {
   if ((x >= 0) && (x < imageWidth) && (y >= 0) && (y < imageHeight)) {
     image[4 * imageWidth * y + 4 * x + 0] = color.Red;
     image[4 * imageWidth * y + 4 * x + 1] = color.Green;
@@ -57,7 +63,11 @@ void setImagePixel(int16_t x, int16_t y, gfxDraw::ARGB color) {
   }
 };
 
-gfxDraw::ARGB readImagePixel(int16_t x, int16_t y) {
+/// @brief Read a pixel from the png buffer.
+/// @param x x offset of the pixel.
+/// @param y y offset of the pixel.
+/// @return Color of the pixel
+gfxDraw::ARGB pngReadPixel(int16_t x, int16_t y) {
   gfxDraw::ARGB col;
   if ((x >= 0) && (x < imageWidth) && (y >= 0) && (y < imageHeight)) {
     col.Red = image[4 * imageWidth * y + 4 * x + 0];
@@ -68,19 +78,22 @@ gfxDraw::ARGB readImagePixel(int16_t x, int16_t y) {
   return (col);
 }
 
+/// @brief Callback function to draw a solid color on pixels.
+/// @param color color to be used for painting.
+/// @return fSetPixel function.
+fSetPixel pngDrawColor(gfxDraw::ARGB color) {
+  return [color](int16_t x, int16_t y) {
+    pngDrawPixel(x, y, color);
+  };
+}
+
 void fillImage(gfxDraw::ARGB color) {
-  for (unsigned y = 0; y < imageHeight; y++) {
-    for (unsigned x = 0; x < imageWidth; x++) {
-      setImagePixel(x, y, color);
-    }
-  }
+  gfxDraw::drawRect(0, 0, imageWidth, imageHeight, pngDrawColor(color));
 }
 
 
-// helpful "inline" function to draw to the png image with a fixed color
-#define pngSetPixel(col) [](int16_t x, int16_t y) { \
-  setImagePixel(x, y, (col)); \
-}
+
+
 
 // ===== Test paths
 
@@ -199,7 +212,7 @@ void assert(bool b, const char *text) {
 // draw the test paths for outTest.bmp
 void silentTests() {
   uint16_t count;
-  TRACE("\nSilent Tests:\n");
+  GFX_TRACE("\nSilent Tests:");
 
   if (sizeof(gfxDraw::ARGB) != 4) {
     printf("error: size(ARGB) is not 4!\n");
@@ -249,90 +262,90 @@ void silentTests() {
   a = gfxDraw::vectorAngle(1, -1);
   assert((a == 315), "vectorAngle( 1, -1) error");
 
-  TRACE("\n");
+  GFX_TRACE("");
 }
 
 
 void drawTest01() {
-  TRACE("\nDraw Tests #1\n");
+  GFX_TRACE("\nDraw Tests #1");
 
   auto drawHelper = [](const char *pathText, int16_t x, int16_t y) {
     std::vector<gfxDraw::Segment> vSeg = gfxDraw::parsePath(pathText);
     moveSegments(vSeg, x, y);
-    fillSegments(vSeg, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(255, 255, 128)));
+    fillSegments(vSeg, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB(255, 255, 128)));
   };
 
-  TRACE("\nTest-01:\n");
+  GFX_TRACE("\nTest-01:");
   // 8*8 rectange needs 2 edges on horizontal lines
-  gfxDraw::drawRect(10, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(10, 10, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z", 10, 10);
 
-  TRACE("\nTest-02:\n");
+  GFX_TRACE("\nTest-02:");
   // 7*8 rectange needs 2 more points on horizontal lines
-  gfxDraw::drawRect(20, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
+  gfxDraw::drawRect(20, 10, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h6 v7 h-6 z", 20, 10);
 
-  TRACE("\nTest-03:\n");
+  GFX_TRACE("\nTest-03:");
   // closed W
-  gfxDraw::drawRect(30, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(30, 10, 11, 10, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h8 v7 l-4,-4 l-4 4 z", 30, 10);
 
-  TRACE("\nTest-04: closed M\n");
-  gfxDraw::drawRect(41, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
+  GFX_TRACE("\nTest-04: closed M");
+  gfxDraw::drawRect(41, 10, 11, 10, nullptr, pngDrawColor(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l4,4 l4 -4 v7 h-8 z", 41, 10);
 
-  TRACE("\nTest-05: route\n");
-  gfxDraw::drawRect(52, 10, 11, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  GFX_TRACE("\nTest-05: route");
+  gfxDraw::drawRect(52, 10, 11, 10, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   drawHelper("M5 1 l4,4 l-4 4 l-4 -4 z", 52, 10);
 
-  TRACE("\nTest-06: |> symbol\n");
-  gfxDraw::drawRect(63, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
+  GFX_TRACE("\nTest-06: |> symbol");
+  gfxDraw::drawRect(63, 10, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 l7,4 l-7 4 z", 63, 10);
 
-  TRACE("\nTest-07: <| symbol\n");
-  gfxDraw::drawRect(73, 10, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  GFX_TRACE("\nTest-07: <| symbol");
+  gfxDraw::drawRect(73, 10, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   drawHelper("M8 1 l-7,4 l7 4 z", 73, 10);
 
-  TRACE("\nTest-10: [[]] \n");
-  gfxDraw::drawRect(10, 22, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  GFX_TRACE("\nTest-10: [[]] ");
+  gfxDraw::drawRect(10, 22, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   drawHelper("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z", 10, 22);
 
-  TRACE("\nTest-11: [*] \n");
-  gfxDraw::drawRect(20, 22, 10, 10, nullptr, pngSetPixel(gfxDraw::ARGB_GRAY));
+  GFX_TRACE("\nTest-11: [*] ");
+  gfxDraw::drawRect(20, 22, 10, 10, nullptr, pngDrawColor(gfxDraw::ARGB_GRAY));
   drawHelper("M1 1 h7 v7 h-7 z M4 4 h1 v1 h-1 z", 20, 22);
 
-  gfxDraw::drawRect(10, 34, 27, 24, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(10, 34, 27, 24, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText("M2 52 l60-50 v20 h20 l-30 50z", 10, 34, 30,
-                      pngSetPixel(gfxDraw::ARGB_BLUE),
+                      pngDrawColor(gfxDraw::ARGB_BLUE),
                       [](int16_t x, int16_t y) {
                         gfxDraw::ARGB col = gfxDraw::ARGB(0xC0, 0x0, 0, 0xFF);
                         col.Green += (7 * x);
                         col.Blue += (7 * y);
-                        setImagePixel(x, y, col);
+                        pngDrawPixel(x, y, col);
                       });
 
 
-  gfxDraw::drawRect(40, 34, 43, 26, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  gfxDraw::drawRect(40, 34, 43, 26, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
   gfxDraw::pathByText(
     "M2 42 l20-33 l20 38 l20 -38 l20 33 l0 -40 l-70 0 z",
     40, 34, 50,
-    pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+    pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // radio with 2 inner paths
-  gfxDraw::drawRect(91, 34, 43, 35, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  gfxDraw::pathByText(RadioPath, 90, 34, 50, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::drawRect(91, 34, 43, 35, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  gfxDraw::pathByText(RadioPath, 90, 34, 50, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // smiley with bezier curves
-  gfxDraw::drawRect(10, 80, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
-  gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::drawRect(10, 80, 99, 99, nullptr, pngDrawColor(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmilieCurvePath, 11, 81, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // smiley with Arcs
-  gfxDraw::drawRect(120, 80, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
-  gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::drawRect(120, 80, 99, 99, nullptr, pngDrawColor(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 120, 81, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // gfxDraw::drawCubicBezier(5, 10, 10, -5, 20, 25, 26, 10,
   //                          [](int16_t x, int16_t y) {
-  //                            setImagePixel(x + 110, y + 80, gfxDraw::RED);
+  //                            pngDrawPixel(x + 110, y + 80, gfxDraw::RED);
   //                          });
 
 }  // drawTest01()
@@ -343,23 +356,23 @@ void drawTest02() {
   std::vector<gfxDraw::Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
   gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
   gfxDraw::moveSegments(segs, 100, 0);                                                                    // move to the right
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
   gfxDraw::moveSegments(segs, 22, 15);                                                                    // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
   segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
   gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
   gfxDraw::rotateSegments(segs, 25);                                                                      // rotate some degrees
   gfxDraw::moveSegments(segs, 200, 40);                                                                   // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
 
   segs = gfxDraw::parsePath(SmilieCurvePath);
   gfxDraw::scaleSegments(segs, 200);
   gfxDraw::rotateSegments(segs, 25);                                                               // rotate some degrees
   gfxDraw::moveSegments(segs, 40, 40);                                                             // move right down
-  gfxDraw::fillSegments(segs, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_LIME));  // hard-coded fill color here.
+  gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB_LIME));  // hard-coded fill color here.
 
   gfxDraw::gfxDrawPathConfig c = {
     .strokeColor = gfxDraw::ARGB_YELLOW,
@@ -383,30 +396,30 @@ void drawTest02() {
   rect->scale(200);
   rect->move(20, 20);
 
-  rect->draw(setImagePixel);
+  rect->draw(pngDrawPixel);
 
   // // rect2->setFillGradient(gfxDraw::ARGB_YELLOW, 10, 0, gfxDraw::ARGB_ORANGE, 36, 0);
   // rect2->setFillGradient(gfxDraw::ARGB_YELLOW, 0, 2, gfxDraw::ARGB_BLUE, 0, 22);
-  // rect2->draw(4, 240, setImagePixel);
+  // rect2->draw(4, 240, pngDrawPixel);
 
-  // gfxDraw::rect(4, 200, 47, 31, nullptr, pngSetPixel(gfxDraw::SILVER));
-  // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // gfxDraw::rect(4, 200, 47, 31, nullptr, pngDrawColor(gfxDraw::SILVER));
+  // gfxDraw::pathByText("M0 12 l24-12 l20 20 h-16 v8 h-12 z", 5, 201, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // gfxDrawPathWidget *rect1 = new gfxDrawPathWidget(gfxDraw::TRANSPARENT, gfxDraw::SILVER);
   // rect1->setRect(46, 30);
-  // rect1->draw(4, 200, setImagePixel);
+  // rect1->draw(4, 200, pngDrawPixel);
 
   // gfxDrawPathWidget *draw1 = new gfxDrawPathWidget(gfxDraw::ARGB_BLUE, gfxDraw::ARGB_ORANGE);
   // draw1->setPath("M0 12 l24-12 l20 20 h-16 v8 h-12 z");
-  // draw1->draw(5, 201, setImagePixel);
+  // draw1->draw(5, 201, pngDrawPixel);
 
 
 #if 0
 
-  // gfxDraw::drawCubicBezier(80, 200, 80, 240, 150, 240, 150, 200, pngSetPixel(gfxDraw::ARGB_BLACK));
+  // gfxDraw::drawCubicBezier(80, 200, 80, 240, 150, 240, 150, 200, pngDrawColor(gfxDraw::ARGB_BLACK));
 
-  // da->rect(180, 200, 84, 74, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER), 2);
-  // gfxDraw::pathByText("M80 200 C 80,240 150,240 150,200 z", 0,0, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // da->rect(180, 200, 84, 74, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER), 2);
+  // gfxDraw::pathByText("M80 200 C 80,240 150,240 150,200 z", 0,0, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB_YELLOW));
 #endif
 
 
@@ -420,31 +433,31 @@ void drawTest03() {
   fillImage(gfxDraw::ARGB_WHITE);
 
   // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24 c0 14 10 24 24 24 c14 0 24-10 24-24 c0-14-10-24-24-24Z",
-  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // gfxDraw::pathByText("M24 0c-14 0-24 10-24 24  0 14 10 24 24 24  14 0 24-10 24-24  0-14-10-24-24-24Z", 11, 81, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // Simple Arc drawing test cases
-  // gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z", 2, 2, 200, pngSetPixel(gfxDraw::ARGB_BLUE), nullptr);
-  // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, pngSetPixel(gfxDraw::ARGB_BLUE), nullptr);
+  // gfxDraw::pathByText("M2 2 A 10 30 0 0 0 20 10 Z", 2, 2, 200, pngDrawColor(gfxDraw::ARGB_BLUE), nullptr);
+  // gfxDraw::pathByText("M112 102 A 12 12 0 0 0 128 118 ", 2, 2, 100, pngDrawColor(gfxDraw::ARGB_BLUE), nullptr);
 
-  // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // gfxDraw::pathByText("M30 112 A 100 100 0 0 1 180 220 Z", 2, 2, 10, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawRect(210, 10, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
-  // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // gfxDraw::drawRect(210, 10, 99, 99, nullptr, pngDrawColor(gfxDraw::ARGB_GREEN));
+  // gfxDraw::pathByText(SmilieCurvePath, 211, 11, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  // gfxDraw::drawRect(210, 120, 99, 99, nullptr, pngSetPixel(gfxDraw::ARGB_GREEN));
+  // gfxDraw::drawRect(210, 120, 99, 99, nullptr, pngDrawColor(gfxDraw::ARGB_GREEN));
 
-  gfxDraw::pathByText(PiePath, 8, 8, 30, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(PiePath, 8, 8, 30, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::pathByText(SwordPath, 10, 160, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SwordPath, 10, 160, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_GREEN));
-  gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_GREEN));
+  gfxDraw::pathByText(SmileyArcPath, 220, 10, 50, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(SmileyArcPath, 100, 80, 150, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::drawRoundedRect(260, 10, 120, 50, 22, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xEE, 0x88)));
+  gfxDraw::drawRoundedRect(260, 10, 120, 50, 22, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB(0xFF, 0xEE, 0x88)));
 
-  gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB(0xFF, 0xFF, 0)));
+  gfxDraw::pathByText("O 20 20 20 O 20 20 10", 10, 120, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB(0xFF, 0xFF, 0)));
 
   saveImage("test03.png");
 }  // drawTest03()
@@ -455,7 +468,7 @@ using namespace gfxDraw;
 // draw a heard by using the gfxDrawPathWidget functionality
 // demonstrate on how to undraw
 void drawTest04_Widget() {
-  // gfxDraw::pathByText(heardPath, 8, 8, 100, pngSetPixel(gfxDraw::ARGB_BLUE), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // gfxDraw::pathByText(heardPath, 8, 8, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   // setup the widget for drawing a heard
   gfxDrawPathWidget widget;
@@ -464,58 +477,58 @@ void drawTest04_Widget() {
   widget.setPath(heardPath);
 
   // draw a background
-  drawRect(10, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
+  drawRect(10, 10, 87, 80, nullptr, pngDrawColor(ARGB_SILVER));
 
   // simple drawing on the rectangle behind
   widget.move(10, 10);
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
 
   // draw a rotated heard on top
   widget.rotate(40, 44 + 10, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
 
   // simple drawing on the rectangle behind and complete undraw.
   // and save of background colors
-  drawRect(110, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
+  drawRect(110, 10, 87, 80, nullptr, pngDrawColor(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(110, 10);
-  widget.draw(setImagePixel);
-  // widget.undraw(setImagePixel);
+  widget.draw(pngDrawPixel);
+  // widget.undraw(pngDrawPixel);
 
   // draw and draw after transformations
   // with removing not overdrawn pixels.
-  drawRect(210, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
+  drawRect(210, 10, 87, 80, nullptr, pngDrawColor(ARGB_SILVER));
   widget.resetTransformation();
   widget.move(210, 10);
-  // widget.draw(setImagePixel);
+  // widget.draw(pngDrawPixel);
 
   saveImage("test04.png");
 
   // rotate heard on top
   widget.rotate(45, 44 + 210, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
   saveImage("test04.png");
 
   widget.rotate(-45, 44 + 210, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
   saveImage("test04.png");
 
   // non solid version of the same
-  drawRect(310, 10, 87, 80, nullptr, pngSetPixel(ARGB_SILVER));
+  drawRect(310, 10, 87, 80, nullptr, pngDrawColor(ARGB_SILVER));
   widget.setFillColor(ARGB_TRANSPARENT);
   widget.resetTransformation();
   widget.move(310, 10);
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
 
   saveImage("test04.png");
 
   // rotate heard on top
   widget.rotate(45, 44 + 310, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
   saveImage("test04.png");
 
   widget.rotate(-45, 44 + 310, 40 + 10);  // rotate on current center
-  widget.draw(setImagePixel);
+  widget.draw(pngDrawPixel);
   saveImage("test04.png");
 }
 
@@ -536,13 +549,13 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->setValue(70);
 
   // drawing using standard unconfigured gauge.
-  g->draw(setImagePixel);
+  g->draw(pngDrawPixel);
 
 
   // Gauge with multiple segments, no scale, standard pointer
@@ -559,7 +572,7 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->addSegment(0, 16, 0xff8080ff);
@@ -569,7 +582,7 @@ void drawTest05_Gauge() {
   g->setValue(32);
 
   // drawing using colorful drawing
-  g->draw(setImagePixel);
+  g->draw(pngDrawPixel);
 
 
   // Gauge with multiple segments and scale, custom pointer
@@ -589,7 +602,7 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->addSegment(0, 16, 0xff8080ff);
@@ -599,7 +612,7 @@ void drawTest05_Gauge() {
   g->setValue(32);
 
   // drawing using colorful drawing
-  g->draw(setImagePixel);
+  g->draw(pngDrawPixel);
 
 
   // Gauge with one special segments and scale, short custom pointer
@@ -617,13 +630,13 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w, conf.w, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->addSegment(30, 70, 0xFF66FF99);  // green segment only
 
   g->setValue(45);
-  g->draw(setImagePixel);
+  g->draw(pngDrawPixel);
 
 
   // Gauge with one special segments and scale, short custom pointer
@@ -639,7 +652,7 @@ void drawTest05_Gauge() {
   };
 
   // draw a background to check drawing area
-  drawRect(conf.x, conf.y, conf.w / 2, conf.w, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
+  drawRect(conf.x, conf.y, conf.w / 2, conf.w, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
 
   g = new gfxDraw::gfxDrawGaugeWidget(&conf);
   g->addSegment(0, 25, 0xFFFF8888);
@@ -648,7 +661,7 @@ void drawTest05_Gauge() {
   g->addSegment(75, 100, 0xFFFF4444);
 
   g->setValue(55);
-  g->draw(setImagePixel);
+  g->draw(pngDrawPixel);
   saveImage("test05.png");
 }  // drawTest05_Gauge()
 
@@ -667,74 +680,74 @@ void drawTest06_Text() {
 
   Point dim = textBox(10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,");
 
-  drawRect(10, 10, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(10, 10, 10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(10, 10, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(10, 10, 10, "ABCDEFQ \"abc\" 'defgh'[ij]_12345,", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   // writing using a cursor
   c = Point(10, c.y + lineHeight());
   dim = textBox(10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   c = Point(10, c.y + lineHeight());
   dim = textBox(10, "abcdefghijklmnopqrstuvwxyz");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 10, "abcdefghijklmnopqrstuvwxyz", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "abcdefghijklmnopqrstuvwxyz", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(10, ".");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 10, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, ".", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(10, "1234567890");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 10, "1234567890", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, "1234567890", pngDrawColor(gfxDraw::ARGB_BLACK));
 
 
   // writing using a cursor
   c = Point(10, 50);
   dim = textBox(20, "abc");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 20, "abc", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, "abc", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(20, ".");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 20, ".", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, ".", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(20, "ABC");
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 20, "ABC", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 20, "ABC", pngDrawColor(gfxDraw::ARGB_BLACK));
 
 
   dim = textBox(16, "abc.ABC");
-  drawRect(10, 80, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  drawText(10, 80, 16, "abc.ABC", pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(10, 80, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  drawText(10, 80, 16, "abc.ABC", pngDrawColor(gfxDraw::ARGB_BLACK));
 
   // mixed fonts in a row
   c = Point(10, 100);
   const char *txt = "abcABC ";
   dim = textBox(7, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 7, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 7, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(8, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 8, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 8, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(10, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 10, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 10, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(14, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 14, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 14, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(16, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 16, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 16, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   dim = textBox(24, txt);
-  drawRect(c, dim.x, dim.y, nullptr, pngSetPixel(gfxDraw::ARGB_SILVER));
-  c = drawText(c, 24, txt, pngSetPixel(gfxDraw::ARGB_BLACK));
+  drawRect(c, dim.x, dim.y, nullptr, pngDrawColor(gfxDraw::ARGB_SILVER));
+  c = drawText(c, 24, txt, pngDrawColor(gfxDraw::ARGB_BLACK));
 
   saveImage("test06.png");
 }
@@ -788,8 +801,8 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
     mark15.setFillColor(ARGB_BLACK);
 
     // draw a background
-    drawRect(_cx - _radius, _cy - _radius, 2 * _radius, 2 * _radius, nullptr, pngSetPixel(ARGB_SILVER));
-    setImagePixel(_cx, _cy, gfxDraw::ARGB_BLACK);
+    drawRect(_cx - _radius, _cy - _radius, 2 * _radius, 2 * _radius, nullptr, pngDrawColor(ARGB_SILVER));
+    pngDrawPixel(_cx, _cy, gfxDraw::ARGB_BLACK);
 
     saveImage("test05.png");
 
@@ -801,19 +814,19 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
         mark15.scale(_radius * 100 / 256);
         mark15.rotate(i);
         mark15.move(_cx, _cy);
-        mark15.draw(setImagePixel);
+        mark15.draw(pngDrawPixel);
 
       } else if (i % 30 == 0) {
         mark05.resetTransformation();
         mark05.scale(_radius * 100 / 256);
         mark05.rotate(i);
         mark05.move(_cx, _cy);
-        mark05.draw(setImagePixel);
+        mark05.draw(pngDrawPixel);
 
       } else {
         int32_t dx = sin256(i) * _radius;
         int32_t dy = -cos256(i) * _radius;
-        setImagePixel(_cx + SCALE256(dx), _cy + SCALE256(dy), gfxDraw::ARGB_BLACK);
+        pngDrawPixel(_cx + SCALE256(dx), _cy + SCALE256(dy), gfxDraw::ARGB_BLACK);
       }
     }
 
@@ -832,7 +845,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
     hand.scale(_radius * 100 / 256);
     hand.rotate(hhDeg);
     hand.move(_cx, _cy);
-    hand.draw(setImagePixel);
+    hand.draw(pngDrawPixel);
     hhDegLast = hhDeg;
   }
 
@@ -846,7 +859,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
     hand.scale(_radius * 100 / 256);
     hand.rotate(mmDeg);
     hand.move(_cx, _cy);
-    hand.draw(setImagePixel);
+    hand.draw(pngDrawPixel);
     mmDegLast = mmDeg;
   }
 
@@ -858,7 +871,7 @@ void drawClock(int16_t hh, int16_t mm, int16_t ss, bool redraw = false) {
   handSS.scale(_radius * 100 / 256);
   handSS.rotate(ssDeg);
   handSS.move(_cx, _cy);
-  handSS.draw(setImagePixel);
+  handSS.draw(pngDrawPixel);
 
   saveImage("test05.png");
 }
@@ -919,34 +932,34 @@ int main() {
 #endif
 
 
-  // gfxDraw::rect(10, 50, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), pngSetPixel(gfxDraw::CYAN), 2);
-  // gfxDraw::rect(10, 60, 12, 8, nullptr, pngSetPixel(gfxDraw::CYAN), 2);
-  // gfxDraw::rect(10, 70, 12, 8, pngSetPixel(gfxDraw::ARGB_BLACK), nullptr, 2);
+  // gfxDraw::rect(10, 50, 12, 8, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::CYAN), 2);
+  // gfxDraw::rect(10, 60, 12, 8, nullptr, pngDrawColor(gfxDraw::CYAN), 2);
+  // gfxDraw::rect(10, 70, 12, 8, pngDrawColor(gfxDraw::ARGB_BLACK), nullptr, 2);
 
-  // gfxDraw::rect(30, 70, 10, 8, pngSetPixel(gfxDraw::RED), nullptr, 2);
-  // gfxDraw::rect(39, 70, -10, 8, pngSetPixel(gfxDraw::ARGB_BLACK), nullptr, 2);
+  // gfxDraw::rect(30, 70, 10, 8, pngDrawColor(gfxDraw::RED), nullptr, 2);
+  // gfxDraw::rect(39, 70, -10, 8, pngDrawColor(gfxDraw::ARGB_BLACK), nullptr, 2);
 
-  // gfxDraw::rect(42, 70, 10, 8, nullptr, pngSetPixel(gfxDraw::RED), 2);
-  // gfxDraw::rect(51, 70, -10, 8, nullptr, pngSetPixel(gfxDraw::ARGB_BLACK), 2);
+  // gfxDraw::rect(42, 70, 10, 8, nullptr, pngDrawColor(gfxDraw::RED), 2);
+  // gfxDraw::rect(51, 70, -10, 8, nullptr, pngDrawColor(gfxDraw::ARGB_BLACK), 2);
 
-  // gfxDraw::rect(54, 70, 10, 8, nullptr, pngSetPixel(gfxDraw::RED), 2);
-  // gfxDraw::rect(54, 77, 10, -8, nullptr, pngSetPixel(gfxDraw::ARGB_BLACK), 2);
+  // gfxDraw::rect(54, 70, 10, 8, nullptr, pngDrawColor(gfxDraw::RED), 2);
+  // gfxDraw::rect(54, 77, 10, -8, nullptr, pngDrawColor(gfxDraw::ARGB_BLACK), 2);
 
-  // drawDigits14(1, 0, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits14(2, 80, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits14(5, 160, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits14(9, 250, 10, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(1, 0, 10, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(2, 80, 10, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(5, 160, 10, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits14(9, 250, 10, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  // drawDigits7(0, 0, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(1, 34, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(2, 68, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(3, 102, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(4, 136, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(5, 170, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(6, 204, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(7, 238, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(8, 282, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
-  // drawDigits7(9, 316, 130, pngSetPixel(gfxDraw::RED), pngSetPixel(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(0, 0, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(1, 34, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(2, 68, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(3, 102, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(4, 136, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(5, 170, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(6, 204, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(7, 238, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(8, 282, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  // drawDigits7(9, 316, 130, pngDrawColor(gfxDraw::RED), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   printf("end.");
 }

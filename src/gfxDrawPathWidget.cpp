@@ -12,14 +12,11 @@
 
 #include "gfxDrawPathWidget.h"
 
-#include "gfxDrawBitmap.h"
+// #include "gfxDrawBitmap.h"
 
-/// unconditional print out this
-#define LOG_PRINT(...)  // GFXD_TRACE(__VA_ARGS__)
-
-// tracing information (left from development for future problem analysis) can be disabled
-#define LOG_TRACE(...)  // GFXD_TRACE(__VA_ARGS__)
-
+#ifndef GFX_TRACE
+#define GFX_TRACE(...)  // GFXDRAWTRACE(__VA_ARGS__)
+#endif
 
 namespace gfxDraw {
 
@@ -42,7 +39,7 @@ void gfxDrawPathWidget::setConfig(gfxDrawPathConfig *c) {
 
 
 /// @brief Create segments from a textual path definition.
-void gfxDrawPathWidget::setPath(const char *path) {
+void gfxDrawPathWidget::setPath(const char *path) { 
   _segments = parsePath(path);
   _initMatrix(_matrix);
 }
@@ -132,9 +129,9 @@ void gfxDrawPathWidget::_extendBox(int16_t x, int16_t y) {
 }
 
 void gfxDrawPathWidget::draw(gfxDraw::fDrawPixel cbDraw) {
-  LOG_TRACE("draw()");
-  LOG_TRACE(" stroke= %08lX", _stroke.raw);
-  LOG_TRACE(" fill  = %08lX", _fillColor1.raw);
+  GFX_TRACE("draw()");
+  GFX_TRACE(" stroke= %08lX", _stroke.raw);
+  GFX_TRACE(" fill  = %08lX", _fillColor1.raw);
 
   x_min = INT16_MAX;
   y_min = INT16_MAX;
@@ -190,12 +187,12 @@ void gfxDrawPathWidget::draw(gfxDraw::fDrawPixel cbDraw) {
 // ===== gradient filling =====
 
 void gfxDrawPathWidget::setStrokeColor(gfxDraw::ARGB stroke) {
-  LOG_TRACE("gfx::setStroke %08lx", stroke.raw);
+  GFX_TRACE("gfx::setStroke %08lx", stroke.raw);
   _stroke = stroke;
 };
 
 void gfxDrawPathWidget::setFillColor(gfxDraw::ARGB fill) {
-  LOG_TRACE("gfx::setFill %08lx", fill.raw);
+  GFX_TRACE("gfx::setFill %08lx", fill.raw);
   _fillColor1 = fill;
 };
 
