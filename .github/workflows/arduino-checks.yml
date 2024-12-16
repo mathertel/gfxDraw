@@ -31,3 +31,22 @@ jobs:
         with:
           library-manager: update
           verbose: false
+
+  compile-esp32-v3:
+    name: use ESP32 3.x
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: compile sketches
+        uses: arduino/compile-sketches@v1
+        with:
+          verbose: true
+          platforms: |
+            # Install ESP32 platform via Boards Manager
+            - name: "esp32:esp32"
+              source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+              version: 3.0.7
+          fqbn: esp32:esp32:esp32
+          sketch-paths: |
+            - 'examples/moongfx'
