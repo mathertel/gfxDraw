@@ -75,37 +75,69 @@ By design the drawing functionionality is independent of the color depth.
 The Widget Classes and the internal Bitmap Class supports drawing using a 32-bit (or less) color setup using RGB+Alpha
 for a specific pixel.
 
-The drawing output can be "plugged" not ony to the GFX library for drawing but some "filters" are available also to
+The output of the drawing routined in the library is prvided by a callback function.
+This can be "plugged" not ony to the GFX library for drawing but some "filters" are available also to
 support functionality like saving the output in memory or filling a widget with a gradient.
 
 
 ## Drawing on a display
 
-The easiest way to draw one of the provided primitives.  A helper function for drawing a color at a position is used for
-binding the gfxDraw functionality to the display driver:
+The easiest way to use the output of the drawing routines is by using helper function for drawing a fixed color.
+This function then calls the effective drawPixel function of the GFX library.
+
+Then a rectagle  with no border and a SILVER fill color or any other algorithm can be drawn using this callback function:
 
 ```cpp
 using namespace gfxDraw; // use gfxDraw library namespace
 
-setFillColor(int16_t x, int16_t y) {
-  gfx->setPixel(x, y, SILVER);
+// a callback function implementing the fSetPixel parameters 
+drawSilver(int16_t x, int16_t y) {
+  gfx->drawPixel(x, y, SILVER);
 })
-```
 
-A rectagle with no border and a SILVER fill color can be drawn with:
-
-```cpp
 // draw a background rectangle
-drawRect(8, 8, 60, 40, nullptr, setFillColor);
-```
+gfxDraw::drawRect(8, 8, 60, 40, nullptr, drawSilver);
 
-A path can be drawn using
-
-```cpp
 // A SVG path defining the shape of a heard
 const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
 
-pathByText(heardPath, 8, 8, 100, nullptr, setFillColor);
+gfxDraw::pathByText(heardPath, 8, 8, 100, nullptr, drawSilver);
+```
+
+A more flexible way is by providing a factory function that returns a fSetPixel function that draws the color given by
+an argument:
+
+```cpp
+std::function<void(int16_t x, int16_t y)> drawColor(uint32_t color) {
+  return [color](int16_t x, int16_t y) {
+    gfx->drawPixel(x, y, color);
+  };
+}
+
+// A SVG path defining the shape of a heard
+const char *heardPath = "M43 7 a1 1 0 00-36 36l36 36 36-36a1 1 0 00-36-36z";
+
+gfxDraw::pathByText(heardPath, 8, 8, 100, drawColor(RED), drawColor(YELLOW));
+```
+
+When using Widgets the colors are given by the widget implementation to a different function that takes the color as an
+additional parameter:
+
+```cpp
+void draw(int16_t x, int16_t y, gfxDraw::ARGB color) {
+  gfx->drawPixel(x, y, col565(color));
+}
+
+// assemble the configuration for the widget including colors
+_gConfig = new gfxDraw::gfxDrawGaugeConfig();
+_gConfig->pointerColor = ARGB_BLACK;
+_gConfig->segmentColor = ARGB_SILVER;
+
+// create the widget
+_gWidget = new gfxDraw::gfxDrawGaugeWidget(_gConfig);
+
+// draw
+_gWidget->draw(draw);
 ```
 
 
@@ -229,6 +261,8 @@ for Arduino. -->
 This example demonstrates how to use gfxDraw with the
 [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX) that has some excellent support for devices
 based on the ESP32 chips and graphics displays.
+
+The example shows various drawing outputs in a loop.
 
 
 ### VSCode PNG Example
