@@ -32,7 +32,12 @@ void addFont(const GFXfont *newFont);
 /// @return Dimension of the text with box.x and .y == 0.
 Point textBox(int16_t h, const char *text);
 
+
+/// @brief calculate the defined lineHeight 
+/// @param size Size of font to be used or 0 to use the last font size
+/// @return total lineHeight
 int16_t lineHeight(int16_t size = 0);
+
 
 /// @brief Draw a text
 /// @param p1 Starting Point

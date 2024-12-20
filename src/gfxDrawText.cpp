@@ -226,7 +226,7 @@ void setupFont() {
 
 int16_t lineHeight(int16_t size) {
   _findBestFont(size);
-  return (_currentFont->font->yAdvance);
+  return (_currentFont->font->yAdvance * _currentScale);
 };
 
 
