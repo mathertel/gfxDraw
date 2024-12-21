@@ -44,8 +44,8 @@ public:
     uint32_t raw;  // equals #AArrggbb
   };
 
-  constexpr bool
-  operator==(const ARGB &col2);
+  constexpr bool operator==(const ARGB &col2);
+  
   constexpr bool operator!=(const ARGB &col2);
 
   // conversions to uint32_t can be implicit

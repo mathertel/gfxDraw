@@ -75,6 +75,23 @@ void Sprite::draw(Point pos, fDrawPixel cbDraw) {
 }  // draw()
 
 
+
+void Sprite::mapColor(fMapColor cbMap, bool mapAll) {
+  GFX_TRACE("Sprite::map()");
+
+  for (int16_t y = 0; y < _h; y++) {
+    uint32_t rowOffset = (y * _w);
+    for (int16_t x = 0; x < _w; x++) {
+      ARGB color = data[rowOffset];
+      if (mapAll || (color.Alpha > 0)) {
+        data[rowOffset] = cbMap(color);
+      }
+      rowOffset++;
+    }
+  }
+}  // draw()
+
+
 // // changeColor: map all given pixels by color
 // void changeColors(std::function<ARGB(ARGB color)> f) {
 //   GFX_TRACE("Background::changeColors()");

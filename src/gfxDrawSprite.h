@@ -36,6 +36,8 @@ public:
 
   void drawPixel(int16_t x, int16_t y, ARGB color);
 
+  void mapColor(fMapColor cbMap, bool mapAll = false);
+
   /// @brief draw all current non-transparent pixels
   void draw(Point pos, fDrawPixel cbDraw);
 

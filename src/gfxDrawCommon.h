@@ -33,6 +33,10 @@ typedef std::function<void(int16_t x, int16_t y)> fSetPixel;
 /// @brief Callback function definition to change a pixel on a display by applying the given color.
 typedef std::function<void(int16_t x, int16_t y, ARGB color)> fDrawPixel;
 
+/// @brief Callback function definition to change a pixel on a display by applying the given color.
+typedef std::function<ARGB(ARGB color)> fMapColor;
+
+
 /// @brief Callback function to transform all points in the segments
 typedef std::function<void(int16_t &x, int16_t &y)> fTransform;
 

@@ -768,11 +768,21 @@ void drawTest07_Sprite() {
     sprite.drawPixel(x, y, color);
   });
 
-  sprite.draw(Point(10,10), pngDrawPixel);
-  sprite.draw(Point(20,20), pngDrawPixel);
-  sprite.draw(Point(30,30), pngDrawPixel);
-  sprite.draw(Point(40,40), pngDrawPixel);
-  sprite.draw(Point(50,50), pngDrawPixel);
+  sprite.draw(Point(10, 10), pngDrawPixel);
+
+  // map the silver to green color and draw
+  sprite.mapColor([](ARGB color) { return (color.raw == ARGB_SILVER.raw ? ARGB_LIME : color); });
+  sprite.draw(Point(20, 20), pngDrawPixel);
+
+  // map the green color and Yellow
+  sprite.mapColor([](ARGB color) { return (color.raw == ARGB_LIME.raw ? ARGB_YELLOW : color); });
+  sprite.draw(Point(30, 30), pngDrawPixel);
+
+  sprite.draw(Point(40, 40), pngDrawPixel);
+  
+  // map the Yellow color and Transparent
+  sprite.mapColor([](ARGB color) { return (color.raw == ARGB_YELLOW.raw ? ARGB_TRANSPARENT : color); });
+  sprite.draw(Point(50, 50), pngDrawPixel);
 
   saveImage("test07.png");
 }
