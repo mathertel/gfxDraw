@@ -1,11 +1,11 @@
 // - - - - -
 // GFXDraw - A Arduino library for drawing shapes on a GFX display using paths describing the borders.
-// gfxDrawLine.cpp: Library implementation file for functions to calculate all points of a staight line.
+// gfxDrawText.cpp: Library implementation file for functions to calculate all points of a staight line.
 //
 // Copyright (c) 2024-2024 by Matthias Hertel, http://www.mathertel.de
 // This work is licensed under a BSD style license. See http://www.mathertel.de/License.aspx
 //
-// Changelog: See gfxDrawLine.h and documentation files in this library.
+// Changelog: See gfxDrawText.h and documentation files in this library.
 //
 // - - - - -
 
@@ -239,22 +239,36 @@ Point textBox(int16_t size, const char *text) {
 
   if ((_currentFont) && (text)) {
     const GFXfont *_font = _currentFont->font;
+    int16_t lineWidth = 0;
+    int16_t maxWidth = 0;
+    int16_t lineCount = 1;
 
     // calculate char by char
     while (*text) {
       char c = *text++;
 
-      if ((c >= _font->first) && (c <= _font->last)) {
+      if (c == '\n') {
+        lineCount++;
+        if (lineWidth > maxWidth) {
+          maxWidth = lineWidth;
+        }
+        lineWidth = 0;
+      } else if ((c >= _font->first) && (c <= _font->last)) {
         uint8_t cOffset = c - _font->first;
         GFXglyph *glyph = _font->glyph + cOffset;
-        dim.x += (glyph->xAdvance * _currentScale);
+        lineWidth += (glyph->xAdvance * _currentScale);
       }
     }
-    dim.y = (_currentFont->height * _currentScale);
+
+    if (lineWidth > maxWidth) {
+      maxWidth = lineWidth;
+    }
+
+    dim.x = maxWidth;
+    dim.y = (lineCount * _currentFont->height * _currentScale);
   }
   return (dim);
 }  // textBox()
-
 
 
 Point drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw) {
@@ -268,7 +282,13 @@ Point drawText(Point &p, int16_t size, const char *text, fSetPixel cbDraw) {
   if (_currentFont) {
     // draw char by char and advance _textCursor
     while (*text) {
-      drawChar(*text++, cbDraw);
+      char c = *text++;
+      if (c == '\n') {
+        _textCursor.x = p.x;  // reset to the beginning of the line
+        _textCursor.y += _currentFont->height * _currentScale;  // move to the next line
+      } else {
+        drawChar(c, cbDraw);
+      }
     }
   }
   return (_textCursor);

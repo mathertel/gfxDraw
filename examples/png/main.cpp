@@ -9,6 +9,7 @@
 #include "gfxDrawPathWidget.h"
 #include "gfxDrawGaugeWidget.h"
 #include "gfxDrawText.h"
+#include "gfxDrawSprite.h"
 
 #include "lodepng.h"
 
@@ -88,7 +89,7 @@ fSetPixel pngDrawColor(gfxDraw::ARGB color) {
 }
 
 void fillImage(gfxDraw::ARGB color) {
-  gfxDraw::drawRect(0, 0, imageWidth, imageHeight, pngDrawColor(color));
+  gfxDraw::drawRect(0, 0, imageWidth, imageHeight, nullptr, pngDrawColor(color));
 }
 
 
@@ -120,7 +121,7 @@ const char *PiePath = R"==(
    )==";
 
 // A SVG path showing a sword
-const char *SwordPath = R"==(
+const char *swordPath = R"==(
 M 40 80 L 100 10 L 130 0 L 120 30 L 50 90 C 60 100 60 110 70 100 C 70 110 80 120 70 120 A 14 14 0 0 1 60 130 A 50 50 0 0 0 40 100 C 36 99 36 99 35 105 l -15 13 C 10 121 10 121 12 110 L 25 95 C 31 94 31 94 30 90 A 50 50 90 0 0 0 70 A 14 14 0 0 1 10 60 C 10 50 20 60 30 60 C 20 70 30 70 40 80 M 100 10 L 100 30 L 120 30 L 102 28 L 100 10z
 )==";
 
@@ -354,24 +355,24 @@ void drawTest01() {
 // draw the test paths for test02.png
 void drawTest02() {
   std::vector<gfxDraw::Segment> segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
-  gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
-  gfxDraw::moveSegments(segs, 100, 0);                                                                    // move to the right
+  gfxDraw::scaleSegments(segs, 400);                                                                        // scale by 400%
+  gfxDraw::moveSegments(segs, 100, 0);                                                                      // move to the right
   gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
-  gfxDraw::moveSegments(segs, 22, 15);                                                                    // move right down
+  gfxDraw::moveSegments(segs, 22, 15);                                                                      // move right down
   gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
   segs = gfxDraw::parsePath("M1 1 h7 v7 h-7 z M3 3 h3 v3 h-3 z");
-  gfxDraw::scaleSegments(segs, 400);                                                                      // scale by 400%
-  gfxDraw::rotateSegments(segs, 25);                                                                      // rotate some degrees
-  gfxDraw::moveSegments(segs, 200, 40);                                                                   // move right down
+  gfxDraw::scaleSegments(segs, 400);                                                                        // scale by 400%
+  gfxDraw::rotateSegments(segs, 25);                                                                        // rotate some degrees
+  gfxDraw::moveSegments(segs, 200, 40);                                                                     // move right down
   gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB(0xEEEEEEFF)));  // hard-coded fill color here.
 
 
   segs = gfxDraw::parsePath(SmilieCurvePath);
   gfxDraw::scaleSegments(segs, 200);
-  gfxDraw::rotateSegments(segs, 25);                                                               // rotate some degrees
-  gfxDraw::moveSegments(segs, 40, 40);                                                             // move right down
+  gfxDraw::rotateSegments(segs, 25);                                                                 // rotate some degrees
+  gfxDraw::moveSegments(segs, 40, 40);                                                               // move right down
   gfxDraw::fillSegments(segs, pngDrawColor(gfxDraw::ARGB_BLACK), pngDrawColor(gfxDraw::ARGB_LIME));  // hard-coded fill color here.
 
   gfxDraw::gfxDrawPathConfig c = {
@@ -448,7 +449,7 @@ void drawTest03() {
 
   gfxDraw::pathByText(PiePath, 8, 8, 30, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
-  gfxDraw::pathByText(SwordPath, 10, 160, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
+  gfxDraw::pathByText(swordPath, 10, 160, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
 
   gfxDraw::pathByText(SmileyArcPath, 200, 100, 100, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_YELLOW));
   gfxDraw::pathByText(SmileyArcPath, 140, 10, 200, pngDrawColor(gfxDraw::ARGB_BLUE), pngDrawColor(gfxDraw::ARGB_GREEN));
@@ -752,6 +753,31 @@ void drawTest06_Text() {
   saveImage("test06.png");
 }
 
+void drawTest07_Sprite() {
+  newImage(520, 350);  // 3 * 2 areas
+  fillImage(gfxDraw::ARGB_WHITE);
+
+  // setup the widget for drawing a heard
+  gfxDrawPathWidget widget;
+  Sprite sprite;
+  widget.setStrokeColor(ARGB_BLACK);
+  widget.setFillColor(ARGB_SILVER);
+  widget.setPath(swordPath);
+
+  widget.draw([&](int16_t x, int16_t y, ARGB color) {
+    sprite.drawPixel(x, y, color);
+  });
+
+  sprite.draw(Point(10,10), pngDrawPixel);
+  sprite.draw(Point(20,20), pngDrawPixel);
+  sprite.draw(Point(30,30), pngDrawPixel);
+  sprite.draw(Point(40,40), pngDrawPixel);
+  sprite.draw(Point(50,50), pngDrawPixel);
+
+  saveImage("test07.png");
+}
+
+
 uint16_t conv2d(const char *p) {
   return (10 * (*p - '0')) + (*(p + 1) - '0');
 }
@@ -916,6 +942,10 @@ int main() {
 
 #if (1)
   drawTest06_Text();
+#endif
+
+#if (1)
+  drawTest07_Sprite();
 #endif
 
 #if (0)

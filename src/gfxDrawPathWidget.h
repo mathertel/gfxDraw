@@ -122,10 +122,6 @@ private:
 
   // distance of the 2 gradient points.
   int32_t d1000;
-
-
-  // Reference to background data
-  class Background *_bg = nullptr;
 };
 
 }  // namespace gfxDraw
