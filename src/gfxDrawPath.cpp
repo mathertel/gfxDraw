@@ -276,11 +276,11 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
   }
 
   _Edge *prevEdge = &edges[end];
-  uint16_t prevY = edges[end].y;
+  int16_t prevY = edges[end].y;
 
   size_t n = start;
   while (n <= end) {
-    uint16_t thisY = edges[n].y;
+    int16_t thisY = edges[n].y;
 
     if (thisY > prevY) {
       if (prevSlope == SLOPE_FALLING) {
@@ -290,8 +290,8 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
         edges[n].len = 0;
         n++;
         end++;
+        prevSlope = SLOPE_RAISING;
       }
-      prevSlope = SLOPE_RAISING;
 
     } else if (thisY < prevY) {
       if (prevSlope == SLOPE_RAISING) {
@@ -301,8 +301,8 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
         edges[n].len = 0;
         n++;
         end++;
+        prevSlope = SLOPE_FALLING;
       }
-      prevSlope = SLOPE_FALLING;
     }
 
     prevEdge = &edges[n];
@@ -333,20 +333,20 @@ size_t slopeEdges(std::vector<_Edge> &edges, size_t start, size_t end) {
   return (end);
 }  // slopeEdges()
 
+
+// send all edges in readably format to the trace output
 void dumpEdges(std::vector<_Edge> &edges) {
   size_t size = edges.size();
   GFX_TRACE("\nEdges: %zu", size);
-#if 0
+
   for (size_t i = 0; i < size; i++) {
     if (i % 10 == 0) {
       if (i > 0) { GFX_TRACE(""); }
-      GFX_TRACE("  e%02d:", i);
     }
-    GFX_TRACE(" (%3d/%3d)-%2d", edges[i].x, edges[i].y, edges[i].len);
+    GFX_TRACE(" (%3d/%3d) - %2d", edges[i].x, edges[i].y, edges[i].len);
   }
   GFX_TRACE("");
-#endif
-}
+}  // dumpEdges()
 
 // =====
 
@@ -633,6 +633,7 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
   n = eStart;
   while (n < eSize) {
     if (edges[n].y != POINT_BREAK_Y) {
+      // mark the end of the path or sub-path
       n++;
     } else {
       if (eStart < n - 1) {
@@ -659,11 +660,12 @@ void fillSegments(std::vector<Segment> &segments, fSetPixel cbBorder, fSetPixel 
       eSize = edges.size();
     }
   }
-  // dumpEdges(edges);
-  GFX_TRACE(" ... sort");
 
   // sort edges by ascending lines (y)
+  GFX_TRACE(" ... sort");
   std::sort(edges.begin(), edges.end(), _Edge::compare);
+  // dumpEdges(edges);
+
   GFX_TRACE(" ...a");
 
   int16_t y = INT16_MAX;
