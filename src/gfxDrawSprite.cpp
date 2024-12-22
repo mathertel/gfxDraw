@@ -30,6 +30,7 @@ Sprite::Sprite(int16_t x, int16_t y, int16_t w, int16_t h)
 
 void Sprite::drawPixel(int16_t x, int16_t y, ARGB color) {
   // GFX_TRACE("bg::set(%d,%d)=%08x", x, y, color.raw);
+
   if (_w == 0) {
     _createData(x, y);
     GFX_TRACE(" init to (%d/%d)-(%d/%d)", _x, _y, _x + _w - 1, _y + _h - 1);
@@ -90,6 +91,22 @@ void Sprite::mapColor(fMapColor cbMap, bool mapAll) {
     }
   }
 }  // draw()
+
+
+void Sprite::mapColor(ARGB oldColor, ARGB newColor) {
+  GFX_TRACE("Sprite::mapColor()");
+
+  for (int16_t y = 0; y < _h; y++) {
+    uint32_t rowOffset = (y * _w);
+    for (int16_t x = 0; x < _w; x++) {
+      ARGB color = data[rowOffset];
+      if (color == oldColor) {
+        data[rowOffset] = newColor;
+      }
+      rowOffset++;
+    }
+  }
+}  // mapColor()
 
 
 // // changeColor: map all given pixels by color

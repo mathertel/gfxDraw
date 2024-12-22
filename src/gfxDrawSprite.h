@@ -36,9 +36,20 @@ public:
 
   void drawPixel(int16_t x, int16_t y, ARGB color);
 
+  /// @brief change all pixels by applying a function to the color.
+  /// @param cbMap the function to be applied to each pixel.
+  /// @param mapAll if true all pixels are mapped, otherwise only non-transparent pixels.
   void mapColor(fMapColor cbMap, bool mapAll = false);
 
-  /// @brief draw all current non-transparent pixels
+  /// @brief change all pixels with a specific color to another color.
+  /// @param oldColor the color to be changed.
+  /// @param newColor the new color.
+  void mapColor(ARGB oldColor, ARGB newColor);
+
+
+  /// @brief draw all current non-transparent pixels to the display.
+  /// @param pos the position where the sprite should be drawn.
+  /// @param cbDraw the callback function to draw a pixel on the display.
   void draw(Point pos, fDrawPixel cbDraw);
 
 private:

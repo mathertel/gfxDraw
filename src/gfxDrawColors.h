@@ -44,9 +44,15 @@ public:
     uint32_t raw;  // equals #AArrggbb
   };
 
-  constexpr bool operator==(const ARGB &col2);
-  
-  constexpr bool operator!=(const ARGB &col2);
+  /// @brief Compare two colors.
+  /// @param col2 the color to compare with.
+  /// @return true if the colors are equal.
+  bool operator==(ARGB const &col2);
+
+  /// @brief Compare two colors.
+  /// @param col2 the color to compare with.
+  /// @return true if the colors are not equal.  
+  constexpr bool operator!=(ARGB const &col2);
 
   // conversions to uint32_t can be implicit
 

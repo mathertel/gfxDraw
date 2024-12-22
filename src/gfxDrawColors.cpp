@@ -33,11 +33,11 @@ ARGB::ARGB(uint32_t color)
   Alpha = 0xFF;
 };
 
-constexpr bool ARGB::operator==(const ARGB &col2) {
+bool ARGB::operator==(ARGB const &col2) {
   return (raw == col2.raw);
 }
 
-constexpr bool ARGB::operator!=(const ARGB &col2) {
+constexpr bool ARGB::operator!=(ARGB const &col2) {
   return (raw != col2.raw);
 }
 

@@ -66,6 +66,6 @@
 
 // un-comment GFX_TRACE globally here to enable all tracing
 
-#define GFX_TRACE(...) // GFXDRAWTRACE(__VA_ARGS__)
+// #define GFX_TRACE(...) GFXDRAWTRACE(__VA_ARGS__)
 
 // End.
