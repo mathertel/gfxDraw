@@ -7,7 +7,7 @@
 
 #include <gfxDraw.h>
 #include <gfxDrawColors.h>
-#include <gfxDrawWidget.h>
+#include <gfxDrawPathWidget.h>
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -169,7 +169,7 @@ void loop(void) {
 
     } else if (mode == 3) {
       gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawWidget widget;
+      gfxDraw::gfxDrawPathWidget widget;
       widget.setStrokeColor(gfxDraw::RGBA_BLUE);
       widget.setFillColor(gfxDraw::RGBA_RED);
       widget.setPath(heardPath);
@@ -185,7 +185,7 @@ void loop(void) {
 
     } else if (mode == 4) {
       gfx->fillScreen(BLACK);
-      gfxDraw::gfxDrawWidget heard;
+      gfxDraw::gfxDrawPathWidget heard;
       heard.setStrokeColor(gfxDraw::RGBA_BLUE);
       heard.setFillColor(gfxDraw::RGBA_RED);
       heard.setPath(heardPath);
@@ -202,7 +202,7 @@ void loop(void) {
       }
 
       delay(100);
-      gfxDraw::gfxDrawWidget arrow;
+      gfxDraw::gfxDrawPathWidget arrow;
       arrow.setFillColor(gfxDraw::RGBA_YELLOW);
       arrow.setPath(arrowPath);
       arrow.scale(200);

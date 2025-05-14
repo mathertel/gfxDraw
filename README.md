@@ -60,7 +60,7 @@ lines.  Paths can be transformed, resized and rotated.  See further details belo
 **Widgets** -- The Widget classes offers defining parameters for drawing of complex functionality like **gauges**.
 
 
-### General Library Implementation Rules
+### Library Implementation Rules
 
 This library aims to support graphics implementations that are used in microprocessors like ESP32 based boards with
 pixel oriented graphic displays.
@@ -143,7 +143,7 @@ _gWidget->draw(draw);
 
 ## Widget classes
 
-The Widget classes offers further functionionality and espacially can handle a fixed color for stroke and fill.
+The Widget classes offer further functionionality and espacially can handle a fixed color for stroke and fill.
 
 By creating a instance on a class the basic configuration can be passed to the constructor and parameters can be
 changed by using methods.
@@ -172,7 +172,13 @@ heardWidget->move(8, 8);
 heardWidget->draw(drawCallback);
 ```
 
-See [Path Widgets Class](docs/path-widget.md).
+
+### Implemented Widgets
+
+[Path Widget](docs/path-widget.md) -- use a path definition and various transformations to draw the path.
+[Gauge Widget](docs/gauge-widget.md) -- Gauge implementation with various options.
+
+[7-Segment Widget](docs/7seg-widget.md) -- Drawing 7-Segment Numbers
 
 
 ## SVG Path Syntax
@@ -213,11 +219,6 @@ More details about the implementation can be found in
 [Bezier Arc Command](docs/bezier_command.md)
 [Elliptical Arc Command](docs/elliptical_arc_command.md)
 [Filling Paths](docs/filling.md)
-
-Implemented Widgets
-
-[Path Widget](docs/path-widget.md)
-[Gauge Widget](docs/gauge-widget.md)
 
 
 ## Debugging and logging

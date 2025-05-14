@@ -7,17 +7,17 @@ All notable changes to this project will be documented in this file.
 * estimate bounding box from segments.
 * adjust bounding box on drawing.
 
-## unpublished
+## 2024-12-15 -- Version 0.4.2
 
-* gfxDrawWidget supports undraw by saving background pixels during drawing and restoring background.
+* The [Sprite](/docs/sprite.md) class is created to capture drawings before sending them to the display. This allows flickerless drawing.
 * [moongfx example](examples/moongfx/README.md) using [GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX).
-* gfxDrawBitmap class to save background while drawing
 * ARGB color class using 32-bits per pixel for Alpha + Red, Green, Blue
 
+## 2024-12-15 -- published Arduino Library Vereion 0.4.1
 
 
-## 2024-05-30 Version 0.8.0
 
+## 2024-05-30 
 * arc command parsing without spaces around the flag parameters
 * arc command implementation with optimized drawing for circular arcs.
 * more docu and references

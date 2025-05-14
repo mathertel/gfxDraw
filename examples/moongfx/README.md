@@ -1,55 +1,36 @@
-# moonclock example
+# moongfx example
 
-<!-- This example demonstrates how to use gfxDraw with the
-[GFX Library for Arduino](https://github.com/moononournation/Arduino_GFX) that has some excellent support for devices
-based on the ESP32 chips and graphics displays.
+The moongfx example demonstrates how to use gfxDraw with the [GFX Library for Arduino].
 
-The example draws a heard in the center of the screen and rotates is continuously.
+The [GFX Library for Arduino] has some excellent support for devices based on the ESP32 chips and graphics displays.
 
+The moongfx example has been tested with the the ESP32_2432S028R also known as Cheap Yellow Display Board
+<https://randomnerdtutorials.com/cheap-yellow-display-esp32-2432s028r/> and the
+[SC01 Plus](https://homeding.github.io/boards/esp32s3/sc01-plus.htm).
 
-Have a look to the PDQgraphicstest example of this library to find out that the device is supported.
+To use other devices you can use one of the working boards with the device setup you can find in the provided
+PDQgraphicstest example in the [GFX Library for Arduino].
 
-The display is started using the sequence and pin assignments:
+You need to define the pin enabling the LCD backlight using a definition for GFX_BL and find the right bus and gfx classes with parameters:
 
-``` cpp
-#define GFX_BL 45
-Arduino_DataBus *bus = new Arduino_ESP32LCD8(
-    0 /* DC */, GFX_NOT_DEFINED /* CS */, 47 /* WR */, GFX_NOT_DEFINED /* RD */,
-    9 /* D0 */, 46 /* D1 */, 3 /* D2 */, 8 /* D3 */, 18 /* D4 */, 17 /* D5 */, 16 /* D6 */, 15 /* D7 */);
-Arduino_GFX *gfx = new Arduino_ST7796(bus, 4 /* RST */, 0 /* rotation */, true /* IPS */);
+For ESP32_2432S028R / Cheap Yellow Display Board:
 
-pinMode(GFX_BL, OUTPUT);
-digitalWrite(GFX_BL, HIGH);
-
-gfx->begin();
-gfx->fillScreen(BLACK);
+```cpp
+#define GFX_BL 21
+  bus = new Arduino_ESP32SPI(2 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, 12 /* MISO */);
+  gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 3 /* rotation */);
 ```
 
-The example draws a heard in the center of the screen and rotates is continuously.
+For SC01 Plus Display Board:
 
-  w = gfx->width();
-  h = gfx->height();
+```cpp
+#define GFX_BL 23
+  bus = new Arduino_ESP32SPI(21 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, GFX_NOT_DEFINED /* MISO */);
+  gfx = new Arduino_ST7796(bus, 22 /* RST */, 3 /* rotation */);
+```
 
-testLines
+## The Example Code
 
-    gfx->drawLine(x1, y1, x2, y2, BLUE);
+The example draws different static and dynamic screens on the display in a loop.
 
-
-
-PDQgraphicstest
-
-# elif defined(ESP32_2432S028)
-# define GFX_DEV_DEVICE ESP32_2432S028
-# define GFX_BL 21
-Arduino_DataBus *bus = new Arduino_ESP32SPI(2 /* DC */, 15 /* CS */, 14 /* SCK */, 13 /* MOSI */, 12 /* MISO */);
-Arduino_GFX *gfx = new Arduino_ILI9341(bus, GFX_NOT_DEFINED /* RST */, 0 /* rotation*/);
-
-
-# elif defined(ZX3D50CE02S)
-# define GFX_DEV_DEVICE ZX3D50CE02S
-# define GFX_BL 45
-Arduino_DataBus *bus = new Arduino_ESP32LCD8(
-    0 /* DC */, GFX_NOT_DEFINED /* CS */, 47 /* WR */, GFX_NOT_DEFINED /* RD */,
-    9 /* D0 */, 46 /* D1 */, 3 /* D2 */, 8 /* D3 */, 18 /* D4 */, 17 /* D5 */, 16 /* D6 */, 15 /* D7 */);
-Arduino_GFX *gfx = new Arduino_ST7796(bus, 4 /* RST */, 0 /* rotation */, true /* IPS*/);
- -->
+[GFX Library for Arduino]: https://github.com/moononournation/Arduino_GFX
